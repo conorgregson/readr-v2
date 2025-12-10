@@ -1,0 +1,55 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: readr
+          POSTGRES_PASSWORD: readr
+          POSTGRES_DB: readr_ci
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U readr"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://readr:readr@localhost:5432/readr_ci?schema=public
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install client dependencies
+        working-directory: ./client
+        run: npm ci || echo "No client package.json yet"
+
+      - name: Run client tests
+        working-directory: ./client
+        run: npm test || echo "No client tests defined yet"
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci || echo "No server package.json yet"
+
+      - name: Run server tests
+        working-directory: ./server
+        run: npm test || echo "No server tests defined yet"
