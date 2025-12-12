@@ -1,0 +1,597 @@
+{
+  "info": {
+    "_postman_id": "e55526f7-9ae8-41a2-bd6c-81728d227461",
+    "name": "Readr v2 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47436581",
+    "_collection_link": "https://conor-gregson-8807727.postman.co/workspace/6cb5e5dc-6b9c-4dce-823d-f73d1bdd8243/collection/47436581-e55526f7-9ae8-41a2-bd6c-81728d227461?action=share&source=collection_link&creator=47436581"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"response has ok: true\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  pm.expect(json.ok).to.be.true;\r",
+                  "  pm.expect(json.status).to.eql(\"healthy\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "books - list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"returns ok: true and an array\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  pm.expect(json.ok).to.be.true;\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"first book has expected fields (if any)\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  if (json.data.length === 0) {\r",
+                  "    pm.skip(\"No books to validate\");\r",
+                  "    return;\r",
+                  "  }\r",
+                  "  const b = json.data[0];\r",
+                  "  pm.expect(b).to.have.property(\"id\");\r",
+                  "  pm.expect(b).to.have.property(\"title\");\r",
+                  "  pm.expect(b).to.have.property(\"status\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "books - create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"returns created book and saves id to env\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  pm.expect(json.ok).to.be.true;\r",
+                  "\r",
+                  "  const b = json.data;\r",
+                  "  pm.expect(b).to.have.property(\"id\");\r",
+                  "  pm.expect(b.title).to.eql(\"Postman Test Book\");\r",
+                  "\r",
+                  "  pm.environment.set(\"bookId\", b.id);\r",
+                  "  pm.environment.set(\"bookId\", b.id);\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disabledSystemHeaders": {}
+          },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Postman Test Book\",\r\n  \"author\": \"Conor\",\r\n  \"genre\": \"Non-fiction\",\r\n  \"status\": \"PLANNED\",\r\n  \"pageCount\": 250,\r\n  \"currentPage\": 10\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "books - with search & status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"results only include PLANNED\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  json.data.forEach((b) => {\r",
+                  "    pm.expect(b.status).to.eql(\"PLANNED\");\r",
+                  "  });\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/books?search=Postman&status=PLANNED&limit=5&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Postman"
+                },
+                {
+                  "key": "status",
+                  "value": "PLANNED"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": ":id - update title",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"book updated fields are returned\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  const b = json.data;\r",
+                  "  pm.expect(b.title).to.eql(\"Postman Test Book (Updated)\");\r",
+                  "  pm.expect(b.currentPage).to.eql(50);\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Postman Test Book (Updated)\",\r\n  \"currentPage\": 50\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books",
+                "{{bookId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "books — invalid currentPage > pageCount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 400 for validation error\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"error payload looks like Zod error\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  pm.expect(json.ok).to.be.false;\r",
+                  "  pm.expect(json.error).to.have.property(\"code\", \"VALIDATION_ERROR\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Broken Book\",\r\n  \"pageCount\": 100,\r\n  \"currentPage\": 200\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "sessions - create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"returns session and saves sessionId\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  console.log(\"Create session response:\", json);\r",
+                  "\r",
+                  "  pm.expect(json.ok).to.be.true;\r",
+                  "\r",
+                  "  const s = json.data;\r",
+                  "  pm.expect(s).to.have.property(\"id\");\r",
+                  "  pm.expect(s.bookId).to.eql(pm.environment.get(\"bookId\"));\r",
+                  "\r",
+                  "  pm.environment.set(\"sessionId\", s.id);\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"minutes\": 30,\n  \"notes\": \"Postman test session\",\n  \"date\": \"2025-12-11\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sessions — list for book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"all sessions belong to bookId\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  const expectedBookId = pm.environment.get(\"bookId\");\r",
+                  "\r",
+                  "  if (!Array.isArray(json.data) || json.data.length === 0) {\r",
+                  "    console.log(\"No sessions returned to validate\");\r",
+                  "    return; // no pm.skip in Newman\r",
+                  "  }\r",
+                  "\r",
+                  "  json.data.forEach((s) => {\r",
+                  "    pm.expect(s.bookId).to.eql(expectedBookId);\r",
+                  "  });\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions?bookId={{bookId}}&limit=10&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "bookId",
+                  "value": "{{bookId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": ":id — delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"returns deleted session id and clears env\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  const expectedId = pm.environment.get(\"sessionId\");\r",
+                  "\r",
+                  "  pm.expect(json.ok).to.be.true;\r",
+                  "  pm.expect(json.data.id).to.eql(expectedId);\r",
+                  "\r",
+                  "  pm.environment.unset(\"sessionId\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sessions",
+                "{{sessionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sessions — invalid minutes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"validation error returned\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  pm.expect(json.ok).to.be.false;\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{bookId}}\",\r\n  \"minutes\": -10,\r\n  \"notes\": \"bad minutes\",\r\n  \"date\": \"2025-12-11\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions?bookId={{bookId}}&limit=10&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "bookId",
+                  "value": "{{bookId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": ":id - delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"returns deleted id and clear env var\", function () {\r",
+                  "  const json = pm.response.json();\r",
+                  "  pm.expect(json.ok).to.be.true;\r",
+                  "  pm.expect(json.data.id).to.eql(pm.environment.get(\"bookId\"));\r",
+                  "\r",
+                  "  pm.environment.unset(\"bookId\");\r",
+                  "});\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "books",
+                "{{bookId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

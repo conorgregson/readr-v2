@@ -7,8 +7,9 @@ on:
     branches: [main, dev]
 
 jobs:
-  test:
+  api:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       postgres:
@@ -23,10 +24,11 @@ jobs:
           --health-cmd="pg_isready -U readr"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
 
     env:
       DATABASE_URL: postgresql://readr:readr@localhost:5432/readr_ci?schema=public
+      NODE_ENV: test
 
     steps:
       - name: Checkout repository
@@ -35,21 +37,76 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-
-      - name: Install client dependencies
-        working-directory: ./client
-        run: npm ci || echo "No client package.json yet"
-
-      - name: Run client tests
-        working-directory: ./client
-        run: npm test || echo "No client tests defined yet"
+          cache-dependency-path: server/package-lock.json
 
       - name: Install server dependencies
         working-directory: ./server
-        run: npm ci || echo "No server package.json yet"
+        run: npm ci
 
-      - name: Run server tests
+      - name: Prisma generate
         working-directory: ./server
-        run: npm test || echo "No server tests defined yet"
+        run: npx prisma generate
+
+      - name: Prisma migrate (or push)
+        working-directory: ./server
+        run: |
+          npx prisma migrate deploy || npx prisma db push
+
+      - name: Run API tests (start/stop server)
+        working-directory: ./server
+        run: npm run test:api:ci
+
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: readr
+          POSTGRES_PASSWORD: readr
+          POSTGRES_DB: readr_ci
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U readr"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: postgresql://readr:readr@localhost:5432/readr_ci?schema=public
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Prisma generate
+        working-directory: ./server
+        run: npx prisma generate
+
+      - name: Prisma migrate (or push)
+        working-directory: ./server
+        run: |
+          npx prisma migrate deploy || npx prisma db push
+
+      - name: Smoke test (boot + health)
+        working-directory: ./server
+        run: |
+          npm run build
+          npx kill-port 4000 || true
+          npx start-server-and-test "npm run start:ci" http://localhost:4000/health "node -e \"process.exit(0)\""
