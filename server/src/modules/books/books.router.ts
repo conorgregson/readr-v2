@@ -16,6 +16,7 @@ import {
   sendOk,
 } from "../../utils/http";
 import { AppError } from "../../utils/errors";
+import type { Book } from "@prisma/client";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get("/", validateQuery(ListBooksQuerySchema), async (req, res, next) => {
     });
 
     const response = BookListResponseSchema.parse(
-      books.map((b) => ({
+      books.map((b: Book) => ({
         ...b,
         author: b.author ?? null,
         genre: b.genre ?? null,
