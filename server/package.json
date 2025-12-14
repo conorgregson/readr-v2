@@ -6,7 +6,6 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-
     "build": "tsc",
     "start": "node dist/index.js",
     "start:ci": "node dist/index.js",
@@ -22,7 +21,7 @@
     "test:api:html": "newman run postman/Readr-v2-API.postman_collection.json -e postman/Readr-v2-Local.postman_environment.json --reporters cli,htmlextra --reporter-htmlextra-export postman/reports/api-report.html --color on",
 
     "prestart:api:ci": "kill-port 4000 || true",
-    "test:api:ci": "npm run build && npm run prestart:ci && start-server-and-test \"npm run start:ci\" http://localhost:4000/health \"npm run test:api\""
+    "test:api:ci": "npm run build && start-server-and-test \"npm run start:ci\" http://localhost:4000/health \"npm run test:api\""
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.1.0",
