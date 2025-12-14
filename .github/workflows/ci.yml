@@ -24,20 +24,9 @@ jobs:
             client/package-lock.json
             server/package-lock.json
 
-      # Attempt 1 (allow failure so we can retry)
-      - name: Install client dependencies (attempt 1)
-        id: client_install_1
-        continue-on-error: true
+      - name: Install client dependencies
         working-directory: ./client
-        run: npm ci --include=optional
-
-      # Attempt 2 (only if attempt 1 failed)
-      - name: Install client dependencies (attempt 2)
-        if: steps.client_install_1.outcome == 'failure'
-        working-directory: ./client
-        run: |
-          rm -rf node_modules
-          npm ci --include=optional
+        run: npm ci
 
       - name: Build client
         working-directory: ./client
