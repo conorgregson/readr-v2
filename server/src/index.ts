@@ -3,6 +3,7 @@ import cors from "cors";
 import { json } from "body-parser";
 import type { Server } from "node:http";
 
+import { prisma } from "./db/client";
 import { booksRouter } from "./modules/books/books.router";
 import { sessionsRouter } from "./modules/sessions/sessions.router";
 import { errorHandler } from "./utils/http";
@@ -32,21 +33,32 @@ async function shutdown(signal: string) {
 
   console.log(`[shutdown] Received ${signal}. Closing server...`);
 
-  // Stop accepting new connections
-  await new Promise<void>((resolve) => {
-    if (!server) return resolve();
-    server.close(() => resolve());
-  });
+  // Failsafe: don't hang forever (useful in CI)
+  const forceTimer = setTimeout(() => {
+    console.error("[shutdown] Force exit after timeout");
+    process.exit(1);
+  }, 10_000);
 
-  // If there is a shared Prisma client singleton somewhere, disconnect it here.
-  // Example (if one is added later):
-  // await prisma.$disconnect();
+  try {
+    // Stop accepting new connections
+    await new Promise<void>((resolve) => {
+      if (!server) return resolve();
+      server.close(() => resolve());
+    });
 
-  console.log("[shutdown] Clean shutdown complete.");
-  process.exit(0);
+    // Close Prisma connections
+    await prisma.$disconnect();
+
+    console.log("[shutdown] Clean shutdown complete.");
+    process.exitCode = 0;
+  } catch (err) {
+    console.error("[shutdown] Error during shutdown", err);
+    process.exitCode = 1;
+  } finally {
+    clearTimeout(forceTimer);
+  }
 }
 
-// In CI, Actions sends SIGTERM on cancellation; locally you’ll usually use SIGINT (Ctrl+C).
 process.on("SIGTERM", () => void shutdown("SIGTERM"));
 process.on("SIGINT", () => void shutdown("SIGINT"));
 

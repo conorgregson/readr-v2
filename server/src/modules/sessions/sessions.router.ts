@@ -16,58 +16,52 @@ import {
   sendOk,
 } from "../../utils/http";
 import { AppError } from "../../utils/errors";
+import type { Session } from "@prisma/client";
 
 const router = Router();
 
 // GET /sessions
-router.get(
-  "/",
-  validateQuery(ListSessionsQuerySchema),
-  async (req, res, next) => {
-    try {
-      const { bookId, search, from, to, limit, offset } = (req as any)
-        .validatedQuery ?? {};
+router.get("/", validateQuery(ListSessionsQuerySchema), async (req, res, next) => {
+  try {
+    const { bookId, search, from, to, limit, offset } =
+      (req as any).validatedQuery ?? {};
 
-      const where: any = {};
+    const where: any = {};
 
-      if (bookId) where.bookId = bookId;
+    if (bookId) where.bookId = bookId;
 
-      if (from || to) {
-        where.date = {};
-        if (from) where.date.gte = from;
-        if (to) where.date.lte = to;
-      }
-
-      if (search) {
-        where.notes = {
-          contains: search,
-          mode: "insensitive",
-        };
-      }
-
-      const sessions = await prisma.session.findMany({
-        where,
-        orderBy: { date: "desc" },
-        skip: offset ?? 0,
-        take: limit ?? 50,
-      });
-
-      const response = SessionListResponseSchema.parse(
-        sessions.map((s) => ({
-          ...s,
-          notes: s.notes ?? null,
-          date: s.date.toISOString(),
-          createdAt: s.createdAt.toISOString(),
-          updatedAt: s.updatedAt.toISOString(),
-        })),
-      );
-
-      sendOk(res, response);
-    } catch (error) {
-      next(error);
+    if (from || to) {
+      where.date = {};
+      if (from) where.date.gte = from;
+      if (to) where.date.lte = to;
     }
-  },
-);
+
+    if (search) {
+      where.notes = { contains: search, mode: "insensitive" };
+    }
+
+    const sessions = await prisma.session.findMany({
+      where,
+      orderBy: { date: "desc" },
+      skip: offset ?? 0,
+      take: limit ?? 50,
+    });
+
+    const response = SessionListResponseSchema.parse(
+      sessions.map((s: Session) => ({
+        ...s,
+        notes: s.notes ?? null,
+        date: s.date.toISOString(),
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+      })),
+    );
+
+    sendOk(res, response);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // GET /sessions/:id
 router.get(
@@ -102,46 +96,40 @@ router.get(
 );
 
 // POST /sessions
-router.post(
-  "/",
-  validateBody(CreateSessionSchema),
-  async (req, res, next) => {
-    try {
-      const body = (req as any).validatedBody;
+router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
+  try {
+    const body = (req as any).validatedBody;
 
-      const book = await prisma.book.findUnique({
-        where: { id: body.bookId },
+    const book = await prisma.book.findUnique({ where: { id: body.bookId } });
+    if (!book) {
+      throw new AppError("Book not found for this session", {
+        status: 404,
+        code: "NOT_FOUND",
       });
-      if (!book) {
-        throw new AppError("Book not found for this session", {
-          status: 404,
-          code: "NOT_FOUND",
-        });
-      }
-
-      const created = await prisma.session.create({
-        data: {
-          bookId: body.bookId,
-          minutes: body.minutes,
-          notes: body.notes,
-          date: body.date,
-        },
-      });
-
-      const response = SessionResponseSchema.parse({
-        ...created,
-        notes: created.notes ?? null,
-        date: created.date.toISOString(),
-        createdAt: created.createdAt.toISOString(),
-        updatedAt: created.updatedAt.toISOString(),
-      });
-
-      sendCreated(res, response);
-    } catch (error) {
-      next(error);
     }
-  },
-);
+
+    const created = await prisma.session.create({
+      data: {
+        bookId: body.bookId,
+        minutes: body.minutes,
+        notes: body.notes,
+        date: body.date,
+      },
+    });
+
+    const response = SessionResponseSchema.parse({
+      ...created,
+      notes: created.notes ?? null,
+      date: created.date.toISOString(),
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: created.updatedAt.toISOString(),
+    });
+
+    sendCreated(res, response);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // PATCH /sessions/:id
 router.patch(
@@ -162,9 +150,7 @@ router.patch(
       }
 
       if (body.bookId) {
-        const book = await prisma.book.findUnique({
-          where: { id: body.bookId },
-        });
+        const book = await prisma.book.findUnique({ where: { id: body.bookId } });
         if (!book) {
           throw new AppError("Book not found for this session", {
             status: 404,
