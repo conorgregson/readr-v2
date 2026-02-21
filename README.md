@@ -261,9 +261,7 @@ docker-compose up -d
 
 ## Author
 
-Made by **Conor Gregson**
-
-Full-stack developer & designer of Readr.
+Made by **Conor Gregson** • Full-stack developer & designer of Readr.
 
 - [GitHub](https://github.com/conorgregson)
 - [LinkedIn](https://www.linkedin.com/in/conorgregson)
