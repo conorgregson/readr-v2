@@ -6,3 +6,149 @@
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
 }
+
+@keyframes savedFade {
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  15% {
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+.saved-fade {
+  animation: savedFade 1.5s ease-in-out both;
+}
+
+@keyframes rowExpand {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 600px;
+  }
+}
+
+@keyframes rowCollapse {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 600px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px);
+    max-height: 0;
+  }
+}
+
+.row-edit-enter {
+  overflow: hidden;
+  animation: rowExpand 180ms ease-out both;
+}
+
+.row-edit-exit {
+  overflow: hidden;
+  animation: rowCollapse 160ms ease-in both;
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.row-view-enter {
+  animation: viewFadeIn 140ms ease-out both;
+}
+
+@keyframes controlsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes controlsFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+.controls-enter {
+  animation: controlsFadeIn 120ms ease-out both;
+}
+
+.controls-exit {
+  animation: controlsFadeOut 120ms ease-in both;
+}
+
+.controls-wrap {
+  position: relative;
+  min-width: 170px; /* prevents layout jump; adjust if needed */
+  display: flex;
+  justify-content: flex-end;
+}
+
+.controls-layer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.controls-layer--static {
+  position: relative;
+}
+
+.content-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 78px; /* prevents layout jump; adjust if needed */
+}
+
+.content-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.content-layer--static {
+  position: relative;
+}
+
+.delay-0 {
+  animation-delay: 0ms;
+}
+.delay-30 {
+  animation-delay: 30ms;
+}
