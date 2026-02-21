@@ -1,4 +1,5 @@
 import { Routes, Route, NavLink } from "react-router-dom";
+import { BooksPage as BooksFeaturePage } from "./features/books/page";
 
 function App() {
   return (
@@ -55,7 +56,7 @@ function App() {
       <main className="flex-1">
         <div className="max-w-5xl mx-auto px-4 py-6">
           <Routes>
-            <Route path="/" element={<BooksPage />} />
+            <Route path="/" element={<BooksFeaturePage />} />
             <Route path="/sessions" element={<SessionsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />
@@ -63,18 +64,6 @@ function App() {
         </div>
       </main>
     </div>
-  );
-}
-
-function BooksPage() {
-  return (
-    <section className="space-y-2">
-      <h1 className="text-xl font-semibold">Books</h1>
-      <p className="text-sm text-slate-400">
-        v2.0 starting point. Recreate the v1.9 Books grid, filters, and search
-        in React here.
-      </p>
-    </section>
   );
 }
 

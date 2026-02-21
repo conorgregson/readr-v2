@@ -3,98 +3,115 @@
 ### _Turn pages into progress._
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Backend-Express%20%2B%20Node-003366?style=for-the-badge&logo=node.js" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/ORM-Prisma-0C344B?style=for-the-badge&logo=prisma" /></a>
+  <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
+  <img src="https://img.shields.io/badge/Backend-Express%20%2B%20Node-003366?style=for-the-badge&logo=node.js" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql" />
+  <img src="https://img.shields.io/badge/ORM-Prisma-0C344B?style=for-the-badge&logo=prisma" />
   <br/>
-  <a href="#"><img src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-008080?style=for-the-badge" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Status-In%20Development-FFA500?style=for-the-badge" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" /></a>
-  <br/>
-  <a href="https://github.com/conorgregson/readr-v2/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/ci.yml?style=for-the-badge&label=CI%20Build&logo=github" />
-  </a>
-  <a href="https://github.com/conorgregson/readr-v2/actions/workflows/test.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/test.yml?style=for-the-badge&label=Tests&logo=github" />
-  </a>
+  <img src="https://img.shields.io/badge/Status-Active%20Development-FFA500?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 </p>
 
 ---
 
 ## Overview
 
-**Readr v2** is a full-stack rewrite of my original vanilla JavaScript reading tracker (v1.0–v1.9).
-This version introduces:
+**Readr v2** is a full-stack rewrite of my original offline-first reading tracker (v1.0–v1.9).
 
-- A modern **React + TypeScript** frontend
-- A scalable **Express + PostgreSQL** backend
-- **Prisma ORM** for typed database access
-- **Docker** for local development
-- Strong validation using **Zod**
-- Modular, production-ready architecture
+v2 focuses on:
+- A scalable backend foundation
+- A modern React frontend
+- Strong validation, testing, and CI
+- Clear architectural boundaries
 
-The original v1.x repo is here:
-\*\*▶ https://github.com/conorgregson/reading-log-app
+The original v1.x app remains available here:
+**▶** https://github.com/conorgregson/reading-log-app
+
+---
+
+## Roadmap Philosophy
+
+Readr is developed in versioned milestones where each release isolates a specific risk area
+(e.g., architecture, persistence, UX, or scale) before introducing new complexity.
+
+The roadmap documents not just *what* was built, but *why* — serving as both a planning tool
+and a technical narrative.
+
+See the full roadmap in [`roadmap.md`](./roadmap.md).
+
+---
+
+## Changelog
+
+All notable changes are documented in [`CHANGELOG.md`](./CHANGELOG.md),
+following **Keep a Changelog** and **Semantic Versioning**.
+
+---
+
+## Roadmap (High-Level)
+
+- **v2.0.0** — Backend & CI foundation ✅
+- **v2.1.0** — React frontend rebuild 🚧
+- **v2.2.0** — API integration & persistence
+- **v2.3+** — Accounts, analytics, and growth features
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-
 - React 18
 - TypeScript
 - Vite
-- Tailwind CSS (v3)
+- Tailwind CSS
 - React Router
-- Zustand or Context API
-- Zod validation
+- Zustand / Context
 - Vitest + React Testing Library
 
 ### Backend
-
 - Node.js + TypeScript
-- Express.js
+- Express
 - Prisma ORM
-- Zod request validation
 - PostgreSQL
-- Docker + docker-compose
-- Supertest (API testing)
-- Helmet, CORS
+- Zod validation
+- Docker
+- GitHub Actions CI
 
 ---
 
 ## Project Structure
+
+The repository is organized by responsibility, not framework.
 
 ```bash
 readr-v2/
 │
 ├── client/                 # React frontend
 │   ├── src/
-│   │   ├── components/
-│   │   ├── routes/
-│   │   ├── store/
-│   │   ├── services/
-│   │   ├── lib/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── routes/         # Route-level views
+│   │   ├── store/          # Global state management
+│   │   ├── services/       # API clients and adapters
+│   │   ├── lib/            # Utilities and helpers
 │   │   └── App.tsx
 │   ├── index.html
 │   └── vite.config.ts
 │
 ├── server/                 # Express backend
 │   ├── src/
-│   │   ├── api/
-│   │   ├── services/
-│   │   ├── schemas/
-│   │   ├── db/
-│   │   └── index.ts
+│   │   ├── api/            # Route definitions
+│   │   ├── services/       # Business logic
+│   │   ├── schemas/        # Zod validation schemas
+│   │   ├── db/             # Prisma client and DB helpers
+│   │   └── index.ts        # Server entry point
 │   ├── prisma/
 │   │   └── schema.prisma
 │   └── docker-compose.yml
 │
+├── CHANGELOG.md
+├── roadmap.md
 └── README.md
 ```
-
 ---
 
 ## Architecture
@@ -210,7 +227,7 @@ docker-compose up -d
 
 ## Roadmap
 
-### v2.0 — React Frontend
+### v2.0 — React Frontend (In Progress)
 
 - [ ] Book list UI
 - [ ] Search & filter system
