@@ -1,25 +1,29 @@
 # Roadmap
 
-This roadmap outlines the development priorities for **Readr**.
-It documents both historical progress (v1.x) and the forward-looking evolution toward a scalable, full-stack application (v2+).
+This roadmap documents the evolution of **Readr** from a minimal offline-first reading tracker (v1.x) into a scalable, full-stack application (v2+).
+
+It captures both historical milestones and forward-looking architectural decisions.
 
 ---
 
-## 🧭 Roadmap Philosophy
+## Philosophy
 
 Readr is developed in clearly scoped, versioned milestones.
-Each release isolates a specific risk area (architecture, UX, performance, persistence, or scale) before layering additional features.
 
-The roadmap prioritizes:
+Each release isolates a primary risk area — architecture, UX, persistence, performance, or scale — before layering additional complexity.
+
+Core principles:
+
 - Feature parity before rewrites
 - Accessibility and performance by default
-- Maintainable architecture over premature complexity
+- Maintainable architecture over premature abstraction
+- Incremental, testable progress
 
-This roadmap is both a planning tool and a historical record — documenting *why* decisions were made, not just *what* was built.
+This roadmap is both a planning document and a technical narrative explaining _why_ decisions were made.
 
 ---
 
-## 🎯 Goals
+## Goals
 
 - Provide a minimal, offline-first reading log (v1.x).
 - Evolve into a scalable full-stack application with cloud sync (v2.x).
@@ -28,7 +32,7 @@ This roadmap is both a planning tool and a historical record — documenting *wh
 
 ---
 
-## 📌 Milestones
+## Milestones
 
 ---
 
@@ -42,58 +46,68 @@ v1.x is feature-complete and in maintenance mode.
 ---
 
 ### ✅ Version 1.0 — Core MVP Release
-*(unchanged — retained as historical record)*
+
+_(unchanged — retained as historical record)_
 
 Released: Sep 2025
 
 ---
 
 ### ✅ Version 1.1 — Usability & Goals Update
+
 Released: Sep 2025
 
 ---
 
 ### ✅ Version 1.2 — Branding & PWA Polish
+
 Released: Sep 2025
 
 ---
 
 ### ✅ Version 1.3 — Header & Accessibility Refresh
+
 Released: Sep 2025
 
 ---
 
 ### ✅ Version 1.4 — Power-User Features
+
 Released: Sep 2025
 
 ---
 
 ### ✅ Version 1.5 — Book Enhancements
+
 Released: Sep 2025
 
 ---
 
 ### ✅ Version 1.6 — Search & Filters
+
 Released: Oct 2025
 
 ---
 
 ### ✅ Version 1.7 — Goals & Layout Polish
+
 Released: Nov 2025
 
 ---
 
 ### ✅ Version 1.8 — Sessions & History
+
 Released: Dec 2025
 
 ---
 
 ### ✅ Version 1.9 — Visualization & Motivation
+
 Released: Dec 2025
 
 ---
 
-## 🚀 Version 2.0 — Fullstack Foundation
+## ✅ Version 2.0 — Fullstack Foundation
 
 **Focus:** Establish the technical foundation for Readr v2
 
@@ -115,9 +129,19 @@ Released: Dec 2025
 
 ---
 
-## 🚧 Version 2.1 — React Frontend (In Progress)
+## 🚧 Version 2.1 — React Frontend Rebuild (In Progress)
 
-**Focus:** Frontend rebuild while preserving v1.9 behavior
+**Focus:** Rebuild the v1.9 UI in React + TypeScript while preserving feature parity before introducing API-backed persistence.
+
+v2.1 is executed in structured, time-boxed sprints (Sprint 0–7), each isolating a specific risk area:
+
+- Foundation
+- UI patterns
+- Search parity
+- CRUD flows
+- Sessions parity
+- Hardening
+- Test & CI lock-in
 
 ### Goals
 
@@ -219,7 +243,7 @@ These are intentionally de-scoped from near-term planning:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 - Check open issues ofr active discussions.
 - Suggest new features via the feature request template.
