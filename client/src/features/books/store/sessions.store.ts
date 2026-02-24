@@ -5,23 +5,13 @@ import type {
   PageError,
 } from "../../../shared/types/ui-state";
 
-type DemoBook = {
-  id: string;
-  title: string;
-  author: string;
-};
-
-type BooksState = {
-  // Sprint 2: lifecycle stub (persistence later)
-  isBootstrapped: boolean;
-  loadBooks: () => Promise<void>;
-
+type SessionsState = {
   // Sprint 2: UI state only
   page: PageState;
 
-  // Sprint 2: demo data (temporary)
-  demoQuery: string;
-  demoBooks: DemoBook[];
+  // Sprint 2: lifecycle stub (persistence later)
+  isBootstrapped: boolean;
+  loadSessions: () => Promise<void>;
 
   // Actions
   setMode: (mode: PageMode) => void;
@@ -29,23 +19,15 @@ type BooksState = {
   reset: () => void;
 };
 
-const initialState: Pick<
-  BooksState,
-  "page" | "demoQuery" | "demoBooks" | "isBootstrapped"
-> = {
+const initialState: Pick<SessionsState, "page" | "isBootstrapped"> = {
   page: { mode: "results" },
   isBootstrapped: false,
-  demoQuery: "dune",
-  demoBooks: [
-    { id: "1", title: "Dune", author: "Frank Herbert" },
-    { id: "2", title: "Hyperion", author: "Dan Simmons" },
-  ],
 };
 
-export const useBooksStore = create<BooksState>((set) => ({
+export const useSessionsStore = create<SessionsState>((set) => ({
   ...initialState,
 
-  loadBooks: async () => {
+  loadSessions: async () => {
     // Sprint 2: stub only. Persistence comes later.
     set({ isBootstrapped: true });
   },

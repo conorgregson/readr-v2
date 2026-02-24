@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
-import { useBooksStore } from "./store/books.store";
+import { useBooksStore } from "./store/dev.books.store";
 import type { BookStatus, BooksFilters } from "./types";
 
 import { Input } from "../../shared/ui/Input";
