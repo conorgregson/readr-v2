@@ -2,6 +2,7 @@ import type { Book, BookId } from "../types";
 
 // local-first for v2.1
 const USE_API = false;
+if (USE_API) throw new Error("API mode not supported in v2.1");
 
 // ----------------------------
 // Local (localStorage) adapter
@@ -17,8 +18,10 @@ function readLocal(): Book[] {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
-    return JSON.parse(raw) as Book[];
-  } catch {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Book[]) : [];
+  } catch (e) {
+    if (import.meta.env.DEV) console.warn("[BooksService] Bad storage JSON", e);
     return [];
   }
 }

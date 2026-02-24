@@ -7,7 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v2.1-sprint-0] — Prep & Guardrails (2026-02-22)
+## [v2.1.0-sprint-1] — React Foundation (2026-02-23)
+
+### Added
+
+- Initialized React + TypeScript frontend using Vite.
+- Configured React Router with core routes (`/`, `/sessions`, `/settings`).
+- Implemented persistent `AppShell` layout (header + navigation + outlet).
+- Established Tailwind CSS base theme and global styling.
+- Created shared UI primitives: `Button`, `Input`, `Card`, `Select`, `Spinner`.
+- Added production build and preview workflow (`vite build`, `vite preview`).
+
+### Changed
+
+- Transitioned frontend from legacy structure to React-based SPA architecture.
+- Aligned folder structure with v2.1 feature-driven direction.
+
+### Removed
+
+- Residual legacy frontend mounting patterns incompatible with React Router layout model.
+
+### Fixed
+
+- Ensured strict TypeScript compliance during production builds.
+- Resolved unused import build failures under `tsc -b`.
+
+### Notes
+
+- This release establishes the React application foundation only.
+- No domain logic (books, sessions, search, or persistence) is implemented yet.
+- Sprint 2 introduces UI state patterns and centralized state scaffolding.
+
+---
+
+## [v2.1-sprint-0] — Prep & Guardrails (2026-02-21)
 
 ### Added
 
