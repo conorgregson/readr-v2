@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1.0-sprint-2] — UI States & Store Skeleton (2026-02-24)
+
+### Added
+
+- Shared page UI state components: Loading, Empty, Error, and No Results.
+- Store-driven UI state scaffolding for Books and Sessions (Zustand).
+- `loadBooks()` and `loadSessions()` lifecycle stubs to establish future persistence/API boundaries.
+- `DevStateBar` helper for manual state toggling during foundation work.
+
+### Changed
+
+- Refactored Books and Sessions pages to use centralized store-driven page state instead of local component state.
+- Standardized state toggling UI across pages via `DevStateBar`.
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Corrected store typing and initial state shape for strict TypeScript compliance.
+- Fixed Sessions store import path and minor copy issues.
+
+### Notes
+
+- This sprint establishes consistent UI state patterns and state management scaffolding only.
+- Domain behavior parity work (search, filters, CRUD, persistence) remains deferred to later sprints.
+
+---
+
 ## [v2.1.0-sprint-1] — React Foundation (2026-02-23)
 
 ### Added
