@@ -25,7 +25,14 @@ type BooksState = {
   errorById: Record<BookId, string>;
 
   /** Undo delete: row removed immediately; finalize after 5s unless undone */
-  pendingDeleteById: Record<BookId, { book: Book; timeoutId: number }>;
+  pendingDeleteById: Record<
+    BookId,
+    {
+      book: Book;
+      index: number;
+      timeoutId: ReturnType<typeof window.setTimeout>;
+    }
+  >;
 
   // actions
   loadBooks: () => Promise<void>;
@@ -81,7 +88,8 @@ export const useBooksStore = create<BooksState>((set, get) => ({
 
   setSearchQuery: (q) => set({ searchQuery: q, isLooserSearch: false }),
   setLooserSearch: (enabled) => set({ isLooserSearch: enabled }),
-  setStatusFilter: (status) => set({ filters: { status } }),
+  setStatusFilter: (status) =>
+    set((s) => ({ filters: { ...s.filters, status } })),
 
   addBook: async (input) => {
     set({ error: null, isSaving: true });
@@ -110,7 +118,7 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     });
 
     // Snapshot for rollback
-    const prevBooks = get().books;
+    const prevBooks = get().books.map((b) => ({ ...b }));
 
     // Optimistic update
     set((state) => ({
@@ -153,13 +161,15 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       return { errorById: nextErrors };
     });
 
-    const book = get().books.find((b) => b.id === id);
-    if (!book) return;
+    const booksNow = get().books;
+    const index = booksNow.findIndex((b) => b.id === id);
+    if (index === -1) return;
 
-    // Optimistically remove from list immediately
+    const book = booksNow[index];
+
+    // Optimistically remove immediately
     set((s) => ({ books: s.books.filter((b) => b.id !== id) }));
 
-    // Schedule the actual delete after 5 seconds
     const timeoutId = window.setTimeout(async () => {
       try {
         // Mark row as saving during finalize
@@ -179,7 +189,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
           return { pendingDeleteById: nextPending, savingById: nextSaving };
         });
       } catch (err) {
-        // Restore on failure
         const msg =
           err instanceof Error ? err.message : "Failed to delete book";
 
@@ -190,21 +199,26 @@ export const useBooksStore = create<BooksState>((set, get) => ({
           const nextSaving = { ...s.savingById };
           delete nextSaving[id];
 
+          // Restore at original index
+          const restored = [...s.books];
+          const restoreIndex = Math.min(index, restored.length);
+          restored.splice(restoreIndex, 0, book);
+
           return {
-            books: [book, ...s.books],
+            books: restored,
             pendingDeleteById: nextPending,
             savingById: nextSaving,
             errorById: { ...s.errorById, [id]: msg },
           };
         });
       }
-    }, 5000) as unknown as number;
+    }, 6000);
 
     // Track pending delete so UI can show Undo toast
     set((s) => ({
       pendingDeleteById: {
         ...s.pendingDeleteById,
-        [id]: { book, timeoutId },
+        [id]: { book, index, timeoutId },
       },
     }));
   },
@@ -219,12 +233,16 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       const nextPending = { ...s.pendingDeleteById };
       delete nextPending[id];
 
-      // Clear any row error related to this id
       const nextErrors = { ...s.errorById };
       delete nextErrors[id];
 
+      // Restore at original index
+      const restored = [...s.books];
+      const restoreIndex = Math.min(pending.index, restored.length);
+      restored.splice(restoreIndex, 0, pending.book);
+
       return {
-        books: [pending.book, ...s.books],
+        books: restored,
         pendingDeleteById: nextPending,
         errorById: nextErrors,
       };
