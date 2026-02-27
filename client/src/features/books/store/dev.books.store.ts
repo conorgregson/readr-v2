@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Book, BookId, BooksFilters } from "../types";
+import { defaultBooksFilters } from "../types";
 import { BooksService } from "../services/books.service";
 
 type BooksState = {
@@ -59,7 +60,7 @@ export const useBooksStore = create<BooksState>((set, get) => ({
 
   searchQuery: "",
   isLooserSearch: false,
-  filters: { status: "All" },
+  filters: { ...defaultBooksFilters() },
 
   isLoading: false,
   isSaving: false,

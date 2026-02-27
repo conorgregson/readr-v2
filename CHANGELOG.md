@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1-sprint-3] — Search & Filters Parity (2026-02-26)
+
+### Added
+
+- Implemented `smartSearch` with:
+  - AND semantics
+  - Quoted phrase support
+  - Fuzzy matching
+  - Prefix bonus scoring
+  - Search support for `series`, `genre`, `isbn`, `format`, and `formatSubtype`
+- Filters now apply **before** search execution
+- Added `BooksToolbar` component
+- Added `BooksFiltersPanel` with multi-select status filtering
+- Added `SearchStatus` with dynamic result counts:
+  - `N results`
+  - `N results (filtered from Y)`
+- Added “Try looser search” and “Clear search” actions in `NoResults` state
+- Added extensive Vitest coverage for search edge cases
+
+### Changed
+
+- Standardized `BookStatus` to canonical values:
+  - `"planned" | "reading" | "finished"`
+- Refactored dev page to align with multi-select status filter
+- Improved search ranking behavior with prefix weighting and fuzzy fallback
+
+### Fixed
+
+- Resolved inconsistencies between legacy status strings and canonical enum values
+- Corrected search behavior when filters reduce dataset before query execution
+
+### Notes
+
+- Achieves functional parity with v1.9 search + filter behavior.
+- Establishes foundation for future UI polish and performance optimizations.
+
+---
+
 ## [v2.1.0-sprint-2] — UI States & Store Skeleton (2026-02-24)
 
 ### Added

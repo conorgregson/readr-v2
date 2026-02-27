@@ -2,6 +2,19 @@
 
 Short Operational Checklist for React Rebuild
 
+> Progress snapshot (as of 2026-02-26)
+>
+> ✅ Done:
+>
+> - Inline editing (save/cancel) and canonical status values
+> - Smarter search + looser search CTA behavior (core semantics)
+>
+> ⏳ Next to lock:
+>
+> - Undo (~6s) for books + sessions
+> - Search highlighting + autocomplete
+> - Sessions keyboard navigation + live region parity
+
 This checklist extracts the **non-negotiable parity requirements**
 from roadmap versions **v1.4 through v1.9**.
 

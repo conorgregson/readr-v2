@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { useBooksStore } from "./store/dev.books.store";
-import type { BookStatus, BooksFilters } from "./types";
+import type { BookStatus } from "./types";
 
 import { Input } from "../../shared/ui/Input";
 import { Select } from "../../shared/ui/Select";
@@ -103,7 +103,7 @@ export function BooksDevPage() {
   // Temporary add form
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const [status, setStatus] = useState<BookStatus>("Want to Read");
+  const [status, setStatus] = useState<BookStatus>("planned");
 
   // Saved flash
   const [justSavedId, setJustSavedId] = useState<string | null>(null);
@@ -155,12 +155,10 @@ export function BooksDevPage() {
   const visibleBooks = useMemo(() => {
     const q = normalize(searchQuery);
 
+    const statusActive = filters.status.length > 0;
+
     return books
-      .filter((b) =>
-        (filters.status ?? "All") !== "All"
-          ? b.status === filters.status
-          : true,
-      )
+      .filter((b) => (statusActive ? filters.status.includes(b.status) : true))
       .filter((b) => {
         const hay = `${b.title} ${b.author ?? ""}`.toLowerCase();
         return matches(hay, q, isLooserSearch);
@@ -320,7 +318,7 @@ export function BooksDevPage() {
 
     setTitle("");
     setAuthor("");
-    setStatus("Want to Read");
+    setStatus("planned");
   }
 
   // Cancel all edits
@@ -376,13 +374,14 @@ export function BooksDevPage() {
         <div className="w-full sm:w-64">
           <label className="mb-1 block text-xs text-slate-500">Status</label>
           <Select
-            value={filters.status ?? "All"}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as BooksFilters["status"])
-            }
+            value={filters.status[0] ?? "All"}
+            onChange={(e) => {
+              const v = e.target.value;
+              setStatusFilter(v === "all" ? [] : [v as BookStatus]);
+            }}
           >
             <option value="All">All</option>
-            <option value="Want to Read">Want to Read</option>
+            <option value="Want to Read">Planned</option>
             <option value="Reading">Reading</option>
             <option value="Finished">Finished</option>
           </Select>
@@ -455,7 +454,7 @@ export function BooksDevPage() {
                 void addBook({
                   title: "Test Book",
                   author: "Me",
-                  status: "Want to Read",
+                  status: "planned",
                 })
               }
             >
