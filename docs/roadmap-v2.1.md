@@ -8,6 +8,56 @@
 
 ---
 
+## Parity Lock Progress Dashboard (as of 2026-02-26)
+
+### Sprint Milestones
+
+- [x] Sprint 0 — Prep & Guardrails
+- [x] Sprint 1 — React Foundation
+- [x] Sprint 2 — CRUD + Inline Editing Parity
+- [x] Sprint 3 — Search + Filters Parity
+- [ ] Sprint 4 — Books Parity Lock (Undo + highlight + autocomplete + remaining Tier 0)
+- [ ] Sprint 5 — Sessions Parity
+- [ ] Sprint 6 — Hardening & Accessibility
+- [ ] Sprint 7 — Tests & CI Baseline
+
+### Tier 0 — Must Match Exactly (Books/Search)
+
+**Search**
+
+- [x] Smart search semantics (AND)
+- [x] Quoted phrases
+- [x] Fuzzy matching fallback
+- [x] Prefix bonus / ranking improvements
+- [x] Filters apply before search
+- [x] No-results vs empty behavior + “Try looser search”
+- [ ] Highlight rendering parity
+- [ ] Autocomplete suggestions parity
+- [ ] Dedicated Search button parity (if applicable)
+
+**Books**
+
+- [x] Inline editing save/cancel (title/author/status)
+- [x] Canonical status values ("planned" | "reading" | "finished")
+- [ ] Undo (~6s) for delete/finish
+- [ ] Undo does not break filters/sort/search ordering
+- [ ] Undo persistence behavior matches v1.9
+
+### Tier 0 — Must Match Exactly (Sessions)
+
+- [ ] Sessions history list/table parity
+- [ ] Keyboard navigation (Arrow/Home/End) parity
+- [ ] Undo for deleted sessions parity
+
+### Testing Lock-in (Matrix-driven)
+
+- [x] Search logic unit tests (edge cases)
+- [ ] Looser search component tests
+- [ ] Highlight rendering component tests
+- [ ] Autocomplete component tests
+
+---
+
 ## v2.1.0 — React Foundation
 
 **Planned**:

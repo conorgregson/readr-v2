@@ -2,6 +2,17 @@
 
 Unit vs Component vs Manual QA Coverage Plan
 
+> Progress snapshot (as of 2026-02-26)
+>
+> ✅ Search logic unit coverage: strong (edge cases covered)
+>
+> ⏳ Still needed for parity lock confidence:
+>
+> - Highlight rendering → component tests
+> - Autocomplete suggestions → unit + component tests
+> - Undo timer + restore integrity → unit tests (and some component/QA)
+> - Sessions keyboard behavior → component tests + QA
+
 This matrix identifies where each high-risk subsystem
 must be validated.
 

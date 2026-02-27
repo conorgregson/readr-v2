@@ -2,6 +2,23 @@
 
 **Behavior + Logic Regression Guardrails**
 
+> Progress snapshot (as of 2026-02-26)
+>
+> ✅ Completed in v2.1 Sprints 0–3:
+>
+> - Smart search semantics (AND), phrases, fuzzy fallback, prefix bonus
+> - Filters apply before search
+> - No-results actions (“Try looser search”, “Clear search”)
+> - Canonical BookStatus values
+> - Strong search edge-case unit coverage
+>
+> ⏳ Still required for Tier 0 lock:
+>
+> - Highlight rendering parity
+> - Autocomplete suggestions parity
+> - Undo system (~6s) for books + sessions
+> - Sessions history + keyboard navigation parity
+
 This document defines **what must not regress** when rebuilding Readr in React (v2.x).
 It includes both:
 
