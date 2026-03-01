@@ -7,7 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v2.1-sprint-3] — Search & Filters Parity (2026-02-26)
+## [v2.1.0-sprint-4] — Books CRUD & Timestamp Parity (2026-03-01)
+
+### Added
+
+- Local-first Books persistence via `BooksService` (localStorage adapter).
+- Add Book flow with required `title` and `author` validation (v1.9 parity).
+- Inline editing for `title`, `author`, and `status` with row-local draft state.
+- Optimistic updates with rollback on failure.
+- `startedAt` and `finishedAt` parity logic based on status transitions.
+- Timestamp display polish for Started / Finished dates on book cards.
+- Subtle per-row “✓ Saved” micro-feedback on successful updates.
+- Accessibility polish:
+  - `aria-live="polite"` status region for save confirmation.
+  - `aria-invalid` for required field validation.
+  - Ref-forwarding support in shared `Button` for focus management.
+
+### Changed
+
+- Enforced `author` as a required domain field across types, store, service, and tests.
+- Improved store update flow with normalization and trimming of optional fields.
+- Sanitized persisted records on load to prevent runtime crashes from malformed data.
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Resolved TypeScript type inconsistencies after enforcing required `author`.
+- Prevented invalid persisted records from breaking app initialization.
+
+### Notes
+
+- Delete UI and Undo UX remain intentionally deferred until the dedicated Undo architecture phase.
+- Achieves functional CRUD and timestamp parity with v1.9 core book behavior.
+
+---
+
+## [v2.1.0-sprint-3] — Search & Filters Parity (2026-02-26)
 
 ### Added
 

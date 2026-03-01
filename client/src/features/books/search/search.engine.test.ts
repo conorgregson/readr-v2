@@ -5,7 +5,7 @@ import type { Book } from "../types";
 const make = (p: Partial<Book>): Book => ({
   id: p.id ?? crypto.randomUUID(),
   title: p.title ?? "",
-  author: p.author,
+  author: p.author ?? "Test Author",
   status: p.status ?? "planned",
   createdAt: p.createdAt ?? new Date().toISOString(),
   updatedAt: p.updatedAt ?? new Date().toISOString(),

@@ -19,7 +19,7 @@ function readLocal(): Book[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Book[]) : [];
+    return sanitizeLoadedBooks(parsed);
   } catch (e) {
     if (import.meta.env.DEV) console.warn("[BooksService] Bad storage JSON", e);
     return [];
@@ -28,6 +28,67 @@ function readLocal(): Book[] {
 
 function writeLocal(books: Book[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+}
+
+function nonEmpty(label: string, s: unknown): string {
+  const v = typeof s === "string" ? s.trim() : "";
+  if (!v) throw new Error(`${label} is required`);
+  return v;
+}
+
+function sanitizeOptional(s: unknown): string | undefined {
+  const v = typeof s === "string" ? s.trim() : "";
+  return v ? v : undefined;
+}
+
+function sanitizeLoadedBooks(raw: unknown): Book[] {
+  if (!Array.isArray(raw)) return [];
+
+  const out: Book[] = [];
+  for (const item of raw) {
+    // Best-effort sanitize to prevent runtime crashes.
+    // Strict parity: drop invalid items instead of inventing authors.
+    try {
+      const b = item as Partial<Book>;
+      const id = typeof b.id === "string" ? b.id : crypto.randomUUID();
+
+      const title = nonEmpty("Title", b.title);
+      const author = nonEmpty("Author", b.author);
+
+      const createdAt =
+        typeof b.createdAt === "string" ? b.createdAt : nowIso();
+      const updatedAt =
+        typeof b.updatedAt === "string" ? b.updatedAt : createdAt;
+
+      const status =
+        b.status === "planned" ||
+        b.status === "reading" ||
+        b.status === "finished"
+          ? b.status
+          : "planned";
+      out.push({
+        id,
+        title,
+        author,
+        status,
+        createdAt,
+        updatedAt,
+        startedAt: typeof b.startedAt === "string" ? b.startedAt : undefined,
+        finishedAt: typeof b.finishedAt === "string" ? b.finishedAt : undefined,
+
+        genre: sanitizeOptional(b.genre),
+        series: sanitizeOptional(b.series),
+        seriesType: b.seriesType,
+        format: b.format,
+        formatSubtype: b.formatSubtype,
+        isbn: sanitizeOptional(b.isbn),
+        plannedMonth: sanitizeOptional(b.plannedMonth),
+      });
+    } catch {
+      // Drop invalid record
+    }
+  }
+  return out;
 }
 
 // ----------------------------
@@ -104,6 +165,12 @@ export const BooksService = {
     const books = readLocal();
     const book: Book = {
       ...input,
+      title: nonEmpty("Title", input.title),
+      author: nonEmpty("Author", input.author),
+      genre: sanitizeOptional(input.genre),
+      series: sanitizeOptional(input.series),
+      isbn: sanitizeOptional(input.isbn),
+      plannedMonth: sanitizeOptional(input.plannedMonth),
       id: crypto.randomUUID(),
       createdAt: nowIso(),
       updatedAt: nowIso(),
@@ -126,6 +193,30 @@ export const BooksService = {
     const updated: Book = {
       ...books[idx],
       ...patch,
+      title:
+        patch.title !== undefined
+          ? nonEmpty("Title", patch.title)
+          : books[idx].title,
+      author:
+        patch.author !== undefined
+          ? nonEmpty("Author", patch.author)
+          : books[idx].author,
+      genre:
+        patch.genre !== undefined
+          ? sanitizeOptional(patch.genre)
+          : books[idx].genre,
+      series:
+        patch.series !== undefined
+          ? sanitizeOptional(patch.series)
+          : books[idx].series,
+      isbn:
+        patch.isbn !== undefined
+          ? sanitizeOptional(patch.isbn)
+          : books[idx].isbn,
+      plannedMonth:
+        patch.plannedMonth !== undefined
+          ? sanitizeOptional(patch.plannedMonth)
+          : books[idx].plannedMonth,
       updatedAt: nowIso(),
     };
     const next = [...books];

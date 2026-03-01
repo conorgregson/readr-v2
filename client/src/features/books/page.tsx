@@ -10,6 +10,7 @@ import { useBooksStore } from "./store/books.store";
 import { BookList } from "./components/BookList";
 import { BooksToolbar } from "./components/BooksToolbar";
 import { BooksFiltersPanel } from "./components/BooksFilters";
+import { AddBookPanel } from "./components/AddBookPanel";
 
 export function BooksPage() {
   const loadBooks = useBooksStore((s) => s.loadBooks);
@@ -19,6 +20,7 @@ export function BooksPage() {
   const setError = useBooksStore((s) => s.setError);
 
   const books = useBooksStore((s) => s.books);
+  const addBook = useBooksStore((s) => s.addBook);
 
   const filters = useBooksStore((s) => s.filters);
   const setFilters = useBooksStore((s) => s.setFilters);
@@ -34,6 +36,9 @@ export function BooksPage() {
 
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const resultsId = "books-results";
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const addBtnRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     loadBooks();
@@ -66,7 +71,17 @@ export function BooksPage() {
       <EmptyState
         title="No books yet"
         description="Add your first book to start tracking your reading."
-        action={<Button disabled>Add book (Sprint 4)</Button>}
+        action={
+          <Button
+            ref={addBtnRef}
+            onClick={() => {
+              setError(undefined);
+              setIsAddOpen(true);
+            }}
+          >
+            Add book
+          </Button>
+        }
       />
     );
   }
@@ -86,6 +101,11 @@ export function BooksPage() {
         }}
         onFocusResults={focusResultsAndSelectFirst}
         searchInputRef={searchRef}
+        onAddBook={() => {
+          setError(undefined);
+          setIsAddOpen(true);
+        }}
+        addButtonRef={addBtnRef}
       />
 
       <BooksFiltersPanel
@@ -100,6 +120,22 @@ export function BooksPage() {
           clearFilters();
         }}
       />
+
+      {isAddOpen ? (
+        <AddBookPanel
+          onClose={() => {
+            setIsAddOpen(false);
+            addBtnRef.current?.focus();
+          }}
+          onSubmit={async (data) => {
+            const created = await addBook(data);
+            if (created) {
+              setIsAddOpen(false);
+              addBtnRef.current?.focus();
+            }
+          }}
+        />
+      ) : null}
 
       {showNoResults ? (
         <NoResultsState

@@ -312,7 +312,7 @@ export function BooksDevPage() {
 
     await addBook({
       title: t,
-      author: author.trim() || undefined,
+      author: author.trim(),
       status,
     });
 
