@@ -171,6 +171,27 @@
   position: relative;
 }
 
+/* subtle saved micro-feedback */
+@keyframes readrSavedFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-1px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.readr-saved {
+  animation: readrSavedFade 1200ms ease-in-out forwards;
+}
+
 @keyframes editGlow {
   0% {
     box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);

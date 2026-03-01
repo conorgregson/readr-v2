@@ -1,143 +1,126 @@
-# Readr v1.4–v1.9 Parity Test Matrix
+# Readr v2.1 — Parity Test Matrix
 
 Unit vs Component vs Manual QA Coverage Plan
 
-> Progress snapshot (as of 2026-02-26)
->
-> ✅ Search logic unit coverage: strong (edge cases covered)
->
-> ⏳ Still needed for parity lock confidence:
->
-> - Highlight rendering → component tests
-> - Autocomplete suggestions → unit + component tests
-> - Undo timer + restore integrity → unit tests (and some component/QA)
-> - Sessions keyboard behavior → component tests + QA
+This matrix supports:
 
-This matrix identifies where each high-risk subsystem
-must be validated.
+→ [`docs/parity-charter-v2.1.md`](/docs/parity-charter-v2.1.md)
+
+Tier 0 Locks are not complete until relevant rows are green.
+
+Legend:
+
+- ✅ Covered + passing
+- 🟡 Partial / needs expansion
+- ❌ Missing
+- 🚫 Deferred (not in v2.1 scope)
 
 Goal:
 
-- Lock down logic with unit tests.
-- Verify DOM behavior with component tests.
-- Confirm UX feel via manual QA.
+- Lock logic with unit tests
+- Verify DOM behavior with component tests
+- Confirm UX realism via manual QA
 
 ---
 
-# 🔴 Highest Risk: Search System
+# 🔴 Tier 0 Lock — Books/Search (Sprint 5)
 
-| Area                        | Unit Test | Component Test | Manual QA |
-| --------------------------- | --------- | -------------- | --------- |
-| Fuzzy matching              | ✅        | ❌             | ✅        |
-| Token splitting             | ✅        | ❌             | ✅        |
-| Looser search logic         | ✅        | ✅             | ✅        |
-| Search + filter combination | ✅        | ✅             | ✅        |
-| Highlight rendering         | ❌        | ✅             | ✅        |
-| Autocomplete suggestions    | ✅        | ✅             | ✅        |
+## Search Engine
 
-Notes:
+| Area                        | Unit | Component | Manual | Status |
+| --------------------------- | ---- | --------- | ------ | ------ |
+| Fuzzy matching              | ✅   | ❌        | ✅     | 🟡     |
+| Token splitting             | ✅   | ❌        | ✅     | 🟡     |
+| AND semantics               | ✅   | ❌        | ✅     | 🟡     |
+| Search + filter combination | ✅   | ✅        | ✅     | ✅     |
+| Looser search logic         | ✅   | ✅        | ✅     | ✅     |
+| Empty vs NoResults          | ❌   | ✅        | ✅     | 🟡     |
+| Highlight rendering         | ❌   | ❌        | ❌     | ❌     |
+| Autocomplete suggestions    | ❌   | ❌        | ❌     | ❌     |
+| Dedicated Search button\*   | ❌   | ❌        | ❌     | ❌     |
 
-- Unit tests must include typo + multi-token cases.
-- Manual QA should simulate fast typing + rapid clearing.
-
----
-
-# 🔴 Highest Risk: Undo System
-
-| Area                           | Unit Test | Component Test | Manual QA |
-| ------------------------------ | --------- | -------------- | --------- |
-| Undo timer window              | ✅        | ❌             | ✅        |
-| Object restoration integrity   | ✅        | ❌             | ✅        |
-| Undo with active filters       | ✅        | ✅             | ✅        |
-| Undo persistence after refresh | ✅        | ❌             | ✅        |
-
-Notes:
-
-- Include deep equality checks.
-- Confirm no partial rollback states.
+\* Only if applicable.
 
 ---
 
-# 🔴 Highest Risk: Sessions History + Keyboard Nav
+## Undo System (Books)
 
-| Area                      | Unit Test | Component Test | Manual QA |
-| ------------------------- | --------- | -------------- | --------- |
-| Sorting determinism       | ✅        | ❌             | ❌        |
-| Row navigation state      | ✅        | ❌             | ❌        |
-| Arrow/Home/End behavior   | ❌        | ✅             | ✅        |
-| Live region updates       | ❌        | ✅             | ✅        |
-| Note truncation + tooltip | ❌        | ✅             | ✅        |
+| Area                           | Unit | Component | Manual | Status |
+| ------------------------------ | ---- | --------- | ------ | ------ |
+| Undo timer window              | ❌   | ❌        | ❌     | ❌     |
+| Object restoration integrity   | ❌   | ❌        | ❌     | ❌     |
+| Undo with active filters       | ❌   | ❌        | ❌     | ❌     |
+| Undo persistence after refresh | ❌   | ❌        | ❌     | ❌     |
 
-Notes:
-
-- Keyboard tests should simulate key events.
-- Manual QA should test long lists.
+Tier 0 Lock requirement: All rows green before Sprint 5 closes.
 
 ---
 
-# 🔴 Highest Risk: Analytics / Charts
+# 🔴 Tier 0 Lock — Sessions (Sprint 7)
 
-| Area                               | Unit Test | Component Test | Manual QA |
-| ---------------------------------- | --------- | -------------- | --------- |
-| Percent change math                | ✅        | ❌             | ❌        |
-| Streak calculation                 | ✅        | ❌             | ❌        |
-| Chart data derivation              | ✅        | ❌             | ❌        |
-| Theme persistence                  | ✅        | ✅             | ✅        |
-| Auto-update after session mutation | ✅        | ✅             | ✅        |
+## Sessions Core (Sprint 6)
 
-Notes:
+| Area                | Unit | Component | Manual | Status |
+| ------------------- | ---- | --------- | ------ | ------ |
+| Sorting determinism | ❌   | ❌        | ❌     | ❌     |
+| CRUD flows          | ❌   | ❌        | ❌     | ❌     |
+| Stable rendering    | ❌   | ❌        | ❌     | ❌     |
 
-- Lock math logic early.
-- Charts should not flicker during updates.
+## Keyboard + Highlight (Sprint 7)
 
----
+| Area                    | Unit | Component | Manual | Status |
+| ----------------------- | ---- | --------- | ------ | ------ |
+| Arrow/Home/End behavior | ❌   | ❌        | ❌     | ❌     |
+| Row navigation state    | ❌   | ❌        | ❌     | ❌     |
+| Live region updates     | ❌   | ❌        | ❌     | ❌     |
+| Search highlight rows   | ❌   | ❌        | ❌     | ❌     |
+| Undo session delete     | ❌   | ❌        | ❌     | ❌     |
 
-# 🟠 Medium Risk: Bulk Edit
-
-| Area                          | Unit Test | Component Test | Manual QA |
-| ----------------------------- | --------- | -------------- | --------- |
-| Multi-update integrity        | ✅        | ❌             | ❌        |
-| Bulk edit with active filters | ✅        | ✅             | ✅        |
-| Bulk edit + undo interaction  | ✅        | ❌             | ✅        |
+Tier 0 Lock requirement: All rows green before Sprint 7 closes.
 
 ---
 
-# 🟠 Medium Risk: Import / Export
+# 🟠 Hardening & A11y (Sprint 8)
 
-| Area                      | Unit Test | Component Test | Manual QA |
-| ------------------------- | --------- | -------------- | --------- |
-| JSON schema validation    | ✅        | ❌             | ❌        |
-| Safe merge & dedupe       | ✅        | ❌             | ❌        |
-| Malformed import error UI | ❌        | ✅             | ✅        |
-| Export shape matches v1.9 | ✅        | ❌             | ✅        |
-
-Notes:
-
-- Include snapshot-style tests for export structure.
+| Area                      | Unit | Component | Manual | Status |
+| ------------------------- | ---- | --------- | ------ | ------ |
+| Focus management          | ❌   | ❌        | ❌     | ❌     |
+| Corrupt storage fallback  | ❌   | ❌        | ❌     | ❌     |
+| Rapid interaction stress  | ❌   | ❌        | ❌     | ❌     |
+| Large dataset performance | ❌   | ❌        | ❌     | ❌     |
 
 ---
 
-# 🟡 Lower Risk: Basic CRUD
-
-| Area             | Unit Test | Component Test | Manual QA |
-| ---------------- | --------- | -------------- | --------- |
-| Add book         | ✅        | ✅             | ✅        |
-| Edit book        | ✅        | ✅             | ✅        |
-| Delete book      | ✅        | ❌             | ✅        |
-| Validation rules | ✅        | ✅             | ✅        |
-
----
-
-# CI Baseline Requirements (Sprint 7)
+# 🟢 CI Baseline (Sprint 9)
 
 Before enabling CI badge:
 
-- [ ] Search logic unit tests
-- [ ] Undo unit tests
-- [ ] Sessions sort unit tests
+- [ ] Search logic unit tests stable
+- [ ] Undo unit tests implemented
+- [ ] Sessions sort unit tests implemented
 - [ ] At least one keyboard interaction component test
-- [ ] Import validation test
-- [ ] One intentional failure test proving regression detection
+- [ ] Regression-proof “intentional break” test exists
+- [ ] CI fails on regression
+
+---
+
+# 🚫 Deferred to v2.2+
+
+These are not required for v2.1 freeze:
+
+- Bulk edit
+- Saved favorite filters
+- Import / export + merge/dedupe
+- Multi-device sync behavior
+
+---
+
+# 🚫 Deferred to v2.3+
+
+- Charts / analytics
+- Badge system
+- Snapshot export
+- Streak visualizations
 
 ---
 
@@ -145,6 +128,6 @@ Before enabling CI badge:
 
 Logic errors → Unit test
 DOM behavior → Component test
-UX feel + keyboard realism → Manual QA
+UX realism → Manual QA
 
-All three layers are required for parity confidence.
+All three layers are required for Tier 0 Lock confidence.

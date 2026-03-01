@@ -12,6 +12,8 @@ export function BooksToolbar({
   onCommitQuery,
   onFocusResults,
   searchInputRef,
+  onAddBook,
+  addButtonRef,
 }: {
   booksTotal: number;
   visibleCount: number;
@@ -20,6 +22,8 @@ export function BooksToolbar({
   onCommitQuery: (q: string) => void;
   onFocusResults: () => void;
   searchInputRef: React.RefObject<HTMLInputElement | null>;
+  onAddBook: () => void;
+  addButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   // local "draft" query (v1.9-style)
   const [draftQuery, setDraftQuery] = useState(searchQuery);
@@ -120,6 +124,10 @@ export function BooksToolbar({
             onClick={clearQuery}
           >
             Clear
+          </Button>
+
+          <Button ref={addButtonRef} onClick={onAddBook}>
+            Add book
           </Button>
         </div>
       </div>

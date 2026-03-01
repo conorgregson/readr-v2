@@ -17,7 +17,7 @@ export type Book = {
   id: BookId;
 
   title: string;
-  author?: string;
+  author: string;
 
   status: BookStatus;
 
