@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1-sprint-5] — Books Tier 0 Lock (2026-03-01)
+
+### Added
+
+- Snapshot-based Undo system for book deletion (~6s window).
+- `replaceAll()` persistence method to enable atomic rollback and restore.
+- Store-level undo slot with expiration handling.
+- Red destructive variant styling for Delete button.
+- Unit tests covering:
+  - Undo timer behavior
+  - Snapshot restoration integrity
+  - Expiration guard
+  - Rollback on delete failure
+  - `replaceAll` persistence call
+
+### Changed
+
+- `deleteBook` action now snapshots full `books[]` before removal.
+- Undo logic centralized in store (single-slot model).
+- Books Tier 0 progress updated in Parity Charter.
+- Parity Test Matrix updated to reflect Undo coverage.
+
+### Removed
+
+- N/A
+
+### Fixed
+
+- Ensured delete rollback restores exact ordering and timestamps.
+- Prevented stale undo records after expiration.
+- Cleared undo slot on failed delete persistence.
+
+### Notes
+
+Sprint 5 formally freezes Books/Search Tier 0 behavior.
+Undo delete is now protected by unit tests and considered parity-locked.
+
+---
+
 ## [v2.1.0-sprint-4] — Books CRUD & Timestamp Parity (2026-03-01)
 
 ### Added

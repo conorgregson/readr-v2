@@ -1,285 +1,136 @@
-# Sprint 5 Blueprint — Sessions Logging + History Parity
+# Sprint 5 Blueprint — Books Tier 0 Lock
 
-**Readr v2.1**
+Readr v2.1
 
 Objective:
-Deliver full Sessions parity in React (frontend-only) including:
+Freeze Books + Search into Tier 0 behavioral lock before Sessions begin.
 
-- Log session flow
-- Sessions history view (list/table)
-- Sort + edit + delete flows
-- Keyboard interactions (history navigation)
-- Reuse shared UI patterns (loading/empty/error/no-results)
-- Data integrity with Books (bookId linkage)
-
-Sprint 5 completes the “secondary feature” parity milestone.
+This sprint is about correctness, not new features.
 
 ---
 
-## Sprint 5 Goal
+# Sprint 5 Goal
 
 At the end of this sprint:
 
-- Sessions can be logged against books
-- Sessions history renders correctly and predictably
-- Sort/edit/delete match v1.9 behavior
-- Keyboard navigation parity is in place (where v1 supports it)
-- No one-off UI hacks (use shared patterns)
-- Persistence works (sessions survive refresh)
+- Undo system works (~6s window)
+- Undo survives refresh (if parity requires)
+- Highlight rendering matches v1.9
+- Autocomplete suggestions parity achieved
+- Search behavior fully locked
+- Optimistic rollback finalized
+- No regressions in filters/search
+- Unit + component tests added for high-risk areas
 
-This should feel like v1.9 Sessions, but implemented in React.
-
----
-
-## Non-Negotiable Parity Rules
-
-These must match v1.9:
-
-- A session counts only if it has valid non-zero pages and/or minutes
-- Date normalization matches legacy (same YYYY-MM-DD behavior)
-- Sessions histroy sorting is deterministic and stable
-- Editing a session preserves identity and updates derived viewes immediately
-- Deleting a session removes it immediately (Undo if already part of v2 scope)
-- Keyboard navigation works in history (ArrowUp/Down/Home/End) if present in v1.9
-- Truncated notes display correctly with tooltip behavior (if applicable)
-
-Do NOT:
-
-- Change how totals are computed (minutes preferred; pages fallback)
-- "Fix" date timezone quirks during parity phase
-- Let sessions exist without a resolvable book unless v1.9 allowed it
+Books/Search become frozen.
 
 ---
 
-## Architecture Plan
+# Non-Negotiable Tier 0 Requirements
 
-### Folder Structure
+## Undo (Books)
 
-```bash
-features/sessions/
-  components/
-    LogSessionForm.tsx
-    SessionsTable.tsx (or list)
-    EditSessionForm.tsx
-  services/
-    sessions.service.ts
-  store/
-    sessions.store.ts
-    types.ts
-    page.tsx
-```
+- Delete supports ~6s undo
+- Finish supports ~6s undo
+- Undo restores exact object state
+- Undo preserves:
+  - Filters
+  - Search
+  - Ordering
+- Undo does not corrupt timestamps
+- Undo window expiration finalizes deletion
 
-Shared integration points:
-
-- sessions use books from `features/books/store/books.store.ts`
-- analytics update wiring is Sprint 6+ unless explicitly required
+No partial restores.
 
 ---
 
-## Data Model Parity (Core)
+## Highlight Rendering
 
-A session should support legacy fields from v1.9:
-
-- dataKey: "YYYY-MM-DD" (preffered) OR date: ISO string
-- pagesRead: number (optional)
-- minutes: number (optional)
-- legacy: { type: "pages"|"minutes", value: number } fallback
-- bookId: string
-- notes: string (optional)
-- finished: boolean (optional)
-
-Parity rule:
-
-- Normalize values exactly like v1.9 analystics did:
-  - prefer pagesRead/minutes
-  - fallback to type/value only if primary is zero
-  - negative/non-finite becomes 0
-  - sessions with both pages and minutes 0 are ignored
+- Token matches highlighted exactly like v1.9
+- Fuzzy matches highlighted correctly
+- No double wrapping
+- No broken HTML injection
+- Highlight persists across edits
 
 ---
 
-## Store + Service Responsibilities
+## Autocomplete Parity
 
-### sessions.service.ts (local-first)
+If v1.9 supported autocomplete:
 
-Must provide:
-
-- list()
-- create(session)
-- update(id, updates)
-- remove(id)
-
-Must handle persistence.
-No UI logic.
-
-### sessions.store.ts
-
-State:
-
-- sessions[]
-- sortMode
-- editingSessionId (if inline editing)
-- error state per operation (optional)
-
-Actions:
-
-- loadSessions()
-- addSession()
-- updateSession()
-- deleteSession()
-- setSortMode()
-
-Atomic rule:
-No half-applied state if persistence fails.
+- Suggestions based on current dataset
+- Arrow navigation works
+- Enter selects suggestion
+- Escape closes dropdown
+- aria-activedescendant correct
+- No keyboard trap
 
 ---
 
-## Session Logging Flow
+## Dedicated Search Button (If Applicable)
 
-### UI Requirements
+If v1.9 required explicit submit:
 
-- User can select a book (required unless v1.9 allowed none)
-- Date defaults appropriately (match v1.9)
-- Minutes/pages input supports:
-  - one or both
-  - validation and coercion
-- Notes input optional
-
-### Validation Parity
-
-- Reject sessions with both minutes/pages = 0
-- Reject negative values
-- Date must parse into valid day key
-- BookId must exist (or match v1.9 behavior if missing)
-
-### Keyboard Parity
-
-- `Enter` saves (when valid)
-- `Escape` cancels (if modal/drawer form)
-- Focus lands on first field when opened
+- Parity behavior preserved
+- Enter vs click behavior identical
+- No auto-search deviation
 
 ---
 
-## Sessions History View Parity
+## Optimistic Update Finalization
 
-### Render + UX
-
-- Shows same fields as v1.9 (date, minutes/pages, book title, notes)
-- Handles long notes with truncation + tooltip if applicable
-- Stable rendering: no flicker on edit/save
-
-### Sorting
-
-- Must match v1.9 behavior and be deterministic:
-  - stable ordering
-  - tie-breakers consistent
-- Sorting changes re-render history immediately
-
-### Edit / Delete
-
-- Edit updates session in-place
-- Cancel restores original values
-- Delete removes session immediately
-- (Optional) Undo restores deleted session within window (if implemented already)
+- Store actions must apply-or-rollback
+- Persistence failure restores prior state
+- No half-applied UI state
 
 ---
 
-## Keyboard Navigation Parity (History)
+# Tests Required
 
-If your v1.9 history supported keyboard navigation:
+## Unit
 
-- ArrowDown moves selection to next row
-- ArrowUp moves selection to previous row
-- Home jumps to first
-- End jumps to last
-- Escape clears selection and returns focus appropriately
-- Selected row uses:
-  - aria-selected="true"
-  - visible selection styling
-- Selection changes should be announced via live region
+- Undo timer expiration logic
+- Object restoration integrity
+- Highlight tokenization logic
+- Autocomplete suggestion filtering
 
-Notes:
-Keep this scoped to history UI and do not introduce new global shortcuts.
+## Component
 
----
+- Undo restores correct card
+- Highlight renders correctly
+- Autocomplete keyboard selection
+- Enter/Escape search behavior
 
-## Tests Required
+## Manual QA
 
-### Unit Tests (Store/Service Logic)
-
-- list → loads sessions
-- create → adds session, persists
-- update → updates correct session, preserves id
-- delete → removes correct session
-- normalization rules:
-  - legacy type/value fallback behaves correctly
-  - empty session ignored
-  - negative values rejected/coerced
-
-### Component Tests (Critical Flows)
-
-- Log session form:
-  - invalid sessions blocked
-  - save persists and appears in history
-- Sessions history:
-  - sort changes order correctly
-  - edit/save/cancel works
-  - delete removes row
-- Keyboard:
-  - Arrow/Home/End move selection as expected (if applicable)
-
-### Manual QA (Must)
-
-- Create sessions across multiple dates
-- Verify history ordering + sorting
-- Edit session under active sort
-- Delete session and ensure table updates immediately
-- Refresh page → confirm persistence
-- Log session while books search/filter active (ensure no cross-feature break)
+- Delete under active filter → undo
+- Finish under search → undo
+- Rapid delete/undo cycles
+- Highlight under looser search
+- Autocomplete with 500+ books
 
 ---
 
-## High-Risk Areas
+# High-Risk Areas
 
-1. Date normalization parity (YYYY-MM-DD + local timezone behavior)
-2. Stable sorting (tie-breakers)
-3. Legacy value/type fallback behavior
-4. Keyboard navigation state + focus restore
-5. Sessions referencing books:
-
-- book deleted/renamed later (how does history display?)
+1. Undo + active filters
+2. Undo + search query
+3. Highlight HTML injection
+4. Optimistic rollback on failure
+5. Expired undo timer edge cases
 
 ---
 
-## Out of Scope (Sprint 6+)
-
-Do NOT implement (unless already present in v2 scope):
-
-- Analystics/charts wiring
-- Badges
-- Snapshot export
-- Import/export improvements
-- Service worker update flow
-
-Sprint 5 is Sessions parity only.
-
----
-
-## Acceptance Criteria
+# Acceptance Criteria
 
 Sprint 5 is complete when:
 
-- Sessions link correctly to books
-- Logging, history, sort, edit, delete work like v1.9
-- Keyboard navigation parity works (if applicable)
-- UI patterns reused (no one-off hacks)
-- Persistence confirmed (refresh test)
+- All Books Tier 0 rows in Parity Charter are ✅
+- No highlight bugs
+- Undo stable under stress
+- Tests added and passing
 - No console errors
 
----
+Books are frozen.
 
-## Definition of Done
-
-- Sessions feature is complete and stable
-- History view is usable and predictable
-- Ready for Sprint 6 (Hardening & Accessibility)
+Sessions may begin in Sprint 6.

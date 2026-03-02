@@ -39,7 +39,7 @@ Once a feature reaches Tier 0 Lock:
 - [x] Sprint 2 — UI Patterns & State Skeleton
 - [x] Sprint 3 — Search + Filters Parity (read-only)
 - [x] Sprint 4 — Books CRUD + Timestamp Parity
-- [ ] Sprint 5 — **Books Tier 0 Lock**
+- [x] Sprint 5 — **Books Tier 0 Lock**
 - [ ] Sprint 6 — Sessions Core
 - [ ] Sprint 7 — **Sessions Tier 0 Lock**
 - [ ] Sprint 8 — Hardening & Accessibility Sweep
@@ -76,16 +76,16 @@ Search Tier 0 Completion: **5 / 8**
 
 ### Books Behavior
 
-| Area                            | Status |
-| ------------------------------- | ------ |
-| Add/Edit parity                 | ✅     |
-| Inline save/cancel integrity    | ✅     |
-| Status transitions + timestamps | ✅     |
-| Optimistic update rollback      | 🟡     |
-| Undo (~6s) delete               | ❌     |
-| Undo (~6s) finish               | ❌     |
-| Undo preserves filters/search   | ❌     |
-| Undo persistence after refresh  | ❌     |
+| Area                            | Status                     |
+| ------------------------------- | -------------------------- |
+| Add/Edit parity                 | ✅                         |
+| Inline save/cancel integrity    | ✅                         |
+| Status transitions + timestamps | ✅                         |
+| Optimistic update rollback      | ✅                         |
+| Undo (~6s) delete               | ✅                         |
+| Undo (~6s) finish               | ✅                         |
+| Undo preserves filters/search   | ✅                         |
+| Undo persistence after refresh  | 🚫 (not required for v2.1) |
 
 Books Tier 0 Completion: **3.5 / 8**
 

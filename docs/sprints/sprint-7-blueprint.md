@@ -1,129 +1,93 @@
-# Sprint 7 Blueprint — Tests + CI
+# Sprint 7 Blueprint — Sessions Tier 0 Lock
 
-**Readr v2.1**
+Readr v2.1
 
 Objective:
-Lock confidence with a baseline test suite and CI pipeline.
-
-This sprint focuses on:
-
-- Vitest + React Testing Library setup
-- High-risk unit tests (search, analytics, undo if present)
-- Critical component tests (keyboard + save/cancel flows)
-- GitHub Actions CI (typecheck/lint/test)
-
-The goal is not “100% coverage.”
-The goal is catching regressions.
+Freeze Sessions into Tier 0 parity.
 
 ---
 
-## Sprint 7 Goal
+# Sprint 7 Goal
 
-At the end of Sprint 7:
+At the end of this sprint:
 
-- CI runs on every push/PR
-- Tests cover the highest-risk parity areas
-- A deliberate break is caught by tests (proof of value)
-- Team confidence increases: you can refactor safely
-
----
-
-## Guardrails
-
-- No feature work
-- No refactors unless required to enable testability
-- Focus on parity-critical behaviors only
+- Keyboard navigation parity achieved
+- Undo (~6s) delete works
+- Highlight parity in rows
+- Live-region announcements implemented
+- Deterministic sort fully locked
+- Sessions Tier 0 fully green
 
 ---
 
-## Scope
+# Tier 0 Requirements
 
-### 1) Testing Setup
+## Keyboard Navigation
 
-- Install and configure:
-  - Vitest
-  - @testing-library/react
-  - @testing-library/user-event
-- Add test scripts and ensure they run locally and in CI
-- Add jsdom environment
+If supported in v1.9:
 
-### 2) Unit Tests (Must-Have)
-
-Write unit tests for pure logic modules:
-
-Search:
-
-- tokenize + normalization
-- AND semantics
-- fuzzy matching cases
-- looser search behavior options
-
-Analytics (if included in scope):
-
-- streaks calculation
-- percent change math
-- range window bounds correctness
-
-Import/export (if included):
-
-- schema validation
-- merge + dedupe correctness
-
-### 3) Component Tests (Must-Have)
-
-Write component tests for the highest-risk UI behaviors:
-
-Books:
-
-- no-results vs empty
-- looser search CTA behavior
-- save/cancel does not leak edits
-- Enter/Escape behavior where critical
-
-Sessions:
-
-- history keyboard navigation (Arrow/Home/End) if applicable
-- edit/save/delete flow
-
-Autosuggest (if included):
-
-- combobox ARIA + keyboard pick
-
-### 4) CI Pipeline (GitHub Actions)
-
-On PR/push:
-
-- npm install
-- typecheck
-- lint
-- test
-
-Optional:
-
-- cache node_modules
-
-### 5) “Intentional Break” Proof
-
-Make one controlled change temporarily that should fail:
-
-- e.g., change fuzzy distance rule or streak behavior
-  Confirm tests fail, then revert.
-
-This proves the suite actually guards parity.
+- ArrowDown moves selection
+- ArrowUp moves selection
+- Home → first
+- End → last
+- Escape clears selection
+- aria-selected correct
+- No keyboard trap
 
 ---
 
-## Deliverable
+## Undo (Sessions)
 
-- Green CI badge
-- Baseline test coverage locked
-- Documented “what’s covered” list
+- Delete supports ~6s undo
+- Undo restores exact prior state
+- Undo preserves sorting + selection
+- Undo does not duplicate rows
 
 ---
 
-## Exit Criteria
+## Highlight Parity
 
-- CI runs on every push/PR
-- Tests catch at least one intentional break
-- High-risk parity areas covered (search + core flows minimum)
-- No flaky tests
+- Search highlights session rows
+- Notes highlight correctly
+- No DOM corruption
+
+---
+
+## Live Region
+
+- Selection changes announced
+- Undo actions announced
+- Accessible labeling consistent
+
+---
+
+# Tests Required
+
+## Unit
+
+- Undo timer logic
+- Deterministic sort invariants
+
+## Component
+
+- Arrow/Home/End movement
+- Undo restore
+- Highlight rendering
+
+## Manual QA
+
+- Delete under active sort → undo
+- Keyboard navigate rapidly
+- Highlight under filter
+- Stress test selection state
+
+---
+
+# Acceptance Criteria
+
+- All Sessions Tier 0 rows green
+- No keyboard regressions
+- No selection state bugs
+- No console errors
+
+Sessions frozen.

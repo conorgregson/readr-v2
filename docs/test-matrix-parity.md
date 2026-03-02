@@ -47,10 +47,10 @@ Goal:
 
 | Area                           | Unit | Component | Manual | Status |
 | ------------------------------ | ---- | --------- | ------ | ------ |
-| Undo timer window              | ❌   | ❌        | ❌     | ❌     |
-| Object restoration integrity   | ❌   | ❌        | ❌     | ❌     |
-| Undo with active filters       | ❌   | ❌        | ❌     | ❌     |
-| Undo persistence after refresh | ❌   | ❌        | ❌     | ❌     |
+| Undo timer window              | ✅   | ❌        | ✅     | 🟡     |
+| Object restoration integrity   | ✅   | ❌        | ✅     | 🟡     |
+| Undo with active filters       | 🟡   | ❌        | ✅     | 🟡     |
+| Undo persistence after refresh | 🚫   | 🚫        | 🚫     | 🚫     |
 
 Tier 0 Lock requirement: All rows green before Sprint 5 closes.
 

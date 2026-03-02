@@ -28,6 +28,7 @@ function formatDate(iso?: string) {
 
 export function BookCard({ book }: { book: Book }) {
   const updateBook = useBooksStore((s) => s.updateBook);
+  const deleteBook = useBooksStore((s) => s.deleteBook);
   const setError = useBooksStore((s) => s.setError);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -38,6 +39,7 @@ export function BookCard({ book }: { book: Book }) {
   const [status, setStatus] = useState<BookStatus>(book.status);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const titleRef = useRef<HTMLInputElement | null>(null);
@@ -158,6 +160,27 @@ export function BookCard({ book }: { book: Book }) {
       setError({ message: msg });
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function onDelete() {
+    // keep it simple for parity phase (no modal)
+    const ok = window.confirm(`Delete "${book.title}"?`);
+    if (!ok) return;
+
+    setLocalError(null);
+    setError(undefined);
+
+    try {
+      setIsDeleting(true);
+      const did = await deleteBook(book.id);
+      if (!did) throw new Error("Failed to delete book.");
+    } catch (e) {
+      const msg = (e as Error)?.message ?? "Failed to delete book.";
+      setLocalError(msg);
+      setError({ message: msg });
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -300,9 +323,23 @@ export function BookCard({ book }: { book: Book }) {
               </Button>
             </>
           ) : (
-            <Button variant="secondary" onClick={beginEdit}>
-              Edit
-            </Button>
+            <>
+              <Button
+                variant="secondary"
+                onClick={beginEdit}
+                disabled={isDeleting}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="danger"
+                onClick={onDelete}
+                disabled={isDeleting}
+                aria-busy={isDeleting}
+              >
+                {isDeleting ? "Deleting…" : "Delete"}
+              </Button>
+            </>
           )}
         </div>
       </div>
