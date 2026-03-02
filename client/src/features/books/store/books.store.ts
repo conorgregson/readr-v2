@@ -8,6 +8,16 @@ import { applyFilters } from "../filters";
 import { BooksService } from "../services/books.service";
 import { smartSearch } from "../search/search.engine";
 
+const UNDO_MS = 6000;
+
+type UndoRecord = {
+  createdAtMs: number;
+  expiresAtMs: number;
+  label: string;
+  before: Book[]; // full snapshot for perfect restore
+  meta?: { bookId: BookId; kind: "delete" };
+};
+
 function reqTrim(label: string, value: unknown): string {
   const s = typeof value === "string" ? value.trim() : "";
   if (!s) throw new Error(`${label} is required`);
@@ -50,6 +60,11 @@ type BooksState = {
   // domain
   books: Book[];
 
+  // undo (Sprint 5)
+  undo: UndoRecord | null;
+  undoLast: () => Promise<boolean>;
+  clearUndo: () => void;
+
   // controls
   filters: BooksFilters;
   searchQuery: string;
@@ -70,6 +85,15 @@ type BooksState = {
   reset: () => void;
 };
 
+let undoTimer: number | null = null;
+
+function clearUndoTimer() {
+  if (undoTimer !== null) {
+    window.clearTimeout(undoTimer);
+    undoTimer = null;
+  }
+}
+
 const initialState: Pick<
   BooksState,
   | "page"
@@ -78,6 +102,7 @@ const initialState: Pick<
   | "filters"
   | "searchQuery"
   | "searchFuzzyOverride"
+  | "undo"
 > = {
   page: { mode: "results" },
   isBootstrapped: false,
@@ -88,6 +113,7 @@ const initialState: Pick<
   filters: defaultBooksFilters(),
   searchQuery: "",
   searchFuzzyOverride: null,
+  undo: null,
 };
 
 export const useBooksStore = create<BooksState>((set, get) => ({
@@ -190,23 +216,83 @@ export const useBooksStore = create<BooksState>((set, get) => ({
   },
 
   deleteBook: async (id) => {
-    // Guardrail: implement store delete now, but UI + Undo later.
     const before = get().books;
     const next = before.filter((b) => b.id !== id);
     if (next.length === before.length) return false;
 
-    set({ books: next, page: { mode: "results" } });
+    // overwrite any previous undo
+    clearUndoTimer();
+
+    const nowMS = Date.now();
+    const rec: UndoRecord = {
+      createdAtMs: nowMS,
+      expiresAtMs: nowMS + UNDO_MS,
+      label: "Book deleted",
+      before,
+      meta: { bookId: id, kind: "delete" },
+    };
+
+    // optimistic UI update + set undo slot
+    set({ books: next, undo: rec, page: { mode: "results" } });
+
+    // start expiration timer (just clears the slot)
+    undoTimer = window.setTimeout(() => {
+      // only clear if it's still the same record and now expired
+      const cur = get().undo;
+      if (cur && Date.now() > cur.expiresAtMs) {
+        set({ undo: null });
+      }
+      undoTimer = null;
+    }, UNDO_MS + 50);
 
     try {
       const ok = await BooksService.remove(id);
       if (!ok) throw new Error("Delete failed");
       return true;
     } catch (e) {
+      // rollback UI + clear undo (since delete didn't happen)
+      clearUndoTimer();
       set({
         books: before,
+        undo: null,
         page: {
           mode: "error",
           error: { message: (e as Error)?.message ?? "Failed to delete book" },
+        },
+      });
+      return false;
+    }
+  },
+
+  clearUndo: () => {
+    clearUndoTimer();
+    set({ undo: null });
+  },
+
+  undoLast: async () => {
+    const rec = get().undo;
+    if (!rec) return false;
+
+    // expired guard
+    if (Date.now() > rec.expiresAtMs) {
+      clearUndoTimer();
+      set({ undo: null });
+      return false;
+    }
+
+    // One-shot: clear undo immediately to avoid double-click races
+    clearUndoTimer();
+    set({ undo: null, page: { mode: "results" }, books: rec.before });
+
+    try {
+      // Persist exact snapshot (atomic restore)
+      await BooksService.replaceAll(rec.before);
+      return true;
+    } catch (e) {
+      set({
+        page: {
+          mode: "error",
+          error: { message: (e as Error)?.message ?? "Failed to undo" },
         },
       });
       return false;

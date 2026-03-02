@@ -9,12 +9,21 @@ Each blueprint is:
 - Parity-driven
 - Time-boxed to ~1 week
 - Aligned with the v1.9 Parity Lock Specification
+- Structured around Tier 0 freeze gates
 
 These documents are implementation guides — not architecture or roadmap docs.
 
 ---
 
-## Sprint Blueprints
+## Sprint Blueprints (Charter-Aligned)
+
+### Sprint 0 — Prep & Guardrails
+
+Project setup, constraints, and parity charter established.
+
+→ [Sprint 0 Blueprint](./sprint-0-blueprint.md)
+
+---
 
 ### Sprint 1 — React Foundation
 
@@ -32,7 +41,7 @@ Reusable UI states + Zustand scaffolding.
 
 ---
 
-### Sprint 3 — Books List + Search Parity
+### Sprint 3 — Books List + Search Parity (Read-Only)
 
 Core Readr loop rebuilt with full search/filter parity.
 
@@ -40,7 +49,7 @@ Core Readr loop rebuilt with full search/filter parity.
 
 ---
 
-### Sprint 4 — Books CRUD Parity
+### Sprint 4 — Books CRUD + Timestamp Parity
 
 Add/Edit/Delete flows fully implemented and demo-ready.
 
@@ -48,41 +57,59 @@ Add/Edit/Delete flows fully implemented and demo-ready.
 
 ---
 
-### Sprint 5 — Sessions Parity
+### Sprint 5 — Books Tier 0 Lock 🔒
 
-Log sessions + history + sorting + editing.
+Undo system, highlight parity, autocomplete parity, search lock.
 
 → [Sprint 5 Blueprint](./sprint-5-blueprint.md)
 
 ---
 
-### Sprint 6 — Hardening & Accessibility
+### Sprint 6 — Sessions Core
 
-A11y pass, keyboard parity, edge-case stabilization.
+Log sessions + history + sorting + editing.
 
 → [Sprint 6 Blueprint](./sprint-6-blueprint.md)
 
 ---
 
-### Sprint 7 — Tests + CI
+### Sprint 7 — Sessions Tier 0 Lock 🔒
+
+Keyboard navigation, undo, highlight, deterministic sort lock.
+
+→ [Sprint 7 Blueprint](./sprint-7-blueprint.md)
+
+---
+
+### Sprint 8 — Hardening & Accessibility
+
+A11y pass, focus management, state stability.
+
+→ [Sprint 8 Blueprint](./sprint-8-blueprint.md)
+
+---
+
+### Sprint 9 — Tests + CI Baseline
 
 Unit + component tests + GitHub Actions pipeline.
 
-→ [Sprint 7 Blueprint](./sprint-7-blueprint.md)
+→ [Sprint 9 Blueprint](./sprint-9-blueprint.md)
 
 ---
 
 ## How to Use These Docs
 
 - Always finish the current sprint before referencing the next.
+- Tier 0 lock sprints (5 & 7) must be fully green before moving forward.
 - If behavior is unclear, check:
-  - `parity-lock-v1.9.md`
-  - `parity-must-haves-v1.4–v1.9.md`
-- No new features until parity milestones are met.
+  - `parity-charter-v2.1.md`
+  - `test-matrix-parity.md`
+- No new features until Tier 0 freeze conditions are met.
 - Refactor only if it reduces React → API friction.
 
 This structure ensures:
 
-- Predictable weekly progress
-- Clear demo checkpoints
+- Predictable progress
+- Clean freeze boundaries
 - No parity regressions
+- API readiness after Sprint 9

@@ -22,6 +22,10 @@ export function BooksPage() {
   const books = useBooksStore((s) => s.books);
   const addBook = useBooksStore((s) => s.addBook);
 
+  const undo = useBooksStore((s) => s.undo);
+  const undoLast = useBooksStore((s) => s.undoLast);
+  const clearUndo = useBooksStore((s) => s.clearUndo);
+
   const filters = useBooksStore((s) => s.filters);
   const setFilters = useBooksStore((s) => s.setFilters);
   const clearFilters = useBooksStore((s) => s.clearFilters);
@@ -162,6 +166,39 @@ export function BooksPage() {
             </div>
           }
         />
+      ) : null}
+
+      {undo ? (
+        <div
+          className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="min-w-0 truncate text-sm text-slate-600">
+            {undo.label}
+          </div>
+
+          <div className="shrink-0 flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void undoLast();
+              }}
+            >
+              Undo
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                clearUndo();
+              }}
+              aria-label="Dismiss undo"
+              title="Dismiss"
+            >
+              ✕
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       <BookList

@@ -237,4 +237,36 @@ export const BooksService = {
     writeLocal(next);
     return true;
   },
+
+  async replaceAll(nextBooks: Book[]): Promise<void> {
+    if (USE_API) {
+      // v2.2 can implement: PUT /books or bulk sync endpoint
+      throw new Error("replaceAll not supported in API mode yet");
+    }
+
+    // senitize on write to avoid peristing junk
+    const safe: Book[] = nextBooks.map((b) => ({
+      ...b,
+      title: nonEmpty("Title", b.title),
+      author: nonEmpty("Author", b.author),
+      genre: sanitizeOptional(b.genre),
+      series: sanitizeOptional(b.series),
+      isbn: sanitizeOptional(b.isbn),
+      plannedMonth: sanitizeOptional(b.plannedMonth),
+
+      createdAt: typeof b.createdAt === "string" ? b.createdAt : nowIso(),
+      updatedAt: typeof b.updatedAt === "string" ? b.updatedAt : nowIso(),
+      startedAt: typeof b.startedAt === "string" ? b.startedAt : undefined,
+      finishedAt: typeof b.finishedAt === "string" ? b.finishedAt : undefined,
+      status:
+        b.status === "planned" ||
+        b.status === "reading" ||
+        b.status === "finished"
+          ? b.status
+          : "planned",
+      id: typeof b.id === "string" ? b.id : crypto.randomUUID(),
+    }));
+
+    writeLocal(safe);
+  },
 };
