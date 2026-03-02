@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1-sprint-6] — Sessions Core (2026-03-02)
+
+### Added
+
+- Local-first Sessions persistence layer with normalization and sorting utilities.
+- Versioned Sessions storage envelope (`{ v: 1, sessions: [...] }`).
+- Automatic migration from legacy array storage format.
+- Sessions History table with book title/author resolution.
+- Inline session editing (book, date, pages, minutes, notes).
+- Session deletion with confirmation prompt.
+- Sessions toolbar with:
+  - Search (title, author, notes, date)
+  - Filters (book, type, date range)
+  - Sort (newest / oldest)
+  - “Showing X of Y” summary indicator
+  - Quick filter chips (Pages / Minutes)
+- UI persistence for Sessions filters and sort preferences.
+- Date range auto-correction (prevents From > To invalid state).
+
+### Changed
+
+- `loadSessions` now hydrates from versioned storage with migration guard.
+- Sessions state now supports filter and sort management at the store level.
+- Sessions page now computes visible rows via memoized filter + sort pipeline.
+- History table refactored to use dedicated `SessionsRow` component.
+
+### Removed
+
+- Legacy stub Sessions placeholder cards from initial scaffold.
+
+### Fixed
+
+- Prevented edit panel from closing on failed update.
+- Ensured session re-sorts correctly after date edits.
+- Ensured empty state triggers when final session is deleted.
+
+### Notes
+
+Sprint 6 completes Sessions Core parity foundation.
+Undo architecture intentionally deferred per v2.1 guardrails.
+Sessions storage is now schema-ready for future migrations.
+
+---
+
 ## [v2.1-sprint-5] — Books Tier 0 Lock (2026-03-01)
 
 ### Added

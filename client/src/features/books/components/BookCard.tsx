@@ -195,7 +195,7 @@ export function BookCard({ book }: { book: Book }) {
         {isEditing ? (
           <div className="grid gap-2">
             <label className="grid gap-1">
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-400">
                 Title *
               </span>
               <input
@@ -217,7 +217,7 @@ export function BookCard({ book }: { book: Book }) {
             </label>
 
             <label className="grid gap-1">
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs font-medium text-slate-400">
                 Author *
               </span>
               <input
@@ -238,7 +238,7 @@ export function BookCard({ book }: { book: Book }) {
             </label>
 
             <label className="grid gap-1">
-              <span className="text-xs font-medium text-slate-500">Status</span>
+              <span className="text-xs font-medium text-slate-400">Status</span>
               <select
                 className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2"
                 value={status}

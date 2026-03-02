@@ -66,7 +66,7 @@ Canonical docs:
 ## Table of Contents
 
 - [Overview](#overview)
-- [Parity Summary (v21)](#parity-summary-v21)
+- [Parity Summary (v2.1)](#parity-summary-v2.1)
 - [Why This Project](#why-this-project)
 - [Roadmap Philosophy](#roadmap-philosophy)
 - [Changelog](#changelog)
