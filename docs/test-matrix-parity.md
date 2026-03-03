@@ -62,19 +62,19 @@ Tier 0 Lock requirement: All rows green before Sprint 5 closes.
 
 | Area                | Unit | Component | Manual | Status |
 | ------------------- | ---- | --------- | ------ | ------ |
-| Sorting determinism | ❌   | ❌        | ❌     | ❌     |
-| CRUD flows          | ❌   | ❌        | ❌     | ❌     |
-| Stable rendering    | ❌   | ❌        | ❌     | ❌     |
+| Sorting determinism | ❌   | ❌        | ✅     | 🟡     |
+| CRUD flows          | ❌   | 🟡        | ✅     | 🟡     |
+| Stable rendering    | ❌   | 🟡        | ✅     | 🟡     |
 
 ## Keyboard + Highlight (Sprint 7)
 
 | Area                    | Unit | Component | Manual | Status |
 | ----------------------- | ---- | --------- | ------ | ------ |
-| Arrow/Home/End behavior | ❌   | ❌        | ❌     | ❌     |
-| Row navigation state    | ❌   | ❌        | ❌     | ❌     |
-| Live region updates     | ❌   | ❌        | ❌     | ❌     |
-| Search highlight rows   | ❌   | ❌        | ❌     | ❌     |
-| Undo session delete     | ❌   | ❌        | ❌     | ❌     |
+| Arrow/Home/End behavior | ❌   | 🟡        | ✅     | 🟡     |
+| Row navigation state    | ❌   | 🟡        | ✅     | 🟡     |
+| Live region updates     | ❌   | 🟡        | ✅     | 🟡     |
+| Search highlight rows   | ❌   | 🟡        | ✅     | 🟡     |
+| Undo session delete     | ❌   | 🟡        | ✅     | 🟡     |
 
 Tier 0 Lock requirement: All rows green before Sprint 7 closes.
 
