@@ -40,16 +40,17 @@ Once a feature reaches Tier 0 Lock:
 - [x] Sprint 3 — Search + Filters Parity (read-only)
 - [x] Sprint 4 — Books CRUD + Timestamp Parity
 - [x] Sprint 5 — **Books Tier 0 Lock**
-- [ ] Sprint 6 — Sessions Core
-- [ ] Sprint 7 — **Sessions Tier 0 Lock**
+- [x] Sprint 6 — Sessions Core
+- [x] Sprint 7 — **Sessions Tier 0 Lock**
 - [ ] Sprint 8 — Hardening & Accessibility Sweep
 - [ ] Sprint 9 — Tests & CI Baseline
+- [ ] Sprint 10 — Freeze & Stabilization
 
 ---
 
 # v2.1 Tier 0 Progress Dashboard
 
-_Last updated: 2026-03-01_
+_Last updated: 2026-03-02_
 
 All rows must be complete before v2.1 freeze.
 
@@ -87,10 +88,7 @@ Search Tier 0 Completion: **5 / 8**
 | Undo preserves filters/search   | ✅                         |
 | Undo persistence after refresh  | 🚫 (not required for v2.1) |
 
-Books Tier 0 Completion: **3.5 / 8**
-
-**Sprint 5 Freeze Condition:**
-All rows above must be ✅ before closing Sprint 5.
+Books Tier 0 Completion: **7 / 8**
 
 ---
 
@@ -100,23 +98,22 @@ All rows above must be ✅ before closing Sprint 5.
 
 | Area                | Status |
 | ------------------- | ------ |
-| CRUD flows          | ❌     |
-| Sorting determinism | ❌     |
-| Stable rendering    | ❌     |
+| CRUD flows          | ✅     |
+| Sorting determinism | ✅     |
+| Stable rendering    | ✅     |
 
 ### Sprint 7 — Lock Items
 
 | Area                                 | Status |
 | ------------------------------------ | ------ |
-| Keyboard navigation (Arrow/Home/End) | ❌     |
-| Live region announcements            | ❌     |
-| Undo (~6s) delete                    | ❌     |
-| Highlight parity in rows             | ❌     |
+| Keyboard navigation (Arrow/Home/End) | ✅     |
+| Live region announcements            | ✅     |
+| Undo (~6s) delete                    | ✅     |
+| Highlight parity in rows             | ✅     |
 
-Sessions Tier 0 Completion: **0 / 7**
+Sessions Tier 0 Completion: **7 / 7**
 
-**Sprint 7 Freeze Condition:**
-All rows must be ✅ before closing Sprint 7.
+Sessions behavior is now frozen.
 
 ---
 
@@ -144,6 +141,28 @@ All rows must be ✅ before closing Sprint 7.
 
 ---
 
+## Sprint 10 — Freeze & Stabilization
+
+| Area                                | Status |
+| ----------------------------------- | ------ |
+| Full Tier 0 manual audit            | ❌     |
+| Architecture boundary audit         | ❌     |
+| Dead code removal                   | ❌     |
+| Console/runtime warning audit       | ❌     |
+| Dependency + typecheck verification | ❌     |
+| Regression confidence validation    | ❌     |
+
+Sprint 10 Completion: **0 / 6**
+
+Sprint 10 Freeze Condition:
+
+- All rows must be complete before tagging v2.1.0.
+- No new features may be introduced during this sprint.
+
+This sprint formally locks the React frontend as stable prior to API migration in v2.2.
+
+---
+
 # Scope Clarification (v2.1)
 
 ## In Scope for v2.1 Freeze
@@ -154,7 +173,7 @@ All rows must be ✅ before closing Sprint 7.
 - Undo system
 - Keyboard parity
 - Highlighting
-- Autocomplete
+- Autocomplete (if retained)
 - Hardening + accessibility baseline
 - CI baseline
 
@@ -174,8 +193,6 @@ All rows must be ✅ before closing Sprint 7.
 - Streak systems
 - Shareable snapshot export
 
-Deferred features do not block v2.1 freeze.
-
 ---
 
 # Tier Structure
@@ -191,99 +208,6 @@ Implementation may differ; UX must be indistinguishable.
 ## Tier 2 — Internal Invariants
 
 State, persistence, and domain integrity rules must hold at all times.
-
----
-
-# Tier 0 Requirements (v1.4–v1.9)
-
-## v1.4 — Power-User Features
-
-### Undo System
-
-- [ ] Delete/finish supports Undo (~6s)
-- [ ] Undo restores exact previous object state
-- [ ] Undo preserves ordering, filters, and search integrity
-- [ ] Undo works for books and sessions
-
-### Inline Editing
-
-- [x] Save commits without re-adding
-- [x] Cancel restores original values
-- [ ] Does not break keyboard behavior
-
-### Smarter Search
-
-- [x] Fuzzy typo tolerance
-- [x] Partial token matching
-- [x] Looser search toggle behavior
-- [x] Correct no-results state rendering
-
----
-
-## v1.5 — Book Enhancements (In Scope Only)
-
-- [ ] Series / Standalone flag persists
-- [ ] Digital / Physical flag persists
-- [ ] ISBN stored if provided
-- [x] Planned → Reading → Finished flow correct
-
-Bulk edit deferred to v2.2+.
-
----
-
-## v1.6 — Search & Filters (In Scope Only)
-
-- [ ] Dedicated Search button parity (if applicable)
-- [ ] Autocomplete suggestions parity
-- [x] Clear All resets immediately
-- [ ] Performance acceptable with 1,000+ books
-
-Saved favorite filters deferred to v2.2+.
-
----
-
-## v1.8 — Sessions & History
-
-- [ ] Sessions CRUD parity
-- [ ] Deterministic sorting
-- [ ] Keyboard navigation (Arrow/Home/End)
-- [ ] Live-region announcements (if applicable)
-- [ ] Search highlight in titles/notes
-- [ ] Long notes truncation parity
-- [ ] Undo for deleted sessions
-
----
-
-## v1.9 — Visualization & Motivation
-
-Out of scope for v2.1.
-Deferred to v2.3+ unless explicitly scheduled.
-
----
-
-# Tier 2 — Internal Invariants
-
-## Store / Service Rules
-
-- Components never access persistence directly
-- Stores are the only write path
-- Services are the only IO layer
-- Actions are atomic (apply OR rollback)
-- Corrupt storage never crashes the app
-
-## Books Invariants
-
-- Unique stable `id`
-- Immutable `createdAt`
-- Controlled `updatedAt`
-- Correct timestamp transitions
-
-## Sessions Invariants
-
-- Unique stable `id`
-- Valid `bookId`
-- Deterministic sorting
-- Undo restores exact prior state
 
 ---
 

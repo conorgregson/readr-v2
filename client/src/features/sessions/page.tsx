@@ -13,6 +13,8 @@ import { ErrorState } from "../../shared/ui/states/ErrorState";
 import { NoResultsState } from "../../shared/ui/states/NoResultsState";
 
 import { useSessionsStore } from "./store/sessions.store";
+import { SessionsLiveRegion } from "./components/SessionsA11y";
+import { SessionsUndoBar } from "./components/SessionsUndoBar";
 
 export function SessionsPage() {
   const mode = useSessionsStore((s) => s.page.mode);
@@ -127,6 +129,9 @@ export function SessionsPage() {
         />
       ) : (
         <div className="space-y-3">
+          <SessionsLiveRegion />
+          <SessionsUndoBar />
+
           {isAddOpen ? (
             <AddSessionPanel
               onClose={() => {
@@ -135,7 +140,6 @@ export function SessionsPage() {
               }}
               onSubmit={async (input) => {
                 const created = await addSession(input);
-                // IMPORTANT: only close if the add succeeded
                 if (created) {
                   setIsAddOpen(false);
                   addBtnRef.current?.focus();
@@ -159,6 +163,7 @@ export function SessionsPage() {
               onChangeSort={setSortKey}
             />
           )}
+
           {sessions.length > 0 && visibleSessions.length === 0 ? (
             <NoResultsState
               query={filters.search ? `"${filters.search}"` : "(filters)"}
@@ -169,7 +174,10 @@ export function SessionsPage() {
               }
             />
           ) : (
-            <SessionsHistoryTable sessions={visibleSessions} />
+            <SessionsHistoryTable
+              sessions={visibleSessions}
+              query={filters.search ?? ""}
+            />
           )}
         </div>
       )}

@@ -24,6 +24,17 @@ function safeParse<T>(raw: string | null): T | null {
   }
 }
 
+type UndoDeleteSession = {
+  kind: "delete-session";
+  session: Session;
+  // selection before delete (so undo restores parity)
+  prevSelectedId: string | null;
+  // for a stable restore under active sort/filter
+  prevSortKey: SessionsSortKey;
+  prevFilters: SessionsFilters;
+  expiresAt: number; // ms epoch
+};
+
 type SessionsState = {
   // UI state
   page: PageState;
@@ -34,10 +45,30 @@ type SessionsState = {
   filters: SessionsFilters;
   sortKey: SessionsSortKey;
 
+  // selection (Sprint 7)
+  selectedId: string | null;
+  setSelectedId: (id: string | null) => void;
+  clearSelection: () => void;
+
+  // keyboard nav helpers (Sprint 7)
+  moveSelection: (
+    orderedIds: string[],
+    dir: "next" | "prev" | "first" | "last",
+  ) => void;
+
+  // live region (Sprint 7)
+  liveMessage: string;
+  announce: (msg: string) => void;
+
+  // undo (Sprint 7)
+  undo: UndoDeleteSession | null;
+  undoDelete: () => void;
+  canUndo: () => boolean;
+
   // lifecycle
   loadSessions: () => Promise<void>;
 
-  // CRUD (Sprint 6: start with add; edit/delete can come next)
+  // CRUD
   addSession: (input: CreateSessionInput) => Promise<Session | null>;
   updateSession: (
     id: string,
@@ -45,7 +76,7 @@ type SessionsState = {
   ) => Promise<Session | null>;
   deleteSession: (id: string) => Promise<boolean>;
 
-  // filters/sort (Sprint 6+)
+  // filters/sort
   setFilters: (patch: Partial<SessionsFilters>) => void;
   clearFilters: () => void;
   setSortKey: (key: SessionsSortKey) => void;
@@ -64,13 +95,24 @@ const persistedUI = safeParse<{
 
 const initialState: Pick<
   SessionsState,
-  "page" | "isBootstrapped" | "sessions" | "filters" | "sortKey"
+  | "page"
+  | "isBootstrapped"
+  | "sessions"
+  | "filters"
+  | "sortKey"
+  | "selectedId"
+  | "liveMessage"
+  | "undo"
 > = {
   page: { mode: "results" },
   isBootstrapped: false,
   sessions: [],
   filters: persistedUI?.filters ?? {},
   sortKey: persistedUI?.sortKey ?? "date:desc",
+
+  selectedId: null,
+  liveMessage: "",
+  undo: null,
 };
 
 function persistUI(next: {
@@ -80,9 +122,111 @@ function persistUI(next: {
   localStorage.setItem(SESSIONS_UI_KEY, JSON.stringify(next));
 }
 
-export const useSessionsStore = create<SessionsState>((set) => ({
+// local (module) timer handle — not in zustand state
+let undoTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearUndoTimer() {
+  if (undoTimer) {
+    clearTimeout(undoTimer);
+    undoTimer = null;
+  }
+}
+
+export const useSessionsStore = create<SessionsState>((set, get) => ({
   ...initialState,
 
+  // ---------- selection ----------
+  setSelectedId: (id) =>
+    set(() => ({
+      selectedId: id,
+    })),
+
+  clearSelection: () =>
+    set(() => ({
+      selectedId: null,
+    })),
+
+  moveSelection: (orderedIds, dir) => {
+    const { selectedId } = get();
+    if (!orderedIds.length) {
+      set({ selectedId: null });
+      return;
+    }
+
+    const idx = selectedId ? orderedIds.indexOf(selectedId) : -1;
+
+    let nextIdx = idx;
+    if (dir === "first") nextIdx = 0;
+    if (dir === "last") nextIdx = orderedIds.length - 1;
+
+    if (dir === "next") {
+      nextIdx = idx === -1 ? 0 : Math.min(idx + 1, orderedIds.length - 1);
+    }
+    if (dir === "prev") {
+      nextIdx = idx === -1 ? 0 : Math.max(idx - 1, 0);
+    }
+
+    const nextId = orderedIds[nextIdx] ?? null;
+    if (nextId === selectedId) return;
+
+    set({ selectedId: nextId });
+    if (nextId) {
+      get().announce("Selection changed.");
+    }
+  },
+
+  // ---------- live region ----------
+  // NOTE: many SRs ignore identical strings; add a tiny nonce
+  announce: (msg) =>
+    set(() => ({
+      liveMessage: `${msg} (${Date.now()})`,
+    })),
+
+  // ---------- undo ----------
+  canUndo: () => {
+    const u = get().undo;
+    return !!u && Date.now() < u.expiresAt;
+  },
+
+  undoDelete: () => {
+    const u = get().undo;
+    if (!u) return;
+    if (Date.now() >= u.expiresAt) {
+      set({ undo: null });
+      get().announce("Undo expired.");
+      return;
+    }
+
+    clearUndoTimer();
+
+    try {
+      SessionsService.upsert(u.session);
+    } catch {
+      // ignore
+    }
+
+    persistUI({ filters: u.prevFilters, sortKey: u.prevSortKey });
+
+    set((s) => {
+      const exists = s.sessions.some((x) => x.id === u.session.id);
+      const merged = exists ? s.sessions : [u.session, ...s.sessions];
+
+      const sorted = sortSessions(merged, u.prevSortKey);
+
+      return {
+        sessions: sorted,
+        undo: null,
+        selectedId: u.prevSelectedId,
+        sortKey: u.prevSortKey,
+        filters: u.prevFilters,
+        page: { mode: sorted.length ? "results" : "empty" },
+      };
+    });
+
+    get().announce("Undo complete. Session restored.");
+  },
+
+  // ---------- filters/sort ----------
   setFilters: (patch) =>
     set((s) => {
       const nextFilters = { ...s.filters, ...patch };
@@ -99,15 +243,19 @@ export const useSessionsStore = create<SessionsState>((set) => ({
   setSortKey: (key) =>
     set((s) => {
       persistUI({ filters: s.filters, sortKey: key });
-      return { sortKey: key };
+      return {
+        sortKey: key,
+        sessions: sortSessions(s.sessions, key),
+      };
     }),
 
+  // ---------- lifecycle ----------
   loadSessions: async () => {
     try {
       set({ page: { mode: "loading" } });
 
       const listed = SessionsService.list();
-      const sorted = sortSessions(listed, "date:desc");
+      const sorted = sortSessions(listed, get().sortKey);
 
       set({
         sessions: sorted,
@@ -127,13 +275,13 @@ export const useSessionsStore = create<SessionsState>((set) => ({
     }
   },
 
+  // ---------- CRUD ----------
   addSession: async (input) => {
     try {
       const created = SessionsService.create(input);
 
-      // Keep store in sync (service already wrote it)
       set((s) => ({
-        sessions: sortSessions([created, ...s.sessions], "date:desc"),
+        sessions: sortSessions([created, ...s.sessions], s.sortKey),
         page: { mode: "results" },
       }));
 
@@ -151,15 +299,7 @@ export const useSessionsStore = create<SessionsState>((set) => ({
 
   updateSession: async (id, patch) => {
     try {
-      const existing = (() => {
-        let found: Session | undefined;
-        set((s) => {
-          found = s.sessions.find((x) => x.id === id);
-          return s; // no-op state update
-        });
-        return found;
-      })();
-
+      const existing = get().sessions.find((x) => x.id === id);
       if (!existing) throw new Error("Session not found.");
 
       const next: Session = {
@@ -175,7 +315,7 @@ export const useSessionsStore = create<SessionsState>((set) => ({
       set((s) => ({
         sessions: sortSessions(
           s.sessions.map((x) => (x.id === id ? saved : x)),
-          "date:desc",
+          s.sortKey,
         ),
         page: { mode: "results" },
       }));
@@ -196,15 +336,49 @@ export const useSessionsStore = create<SessionsState>((set) => ({
 
   deleteSession: async (id) => {
     try {
+      const snapshot = get().sessions.find((x) => x.id === id);
+      if (!snapshot) return true; // already gone
+
+      clearUndoTimer();
+      set({ undo: null });
+
       SessionsService.remove(id);
 
+      const prevSelectedId = get().selectedId;
+      const prevSortKey = get().sortKey;
+      const prevFilters = get().filters;
+
+      // Optimistically remove from store
       set((s) => {
         const next = s.sessions.filter((x) => x.id !== id);
+        const nextSorted = sortSessions(next, s.sortKey);
+        const nextSelected = s.selectedId === id ? null : s.selectedId;
+
         return {
-          sessions: next,
-          page: { mode: next.length ? "results" : "empty" },
+          sessions: nextSorted,
+          selectedId: nextSelected,
+          page: { mode: nextSorted.length ? "results" : "empty" },
+          undo: {
+            kind: "delete-session",
+            session: snapshot,
+            prevSelectedId,
+            prevSortKey,
+            prevFilters,
+            expiresAt: Date.now() + 6000,
+          },
         };
       });
+
+      get().announce("Session deleted. Undo available for 6 seconds.");
+
+      // Auto-expire undo
+      undoTimer = setTimeout(() => {
+        const u = get().undo;
+        if (!u) return;
+        if (Date.now() >= u.expiresAt) {
+          set({ undo: null });
+        }
+      }, 6100);
 
       return true;
     } catch (e) {
@@ -220,6 +394,7 @@ export const useSessionsStore = create<SessionsState>((set) => ({
     }
   },
 
+  // ---------- actions ----------
   setMode: (mode) =>
     set((s) => ({
       page: { mode, error: mode === "error" ? s.page.error : undefined },
@@ -231,7 +406,15 @@ export const useSessionsStore = create<SessionsState>((set) => ({
     })),
 
   reset: () => {
+    clearUndoTimer();
     persistUI({ filters: {}, sortKey: "date:desc" });
-    set(() => ({ ...initialState, filters: {}, sortKey: "date:desc" }));
+    set(() => ({
+      ...initialState,
+      filters: {},
+      sortKey: "date:desc",
+      undo: null,
+      selectedId: null,
+      liveMessage: "",
+    }));
   },
 }));

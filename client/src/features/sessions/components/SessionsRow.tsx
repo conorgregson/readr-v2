@@ -16,7 +16,75 @@ function parseOptionalPosInt(
   return v <= 0 ? undefined : v;
 }
 
-export function SessionsRow({ session }: { session: Session }) {
+function norm(s: string) {
+  return s.trim().toLowerCase();
+}
+
+function splitTokens(q?: string) {
+  return norm(q ?? "")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function highlight(text: string, q?: string) {
+  const tokens = splitTokens(q);
+  if (!tokens.length) return text;
+
+  // For highlight parity (safe, no innerHTML), we do a simple multi-token OR highlight.
+  // Keep it stable: compute matches for the earliest token occurrences.
+  const lower = text.toLowerCase();
+
+  // Build ranges
+  const ranges: Array<{ start: number; end: number }> = [];
+  for (const t of tokens) {
+    let i = 0;
+    while (i < lower.length) {
+      const idx = lower.indexOf(t, i);
+      if (idx === -1) break;
+      ranges.push({ start: idx, end: idx + t.length });
+      i = idx + t.length;
+    }
+  }
+  if (!ranges.length) return text;
+
+  // Merge ranges
+  ranges.sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const r of ranges) {
+    const last = merged[merged.length - 1];
+    if (!last || r.start > last.end) merged.push({ ...r });
+    else last.end = Math.max(last.end, r.end);
+  }
+
+  // Render parts
+  const out: React.ReactNode[] = [];
+  let cursor = 0;
+  for (const r of merged) {
+    if (cursor < r.start) out.push(text.slice(cursor, r.start));
+    out.push(
+      <mark key={`${r.start}-${r.end}`} className="rounded px-1">
+        {text.slice(r.start, r.end)}
+      </mark>,
+    );
+    cursor = r.end;
+  }
+  if (cursor < text.length) out.push(text.slice(cursor));
+  return <>{out}</>;
+}
+
+export function SessionsRow({
+  session,
+  query,
+  isSelected,
+  onSelect,
+  setRowRef,
+}: {
+  session: Session;
+  query?: string;
+  isSelected: boolean;
+  onSelect: () => void;
+  setRowRef: (el: HTMLTableRowElement | null) => void;
+}) {
   const books = useBooksStore((s) => s.books);
   const updateSession = useSessionsStore((s) => s.updateSession);
   const deleteSession = useSessionsStore((s) => s.deleteSession);
@@ -115,7 +183,8 @@ export function SessionsRow({ session }: { session: Session }) {
 
   async function onDelete() {
     setLocalError(null);
-    const ok = confirm("Delete this session? This cannot be undone.");
+
+    const ok = confirm("Delete this session? You can undo for ~6 seconds.");
     if (!ok) return;
 
     try {
@@ -145,7 +214,20 @@ export function SessionsRow({ session }: { session: Session }) {
     .join(" · ");
 
   return (
-    <tr className="border-t border-slate-100 align-top">
+    <tr
+      ref={setRowRef}
+      className={`border-t border-slate-100 align-top outline-none ${
+        isSelected ? "bg-slate-50" : ""
+      }`}
+      aria-selected={isSelected}
+      tabIndex={isSelected ? 0 : -1}
+      onClick={() => {
+        if (!isEditing) onSelect();
+      }}
+      onFocus={() => {
+        if (!isEditing) onSelect();
+      }}
+    >
       {/* Date */}
       <td className="py-2 pr-3 whitespace-nowrap">
         {isEditing ? (
@@ -160,7 +242,9 @@ export function SessionsRow({ session }: { session: Session }) {
             }}
           />
         ) : (
-          session.date
+          <span className="text-slate-300">
+            {highlight(session.date, query)}
+          </span>
         )}
       </td>
 
@@ -185,8 +269,12 @@ export function SessionsRow({ session }: { session: Session }) {
           </select>
         ) : book ? (
           <div className="flex flex-col">
-            <span className="font-medium text-slate-300">{book.title}</span>
-            <span className="text-xs text-slate-400">{book.author}</span>
+            <span className="font-medium text-slate-300">
+              {highlight(book.title, query)}
+            </span>
+            <span className="text-xs text-slate-400">
+              {highlight(book.author, query)}
+            </span>
           </div>
         ) : (
           <span className="text-slate-400">Unknown book</span>
@@ -227,7 +315,9 @@ export function SessionsRow({ session }: { session: Session }) {
             />
           </div>
         ) : (
-          <span className="text-slate-300">{details}</span>
+          <span className="text-slate-300">
+            {highlight(details || "—", query)}
+          </span>
         )}
       </td>
 
@@ -273,21 +363,26 @@ export function SessionsRow({ session }: { session: Session }) {
           </div>
         ) : (
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              {session.notes ? (
-                <span className="text-slate-300">{session.notes}</span>
-              ) : (
-                <span className="text-slate-300">—</span>
-              )}
+            <div className="min-w-0 text-slate-300">
+              {session.notes ? highlight(session.notes, query) : "—"}
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              <Button variant="secondary" onClick={() => setIsEditing(true)}>
+              <Button
+                variant="secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+              >
                 Edit
               </Button>
               <Button
                 variant="danger"
-                onClick={() => void onDelete()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void onDelete();
+                }}
                 disabled={isDeleting}
               >
                 {isDeleting ? "Deleting…" : "Delete"}

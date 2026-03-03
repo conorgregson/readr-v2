@@ -1,6 +1,6 @@
 import type { Session, SessionsSortKey } from "../types";
 
-function cmp(a: string, b: string) {
+function compare(a: string, b: string) {
   if (a < b) return -1;
   if (a > b) return 1;
   return 0;
@@ -14,19 +14,24 @@ export function sortSessions(
 
   out.sort((a, b) => {
     // Primary: date (YYYY-MM-DD string compares correctly)
-    const byDate = cmp(a.date, b.date);
+    const byDate = compare(a.date, b.date);
 
     // Secondary: createdAt (ISO string compares correctly)
-    const byCreated = cmp(a.createdAt, b.createdAt);
+    const byCreated = compare(a.createdAt, b.createdAt);
+
+    // Final tie-breaker: id (guarantees determinism)
+    const byId = compare(a.id, b.id);
 
     if (key === "date:asc") {
       if (byDate !== 0) return byDate;
-      return byCreated;
+      if (byCreated !== 0) return byCreated;
+      return byId;
     }
 
     // date:desc
     if (byDate !== 0) return -byDate;
-    return -byCreated;
+    if (byCreated !== 0) return -byCreated;
+    return byId;
   });
 
   return out;

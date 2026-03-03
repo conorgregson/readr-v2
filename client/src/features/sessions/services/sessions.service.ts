@@ -92,6 +92,29 @@ export const SessionsService = {
     return next[idx];
   },
 
+  upsert(session: Session): Session {
+    const safe = normalizeSession(session);
+    if (!safe) throw new Error("Invalid session payload.");
+
+    const all = readAll();
+    const idx = all.findIndex((s) => s.id === safe.id);
+
+    const next = all.slice();
+    if (idx === -1) {
+      next.unshift(safe);
+      writeAll(next);
+      return safe;
+    }
+
+    next[idx] = {
+      ...next[idx],
+      ...safe,
+      updatedAt: new Date().toISOString(),
+    };
+    writeAll(next);
+    return next[idx];
+  },
+
   remove(id: string): void {
     const all = readAll();
     const next = all.filter((s) => s.id !== id);

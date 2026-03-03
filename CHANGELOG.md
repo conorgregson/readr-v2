@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1-sprint-7] — Sessions Tier 0 Lock (2026-03-02)
+
+### Added
+
+- Sessions keyboard navigation parity (ArrowUp/Down, Home, End, Escape).
+- Undo delete (~6s) with full UI state restoration (filters, sort, selection).
+- Live-region announcements for selection changes and undo actions.
+- Search highlight rendering across Sessions rows (date, title, author, notes).
+- Deterministic Sessions sorting with final `id` tie-breaker.
+
+### Changed
+
+- Sessions delete now supports undo with persistence via `upsert`.
+- Sessions state guarantees deterministic ordering invariants.
+- Selection model refactored to be store-driven and keyboard-safe.
+
+### Removed
+
+- None.
+
+### Fixed
+
+- Prevented ordering drift when sessions shared identical timestamps.
+- Prevented selection inconsistencies after delete.
+- Prevented DOM highlight corruption during multi-token searches.
+
+### Notes
+
+Sprint 7 locks Sessions into Tier 0 parity.
+
+Undo follows Contract A: full restoration of prior UI state.
+Sessions behavior is now frozen pending Hardening & A11y (Sprint 8).
+
+---
+
 ## [v2.1-sprint-6] — Sessions Core (2026-03-02)
 
 ### Added
