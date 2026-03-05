@@ -15,6 +15,7 @@ import { NoResultsState } from "../../shared/ui/states/NoResultsState";
 import { useSessionsStore } from "./store/sessions.store";
 import { SessionsLiveRegion } from "./components/SessionsA11y";
 import { SessionsUndoBar } from "./components/SessionsUndoBar";
+import { captureFocusToken, restoreFocus } from "../../shared/a11y/focus";
 
 export function SessionsPage() {
   const mode = useSessionsStore((s) => s.page.mode);
@@ -36,6 +37,26 @@ export function SessionsPage() {
   const addSession = useSessionsStore((s) => s.addSession); // Sprint 6 store action
   const [isAddOpen, setIsAddOpen] = useState(false);
   const addBtnRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusRef = useRef<ReturnType<typeof captureFocusToken>>({
+    kind: "none",
+  });
+  const resultsId = "sessions-results";
+
+  const restoreSessionsFocus = () => {
+    window.setTimeout(() => {
+      restoreFocus(lastFocusRef.current, {
+        fallbackSelectors: [
+          `#${resultsId}`,
+          '[data-focus-id="sessions:log"]',
+          "input",
+          "select",
+          "textarea",
+          "button",
+        ],
+        deferMs: 0,
+      });
+    }, 0);
+  };
 
   useEffect(() => {
     if (isBootstrapped) return;
@@ -107,21 +128,46 @@ export function SessionsPage() {
       {mode === "loading" ? (
         <LoadingState label="Loading sessions..." />
       ) : mode === "empty" ? (
-        <EmptyState
-          title="No sessions yet"
-          description="Logged sessions will appear here."
-          action={
-            <Button
-              ref={addBtnRef}
-              onClick={() => {
-                setError(undefined);
-                setIsAddOpen(true);
+        <>
+          <SessionsLiveRegion />
+          <SessionsUndoBar />
+
+          <EmptyState
+            title="No sessions yet"
+            description="Logged sessions will appear here."
+            action={
+              <Button
+                ref={addBtnRef}
+                onClick={() => {
+                  lastFocusRef.current = captureFocusToken();
+                  setError(undefined);
+                  setIsAddOpen(true);
+                }}
+                data-focus-id="sessions:log"
+                aria-label="Log session"
+              >
+                Log session
+              </Button>
+            }
+          />
+
+          {isAddOpen ? (
+            <AddSessionPanel
+              onClose={() => {
+                setIsAddOpen(false);
+                restoreSessionsFocus();
               }}
-            >
-              Log session
-            </Button>
-          }
-        />
+              onSubmit={async (input) => {
+                const created = await addSession(input);
+                if (created) {
+                  setIsAddOpen(false);
+                  restoreSessionsFocus();
+                }
+                return created;
+              }}
+            />
+          ) : null}
+        </>
       ) : mode === "error" ? (
         <ErrorState
           message={error?.message ?? "Unknown error"}
@@ -136,13 +182,15 @@ export function SessionsPage() {
             <AddSessionPanel
               onClose={() => {
                 setIsAddOpen(false);
-                addBtnRef.current?.focus();
+                // Sprint 8: restore focus predictably after modal close (fallback: Log Session button)
+                restoreSessionsFocus();
               }}
               onSubmit={async (input) => {
                 const created = await addSession(input);
                 if (created) {
                   setIsAddOpen(false);
-                  addBtnRef.current?.focus();
+                  // Post-add focus: keep stable for Sprint 8 (fallback: Log Session)
+                  restoreSessionsFocus();
                 }
                 return created;
               }}
@@ -150,6 +198,7 @@ export function SessionsPage() {
           ) : (
             <SessionsToolbar
               onLogSession={() => {
+                lastFocusRef.current = captureFocusToken();
                 setError(undefined);
                 setIsAddOpen(true);
               }}
@@ -175,6 +224,7 @@ export function SessionsPage() {
             />
           ) : (
             <SessionsHistoryTable
+              id={resultsId}
               sessions={visibleSessions}
               query={filters.search ?? ""}
             />

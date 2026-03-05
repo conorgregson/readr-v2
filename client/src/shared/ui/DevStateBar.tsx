@@ -8,15 +8,17 @@ export function DevStateBar({
   onMode,
   onError,
   className,
+  ...props
 }: {
   mode: PageMode;
   onMode: (mode: PageMode) => void;
   onError: () => void;
   className?: string;
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={["flex flex-wrap gap-2", className].filter(Boolean).join("")}
+      {...props}
+      className={["flex flex-wrap gap-2", className].filter(Boolean).join(" ")}
     >
       <Button
         variant={mode === "results" ? "primary" : "secondary"}

@@ -9,6 +9,31 @@ type SessionsEnvelopeV1 = {
   sessions: unknown[];
 };
 
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
 function safeParse(raw: string | null): unknown {
   if (!raw) return null;
   try {
@@ -31,9 +56,25 @@ function normalizeArray(rawArr: unknown[]): Session[] {
   return out;
 }
 
+function sanitizeSessions(raw: unknown[]): {
+  sessions: Session[];
+  dropped: number;
+} {
+  const out: Session[] = [];
+  let dropped = 0;
+
+  for (const item of raw) {
+    const s = normalizeSession(item);
+    if (s) out.push(s);
+    else dropped += 1;
+  }
+
+  return { sessions: out, dropped };
+}
+
 function writeEnvelopeV1(sessions: Session[]) {
   const env: SessionsEnvelopeV1 = { v: 1, sessions };
-  localStorage.setItem(SESSIONS_KEY, JSON.stringify(env));
+  safeSetItem(SESSIONS_KEY, JSON.stringify(env));
 }
 
 /**
@@ -43,11 +84,27 @@ function writeEnvelopeV1(sessions: Session[]) {
  * Any successful legacy read is rewritten to v1.
  */
 function readAll(): Session[] {
-  const parsed = safeParse(localStorage.getItem(SESSIONS_KEY));
+  const raw = safeGetItem(SESSIONS_KEY);
+  const parsed = safeParse(raw);
+
+  // Corrupt JSON or blocked storage: treat as empty.
+  // If JSON was present but unparseable, clear it once to prevent repeated failures.
+  if (raw && parsed === null) {
+    safeRemoveItem(SESSIONS_KEY);
+    return [];
+  }
 
   // v1 envelope
   if (isRecord(parsed) && parsed.v === 1 && Array.isArray(parsed.sessions)) {
-    return normalizeArray(parsed.sessions as unknown[]);
+    const sessions = normalizeArray(parsed.sessions as unknown[]);
+
+    // Repair-on-read: if invalid rows were dropped, persist the cleaned list.
+    const rawCount = (parsed.sessions as unknown[]).length;
+    if (sessions.length !== rawCount) {
+      writeEnvelopeV1(sessions);
+    }
+
+    return sessions;
   }
 
   // legacy array
@@ -122,7 +179,13 @@ export const SessionsService = {
   },
 
   clear(): void {
-    localStorage.removeItem(SESSIONS_KEY);
+    safeRemoveItem(SESSIONS_KEY);
+  },
+
+  replaceAll(nextSessions: unknown[]): { wrote: number; dropped: number } {
+    const { sessions, dropped } = sanitizeSessions(nextSessions);
+    writeAll(sessions);
+    return { wrote: sessions.length, dropped };
   },
 
   // reserved for future migrations

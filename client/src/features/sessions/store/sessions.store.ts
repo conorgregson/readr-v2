@@ -15,12 +15,37 @@ import { sortSessions } from "../services/sessions.sort";
 
 const SESSIONS_UI_KEY = "readr.sessions.ui.v1";
 
-function safeParse<T>(raw: string | null): T | null {
+function safeParse<T>(raw: string | null, keyToClear?: string): T | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw) as T;
   } catch {
+    if (keyToClear) safeRemoveItem(keyToClear);
     return null;
+  }
+}
+
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // ignore (Safari private mode, quota, blocked storage)
+  }
+}
+
+function safeRemoveItem(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore
   }
 }
 
@@ -91,7 +116,7 @@ type SessionsState = {
 const persistedUI = safeParse<{
   filters?: SessionsFilters;
   sortKey?: SessionsSortKey;
-}>(localStorage.getItem(SESSIONS_UI_KEY));
+}>(safeGetItem(SESSIONS_UI_KEY), SESSIONS_UI_KEY);
 
 const initialState: Pick<
   SessionsState,
@@ -119,7 +144,7 @@ function persistUI(next: {
   filters: SessionsFilters;
   sortKey: SessionsSortKey;
 }) {
-  localStorage.setItem(SESSIONS_UI_KEY, JSON.stringify(next));
+  safeSetItem(SESSIONS_UI_KEY, JSON.stringify(next));
 }
 
 // local (module) timer handle — not in zustand state
@@ -212,11 +237,13 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
       const merged = exists ? s.sessions : [u.session, ...s.sessions];
 
       const sorted = sortSessions(merged, u.prevSortKey);
+      const restoredId = u.session.id;
+      const nextSelectedId = u.prevSelectedId ?? restoredId;
 
       return {
         sessions: sorted,
         undo: null,
-        selectedId: u.prevSelectedId,
+        selectedId: nextSelectedId,
         sortKey: u.prevSortKey,
         filters: u.prevFilters,
         page: { mode: sorted.length ? "results" : "empty" },
@@ -377,7 +404,9 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
         if (!u) return;
         if (Date.now() >= u.expiresAt) {
           set({ undo: null });
+          get().announce("Undo expired.");
         }
+        undoTimer = null;
       }, 6100);
 
       return true;

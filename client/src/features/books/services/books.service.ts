@@ -14,20 +14,75 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function readLocal(): Book[] {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
+function uuid(): string {
+  // Prefer built-in UUID when available
+  const c = globalThis.crypto as Crypto | undefined;
+  if (c && "randomUUID" in c && typeof c.randomUUID === "function") {
+    return c.randomUUID();
+  }
+
+  // Fallback: RFC4122-ish v4 using getRandomValues when available
+  if (c && "getRandomValues" in c && typeof c.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    c.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
+  // Last-resort fallback (still stable enough for local-first)
+  return `id_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+type ReadLocalResult = { books: Book[]; repaired: boolean };
+
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
+function readLocal(): ReadLocalResult {
+  const raw = safeGetItem(STORAGE_KEY);
+  if (!raw) return { books: [], repaired: false };
+
   try {
     const parsed = JSON.parse(raw);
-    return sanitizeLoadedBooks(parsed);
+    const { books, droppedCount } = sanitizeLoadedBooks(parsed);
+    if (droppedCount > 0) {
+      writeLocal(books);
+      return { books, repaired: true };
+    }
+    return { books, repaired: false };
   } catch (e) {
     if (import.meta.env.DEV) console.warn("[BooksService] Bad storage JSON", e);
-    return [];
+    safeRemoveItem(STORAGE_KEY);
+    return { books: [], repaired: true };
   }
 }
 
 function writeLocal(books: Book[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  safeSetItem(STORAGE_KEY, JSON.stringify(books));
 }
 
 function nonEmpty(label: string, s: unknown): string {
@@ -41,17 +96,20 @@ function sanitizeOptional(s: unknown): string | undefined {
   return v ? v : undefined;
 }
 
-function sanitizeLoadedBooks(raw: unknown): Book[] {
-  if (!Array.isArray(raw)) return [];
+function sanitizeLoadedBooks(raw: unknown): {
+  books: Book[];
+  droppedCount: number;
+} {
+  if (!Array.isArray(raw)) return { books: [], droppedCount: 0 };
 
   const out: Book[] = [];
+  let dropped = 0;
   for (const item of raw) {
     // Best-effort sanitize to prevent runtime crashes.
     // Strict parity: drop invalid items instead of inventing authors.
     try {
       const b = item as Partial<Book>;
-      const id = typeof b.id === "string" ? b.id : crypto.randomUUID();
-
+      const id = typeof b.id === "string" ? b.id : uuid();
       const title = nonEmpty("Title", b.title);
       const author = nonEmpty("Author", b.author);
 
@@ -86,9 +144,10 @@ function sanitizeLoadedBooks(raw: unknown): Book[] {
       });
     } catch {
       // Drop invalid record
+      dropped += 1;
     }
   }
-  return out;
+  return { books: out, droppedCount: dropped };
 }
 
 // ----------------------------
@@ -154,7 +213,11 @@ async function apiDeleteBook(id: BookId): Promise<void> {
 export const BooksService = {
   async list(): Promise<Book[]> {
     if (USE_API) return apiFetchBooks();
-    return readLocal();
+    const res = readLocal();
+    if (import.meta.env.DEV && res.repaired) {
+      console.info("[BooksService] Storage repaired for", STORAGE_KEY);
+    }
+    return res.books;
   },
 
   async create(
@@ -162,7 +225,7 @@ export const BooksService = {
   ): Promise<Book> {
     if (USE_API) return apiCreateBook(input);
 
-    const books = readLocal();
+    const books = readLocal().books;
     const book: Book = {
       ...input,
       title: nonEmpty("Title", input.title),
@@ -171,7 +234,7 @@ export const BooksService = {
       series: sanitizeOptional(input.series),
       isbn: sanitizeOptional(input.isbn),
       plannedMonth: sanitizeOptional(input.plannedMonth),
-      id: crypto.randomUUID(),
+      id: uuid(),
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -186,7 +249,7 @@ export const BooksService = {
   ): Promise<Book | null> {
     if (USE_API) return apiUpdateBook(id, patch);
 
-    const books = readLocal();
+    const books = readLocal().books;
     const idx = books.findIndex((currentBook) => currentBook.id === id);
     if (idx === -1) return null;
 
@@ -231,7 +294,7 @@ export const BooksService = {
       return true;
     }
 
-    const books = readLocal();
+    const books = readLocal().books;
     const next = books.filter((currentBook) => currentBook.id !== id);
     if (next.length === books.length) return false;
     writeLocal(next);
@@ -244,7 +307,7 @@ export const BooksService = {
       throw new Error("replaceAll not supported in API mode yet");
     }
 
-    // senitize on write to avoid peristing junk
+    // sanitize on write to avoid peristing junk
     const safe: Book[] = nextBooks.map((b) => ({
       ...b,
       title: nonEmpty("Title", b.title),
@@ -264,7 +327,7 @@ export const BooksService = {
         b.status === "finished"
           ? b.status
           : "planned",
-      id: typeof b.id === "string" ? b.id : crypto.randomUUID(),
+      id: typeof b.id === "string" ? b.id : uuid(),
     }));
 
     writeLocal(safe);

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Spinner } from "./Spinner";
+import { cn } from "./cn";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "danger";
@@ -10,9 +11,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       variant = "primary",
-      className = "",
+      className,
       disabled,
       loading = false,
+      type,
       children,
       ...props
     },
@@ -29,16 +31,26 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           : "border border-slate-300 bg-white text-black hover:bg-slate-100";
 
     const isDisabled = disabled || loading;
-    const disabledStyles = isDisabled ? "opacity-60 cursor-not-allowed" : "";
 
     return (
       <button
         ref={ref}
         {...props}
+        type={type ?? "button"}
         disabled={isDisabled}
-        className={`${base} ${styles} ${disabledStyles} ${className}`}
+        aria-busy={loading || undefined}
+        className={cn(
+          base,
+          styles,
+          isDisabled && "opacity-60 cursor-not-allowed",
+          className,
+        )}
       >
-        {loading ? <Spinner size="sm" /> : null}
+        {loading ? (
+          <span aria-hidden="true">
+            <Spinner size="sm" />
+          </span>
+        ) : null}
         {children}
       </button>
     );

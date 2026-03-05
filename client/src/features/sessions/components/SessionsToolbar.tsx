@@ -64,11 +64,16 @@ export function SessionsToolbar({
             onClick={onClearFilters}
             disabled={!hasActiveFilters}
             title={!hasActiveFilters ? "No active filters" : "Clear filters"}
+            aria-label="Clear session filters"
           >
             Clear
           </Button>
 
-          <Button ref={logButtonRef} onClick={onLogSession}>
+          <Button
+            ref={logButtonRef}
+            onClick={onLogSession}
+            data-focus-id="sessions:log"
+          >
             Log session
           </Button>
         </div>
@@ -79,7 +84,9 @@ export function SessionsToolbar({
         <label className="grid gap-1 md:col-span-2">
           <span className="text-xs font-medium text-slate-400">Search</span>
           <input
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            type="search"
+            aria-label="Search sessions"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             placeholder="Title, author, notes, date…"
             value={filters.search ?? ""}
             onChange={(e) => onChangeFilters({ search: e.target.value })}
@@ -90,7 +97,8 @@ export function SessionsToolbar({
         <label className="grid gap-1 md:col-span-2">
           <span className="text-xs font-medium text-slate-400">Book</span>
           <select
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            aria-label="Filter by book"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={filters.bookId ?? ""}
             onChange={(e) =>
               onChangeFilters({ bookId: e.target.value || undefined })
@@ -109,7 +117,8 @@ export function SessionsToolbar({
         <label className="grid gap-1">
           <span className="text-xs font-medium text-slate-400">Type</span>
           <select
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            aria-label="Filter by session type"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={filters.type ?? ""}
             onChange={(e) =>
               onChangeFilters({
@@ -127,7 +136,8 @@ export function SessionsToolbar({
         <label className="grid gap-1">
           <span className="text-xs font-medium text-slate-400">Sort</span>
           <select
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            aria-label="Sort sessions"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={sortKey}
             onChange={(e) => onChangeSort(e.target.value as SessionsSortKey)}
           >
@@ -141,7 +151,8 @@ export function SessionsToolbar({
           <span className="text-xs font-medium text-slate-400">From</span>
           <input
             type="date"
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            aria-label="Start date"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={filters.dateStart ?? ""}
             onChange={(e) => {
               const nextStart = e.target.value || undefined;
@@ -182,11 +193,12 @@ export function SessionsToolbar({
                 type: filters.type === "pages" ? undefined : "pages",
               })
             }
+            aria-pressed={filters.type === "pages"}
             className={`h-8 rounded-md border px-3 text-xs font-medium ${
               filters.type === "pages"
                 ? "border-slate-400 bg-slate-100 text-slate-800"
                 : "border-slate-200 bg-white text-slate-600"
-            }`}
+            } outline-none focus-visible:ring-2 focus-visible:ring-slate-300`}
           >
             Pages
           </button>
@@ -198,11 +210,12 @@ export function SessionsToolbar({
                 type: filters.type === "minutes" ? undefined : "minutes",
               })
             }
+            aria-pressed={filters.type === "minutes"}
             className={`h-8 rounded-md border px-3 text-xs font-medium ${
               filters.type === "minutes"
                 ? "border-slate-400 bg-slate-100 text-slate-800"
                 : "border-slate-200 bg-white text-slate-600"
-            }`}
+            } outline-none focus-visible:ring-2 focus-visible:ring-slate-300`}
           >
             Minutes
           </button>

@@ -69,8 +69,7 @@ export function normalizeCreateInput(input: CreateSessionInput): Session {
   if (!bookId) throw new Error("Book is required.");
   if (!date) throw new Error("Date must be in YYYY-MM-DD format.");
 
-  const pages =
-    typeof input.pagesRead === "number" ? input.pagesRead : undefined;
+  const pages = typeof input.pages === "number" ? input.pages : undefined;
   const minutes = typeof input.minutes === "number" ? input.minutes : undefined;
 
   const p = pages && pages > 0 ? Math.floor(pages) : undefined;

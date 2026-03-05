@@ -18,6 +18,16 @@ export function BookList({
 }) {
   const clamp = (i: number) => Math.max(0, Math.min(i, books.length - 1));
 
+  // Sprint 8 hardening: if the list changes (filters/search/delete/undo),
+  // ensure activeIndex can't point to a non-existent row.
+  useEffect(() => {
+    if (books.length === 0) {
+      if (activeIndex !== -1) onActiveIndex(-1);
+      return;
+    }
+    if (activeIndex >= books.length) onActiveIndex(books.length - 1);
+  }, [books.length, activeIndex, onActiveIndex]);
+
   useEffect(() => {
     if (activeIndex < 0) return;
     const root = document.getElementById(id);
@@ -34,7 +44,7 @@ export function BookList({
       role="listbox"
       aria-label="Books results"
       data-active-index={activeIndex}
-      className="space-y-3 outline-none"
+      className="space-y-3 outline-none focus-visible:ring-2 focus-visible:ring-slate-300 rounded-md"
       onKeyDown={(e) => {
         const keys = [
           "ArrowDown",
@@ -73,6 +83,7 @@ export function BookList({
             role="option"
             aria-selected={active}
             data-result-index={i}
+            data-book-result-id={b.id}
           >
             <Card className={active ? "ring-2 ring-slate-300" : ""}>
               <BookCard book={b} />

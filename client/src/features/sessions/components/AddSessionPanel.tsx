@@ -12,6 +12,10 @@ function localDayKey(d = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
+function isYyyyMmDd(s: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
 // returns: number | undefined | "NEGATIVE" | "INVALID"
 function parseNonNegInt(
   s: string,
@@ -55,9 +59,13 @@ export function AddSessionPanel({
   const bookRef = useRef<HTMLSelectElement | null>(null);
   const pagesRef = useRef<HTMLInputElement | null>(null);
   const minutesRef = useRef<HTMLInputElement | null>(null);
+  const titleId = "add-session-title";
+  const descId = "add-session-desc";
+  const errorId = "add-session-error";
 
   useEffect(() => {
-    queueMicrotask(() => bookRef.current?.focus());
+    // Defer is more reliable than microtask across environments/layout
+    window.setTimeout(() => bookRef.current?.focus(), 0);
   }, []);
 
   const canSubmit = useMemo(() => {
@@ -80,7 +88,7 @@ export function AddSessionPanel({
 
     if (!bookId) {
       setLocalError("Book is required.");
-      queueMicrotask(() => bookRef.current?.focus());
+      window.setTimeout(() => bookRef.current?.focus(), 0);
       return;
     }
 
@@ -89,20 +97,24 @@ export function AddSessionPanel({
 
     if (p === "NEGATIVE" || m === "NEGATIVE") {
       setLocalError("Minutes and pages cannot be negative.");
-      queueMicrotask(() =>
-        p === "NEGATIVE"
-          ? pagesRef.current?.focus()
-          : minutesRef.current?.focus(),
+      window.setTimeout(
+        () =>
+          p === "NEGATIVE"
+            ? pagesRef.current?.focus()
+            : minutesRef.current?.focus(),
+        0,
       );
       return;
     }
 
     if (p === "INVALID" || m === "INVALID") {
       setLocalError("Minutes and pages must be whole numbers.");
-      queueMicrotask(() =>
-        p === "INVALID"
-          ? pagesRef.current?.focus()
-          : minutesRef.current?.focus(),
+      window.setTimeout(
+        () =>
+          p === "INVALID"
+            ? pagesRef.current?.focus()
+            : minutesRef.current?.focus(),
+        0,
       );
       return;
     }
@@ -112,18 +124,22 @@ export function AddSessionPanel({
 
     if (pv === 0 && mv === 0) {
       setLocalError("Enter minutes or pages.");
-      queueMicrotask(() => pagesRef.current?.focus());
+      window.setTimeout(() => pagesRef.current?.focus(), 0);
       return;
     }
 
     const safeDate = (date || "").trim() || localDayKey();
+    if (!isYyyyMmDd(safeDate)) {
+      setLocalError("Date must be in YYYY-MM-DD format.");
+      return;
+    }
 
     try {
       setIsSaving(true);
       const created = await onSubmit({
         bookId,
         date: safeDate,
-        pagesRead: pv > 0 ? pv : undefined,
+        pages: pv > 0 ? pv : undefined,
         minutes: mv > 0 ? mv : undefined,
         notes: notes.trim() || undefined,
       });
@@ -141,10 +157,34 @@ export function AddSessionPanel({
   }
 
   return (
-    <Card>
+    <Card
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
+      onKeyDown={(e) => {
+        // Sprint 8: handle Escape at the dialog surface (no per-field traps)
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onClose();
+        }
+      }}
+    >
       <div className="flex items-center justify-between gap-3">
-        <div className="text-sm font-medium">Log session</div>
-        <Button variant="secondary" onClick={onClose} disabled={isSaving}>
+        <div>
+          <div id={titleId} className="text-sm font-medium">
+            Log session
+          </div>
+          <div id={descId} className="text-xs text-slate-500">
+            Choose a book and enter minutes or pages.
+          </div>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={onClose}
+          disabled={isSaving}
+          aria-label="Close log session"
+        >
           Close
         </Button>
       </div>
@@ -154,14 +194,15 @@ export function AddSessionPanel({
           <span className="text-xs font-medium text-slate-400">Book *</span>
           <select
             ref={bookRef}
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={bookId}
             aria-invalid={!!localError && !bookId}
+            aria-describedby={localError ? errorId : undefined}
             onChange={(e) => setBookId(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Escape") {
+              if (e.key === "Enter") {
                 e.preventDefault();
-                onClose();
+                void submit();
               }
             }}
           >
@@ -178,15 +219,9 @@ export function AddSessionPanel({
           <span className="text-xs font-medium text-slate-400">Date *</span>
           <input
             type="date"
-            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                onClose();
-              }
-            }}
           />
         </label>
 
@@ -199,16 +234,14 @@ export function AddSessionPanel({
               min={0}
               step={1}
               inputMode="numeric"
-              className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+              className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
               value={pages}
+              aria-describedby={localError ? errorId : undefined}
               onChange={(e) => setPages(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   void submit();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  onClose();
                 }
               }}
             />
@@ -222,16 +255,14 @@ export function AddSessionPanel({
               min={0}
               step={1}
               inputMode="numeric"
-              className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+              className="h-9 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
               value={minutes}
+              aria-describedby={localError ? errorId : undefined}
               onChange={(e) => setMinutes(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   void submit();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  onClose();
                 }
               }}
             />
@@ -241,14 +272,12 @@ export function AddSessionPanel({
         <label className="grid gap-1">
           <span className="text-xs font-medium text-slate-400">Notes</span>
           <textarea
-            className="min-h-[80px] w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2"
+            className="min-h-[80px] w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-300"
             value={notes}
+            aria-describedby={localError ? errorId : undefined}
             onChange={(e) => setNotes(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                onClose();
-              } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 void submit();
               }
@@ -257,7 +286,12 @@ export function AddSessionPanel({
         </label>
 
         {localError ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div
+            id={errorId}
+            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+            role="status"
+            aria-live="polite"
+          >
             {localError}
           </div>
         ) : null}
@@ -267,6 +301,7 @@ export function AddSessionPanel({
             Cancel
           </Button>
           <Button
+            type="button"
             onClick={() => void submit()}
             disabled={!canSubmit || isSaving}
             aria-busy={isSaving}
