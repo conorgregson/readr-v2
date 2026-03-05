@@ -3,6 +3,7 @@ import { Button } from "../../../shared/ui/Button";
 import { useBooksStore } from "../../books/store/books.store";
 import { useSessionsStore } from "../store/sessions.store";
 import type { Session } from "../types";
+import { captureFocusToken, restoreFocus } from "../../../shared/a11y/focus";
 
 function parseOptionalPosInt(
   s: string,
@@ -30,7 +31,7 @@ function highlight(text: string, q?: string) {
   const tokens = splitTokens(q);
   if (!tokens.length) return text;
 
-  // For highlight parity (safe, no innerHTML), we do a simple multi-token OR highlight.
+  // For highlight parity (safe, no innerHTML), simple multi-token OR highlight.
   // Keep it stable: compute matches for the earliest token occurrences.
   const lower = text.toLowerCase();
 
@@ -115,8 +116,12 @@ export function SessionsRow({
   const [notes, setNotes] = useState(session.notes ?? "");
 
   const firstFieldRef = useRef<HTMLSelectElement | null>(null);
+  const editBtnRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusRef = useRef<ReturnType<typeof captureFocusToken>>({
+    kind: "none",
+  });
 
-  // Keep local state in sync if store changes under us (rare but safe)
+  // Keep local state in sync if store changes (rare but safe)
   useEffect(() => {
     if (isEditing) return;
     setBookId(session.bookId);
@@ -176,6 +181,11 @@ export function SessionsRow({
       }
 
       setIsEditing(false);
+      // Sprint 8: restore focus to Edit button after save.
+      window.setTimeout(() => {
+        if (editBtnRef.current) editBtnRef.current.focus();
+        else restoreFocus(lastFocusRef.current, { deferMs: 0 });
+      }, 0);
     } finally {
       setIsSaving(false);
     }
@@ -184,8 +194,13 @@ export function SessionsRow({
   async function onDelete() {
     setLocalError(null);
 
+    lastFocusRef.current = captureFocusToken();
     const ok = confirm("Delete this session? You can undo for ~6 seconds.");
-    if (!ok) return;
+    if (!ok) {
+      // Restore focus after canceling confirm (no focus loss).
+      restoreFocus(lastFocusRef.current, { deferMs: 0 });
+      return;
+    }
 
     try {
       setIsDeleting(true);
@@ -204,6 +219,12 @@ export function SessionsRow({
     setPages(session.pages?.toString() ?? "");
     setMinutes(session.minutes?.toString() ?? "");
     setNotes(session.notes ?? "");
+
+    // Sprint 8: restore focus to Edit button after cancel.
+    window.setTimeout(() => {
+      if (editBtnRef.current) editBtnRef.current.focus();
+      else restoreFocus(lastFocusRef.current, { deferMs: 0 });
+    }, 0);
   }
 
   const details = [
@@ -215,12 +236,17 @@ export function SessionsRow({
 
   return (
     <tr
+      id={`session-row-${session.id}`}
+      data-focus-id={`session:${session.id}:row`}
       ref={setRowRef}
+      role="row"
+      aria-label={`Session ${session.date}`}
       className={`border-t border-slate-100 align-top outline-none ${
-        isSelected ? "bg-slate-50" : ""
+        isSelected ? "bg-slate-700" : ""
       }`}
       aria-selected={isSelected}
       tabIndex={isSelected ? 0 : -1}
+      data-session-row-id={session.id}
       onClick={() => {
         if (!isEditing) onSelect();
       }}
@@ -233,7 +259,8 @@ export function SessionsRow({
         {isEditing ? (
           <input
             type="date"
-            className="h-9 w-[160px] rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            aria-label="Session date"
+            className="h-9 w-[160px] rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             onKeyDown={(e) => {
@@ -253,7 +280,8 @@ export function SessionsRow({
         {isEditing ? (
           <select
             ref={firstFieldRef}
-            className="h-9 w-[320px] max-w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+            aria-label="Book"
+            className="h-9 w-[320px] max-w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400"
             value={bookId}
             onChange={(e) => setBookId(e.target.value)}
             onKeyDown={(e) => {
@@ -290,7 +318,8 @@ export function SessionsRow({
               min={0}
               step={1}
               inputMode="numeric"
-              className="h-9 w-[90px] rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+              aria-label="Pages read"
+              className="h-9 w-[90px] rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400"
               placeholder="Pages"
               value={pages}
               onChange={(e) => setPages(e.target.value)}
@@ -304,7 +333,8 @@ export function SessionsRow({
               min={0}
               step={1}
               inputMode="numeric"
-              className="h-9 w-[90px] rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2"
+              aria-label="Minutes read"
+              className="h-9 w-[90px] rounded-md border border-slate-300 px-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400"
               placeholder="Min"
               value={minutes}
               onChange={(e) => setMinutes(e.target.value)}
@@ -326,7 +356,8 @@ export function SessionsRow({
         {isEditing ? (
           <div className="grid gap-2">
             <textarea
-              className="min-h-[56px] w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2"
+              aria-label="Notes"
+              className="min-h-[56px] w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               onKeyDown={(e) => {
@@ -369,11 +400,16 @@ export function SessionsRow({
 
             <div className="flex shrink-0 items-center gap-2">
               <Button
+                ref={editBtnRef}
                 variant="secondary"
                 onClick={(e) => {
                   e.stopPropagation();
+                  onSelect();
+                  lastFocusRef.current = captureFocusToken();
                   setIsEditing(true);
+                  window.setTimeout(() => firstFieldRef.current?.focus(), 0);
                 }}
+                aria-label="Edit session"
               >
                 Edit
               </Button>
@@ -384,6 +420,7 @@ export function SessionsRow({
                   void onDelete();
                 }}
                 disabled={isDeleting}
+                aria-label="Delete session"
               >
                 {isDeleting ? "Deleting…" : "Delete"}
               </Button>

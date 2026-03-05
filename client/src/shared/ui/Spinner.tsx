@@ -1,3 +1,5 @@
+import { cn } from "./cn";
+
 type SpinnerProps = {
   size?: "sm" | "md";
   className?: string;
@@ -6,18 +8,22 @@ type SpinnerProps = {
 
 export function Spinner({
   size = "sm",
-  className = "",
+  className,
   label = "Loading",
 }: SpinnerProps) {
   const dimension = size === "sm" ? "h-4 w-4" : "h-5 w-5";
 
   return (
-    <span className={`inline-flex items-center ${className}`}>
+    <span
+      className={cn("inline-flex items-center", className)}
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+    >
       <svg
-        className={`animate-spin ${dimension}`}
+        aria-hidden="true"
+        className={cn("animate-spin", dimension)}
         viewBox="0 0 24 24"
-        aria-label={label}
-        role="status"
       >
         <circle
           className="opacity-25"
@@ -34,6 +40,7 @@ export function Spinner({
           d="M4 12a8 8 0 018-8V4a4 4 0 00-4 4H4z"
         />
       </svg>
+
       <span className="sr-only">{label}</span>
     </span>
   );

@@ -11,6 +11,11 @@ import { BookList } from "./components/BookList";
 import { BooksToolbar } from "./components/BooksToolbar";
 import { BooksFiltersPanel } from "./components/BooksFilters";
 import { AddBookPanel } from "./components/AddBookPanel";
+import {
+  captureFocusToken,
+  restoreFocus,
+  focusFirstMatch,
+} from "../../shared/a11y/focus";
 
 export function BooksPage() {
   const loadBooks = useBooksStore((s) => s.loadBooks);
@@ -35,8 +40,13 @@ export function BooksPage() {
   const enableLooserSearch = useBooksStore((s) => s.enableLooserSearch);
 
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const undoBtnRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusRef = useRef<ReturnType<typeof captureFocusToken>>({
+    kind: "none",
+  });
 
-  const visibleBooks = useBooksStore((s) => s.visibleBooks)();
+  const getVisibleBooks = useBooksStore((s) => s.visibleBooks);
+  const visibleBooks = isBootstrapped ? getVisibleBooks() : [];
 
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const resultsId = "books-results";
@@ -45,14 +55,37 @@ export function BooksPage() {
   const addBtnRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    loadBooks();
-  }, [loadBooks]);
+    if (isBootstrapped) return;
+    void loadBooks();
+  }, [isBootstrapped, loadBooks]);
+
+  // When an Undo banner appears, move focus to the Undo action for keyboard parity.
+  // This prevents "focus loss" after a delete (especially if the deleted row contained the focused button).
+  useEffect(() => {
+    if (!undo) return;
+    // Defer so the button exists in the DOM.
+    window.setTimeout(() => {
+      undoBtnRef.current?.focus();
+    }, 0);
+  }, [undo]);
 
   const focusResultsAndSelectFirst = () => {
     const list = document.getElementById(resultsId);
     if (!list) return;
     (list as HTMLElement).focus();
     setActiveIndex(0);
+  };
+
+  const focusResultsAndSelectBook = (bookId: string) => {
+    const list = document.getElementById(resultsId) as HTMLElement | null;
+    if (!list) return false;
+    list.focus();
+    const idx = visibleBooks.findIndex((b) => b.id === bookId);
+    if (idx >= 0) {
+      setActiveIndex(idx);
+      return true;
+    }
+    return false;
   };
 
   // --- derived UI states ----------------------------------
@@ -72,21 +105,51 @@ export function BooksPage() {
 
   if (books.length === 0) {
     return (
-      <EmptyState
-        title="No books yet"
-        description="Add your first book to start tracking your reading."
-        action={
-          <Button
-            ref={addBtnRef}
-            onClick={() => {
-              setError(undefined);
-              setIsAddOpen(true);
+      <>
+        <EmptyState
+          title="No books yet"
+          description="Add your first book to start tracking your reading."
+          action={
+            <Button
+              ref={addBtnRef}
+              onClick={() => {
+                lastFocusRef.current = captureFocusToken();
+                setError(undefined);
+                setIsAddOpen(true);
+              }}
+              data-focus-id="book:add"
+            >
+              Add book
+            </Button>
+          }
+        />
+
+        {isAddOpen ? (
+          <AddBookPanel
+            onClose={() => {
+              setIsAddOpen(false);
+              window.setTimeout(() => {
+                restoreFocus(lastFocusRef.current, {
+                  fallbackSelectors: [`[data-focus-id="book:add"]`],
+                  deferMs: 0,
+                });
+              }, 0);
             }}
-          >
-            Add book
-          </Button>
-        }
-      />
+            onSubmit={async (data) => {
+              const created = await addBook(data);
+              if (created) {
+                setIsAddOpen(false);
+                window.setTimeout(() => {
+                  restoreFocus(lastFocusRef.current, {
+                    fallbackSelectors: [`[data-focus-id="book:add"]`],
+                    deferMs: 0,
+                  });
+                }, 0);
+              }
+            }}
+          />
+        ) : null}
+      </>
     );
   }
 
@@ -106,6 +169,7 @@ export function BooksPage() {
         onFocusResults={focusResultsAndSelectFirst}
         searchInputRef={searchRef}
         onAddBook={() => {
+          lastFocusRef.current = captureFocusToken();
           setError(undefined);
           setIsAddOpen(true);
         }}
@@ -129,13 +193,25 @@ export function BooksPage() {
         <AddBookPanel
           onClose={() => {
             setIsAddOpen(false);
-            addBtnRef.current?.focus();
+            // Sprint 8: defer focus restore until after panel unmount.
+            window.setTimeout(() => {
+              restoreFocus(lastFocusRef.current, {
+                fallbackSelectors: [`[data-focus-id="book:add"]`],
+                deferMs: 0,
+              });
+            }, 0);
           }}
           onSubmit={async (data) => {
             const created = await addBook(data);
             if (created) {
               setIsAddOpen(false);
-              addBtnRef.current?.focus();
+              // Sprint 8: defer focus restore until after list rerender.
+              window.setTimeout(() => {
+                restoreFocus(lastFocusRef.current, {
+                  fallbackSelectors: [`[data-focus-id="book:add"]`],
+                  deferMs: 0,
+                });
+              }, 0);
             }
           }}
         />
@@ -150,6 +226,13 @@ export function BooksPage() {
                 onClick={() => {
                   enableLooserSearch();
                   setActiveIndex(-1);
+                  // Keep keyboard users in the search flow.
+                  const el = searchRef.current;
+                  el?.focus();
+                  if (el) {
+                    const v = el.value;
+                    el.setSelectionRange?.(v.length, v.length);
+                  }
                 }}
               >
                 Try looser search
@@ -159,6 +242,13 @@ export function BooksPage() {
                 onClick={() => {
                   setSearchQuery("");
                   setActiveIndex(-1);
+                  // Sprint 8: search clear must restore focus to search input.
+                  const el = searchRef.current;
+                  el?.focus();
+                  if (el) {
+                    const v = el.value;
+                    el.setSelectionRange?.(v.length, v.length);
+                  }
                 }}
               >
                 Clear search
@@ -180,9 +270,29 @@ export function BooksPage() {
 
           <div className="shrink-0 flex items-center gap-2">
             <Button
-              variant="secondary"
-              onClick={() => {
-                void undoLast();
+              ref={undoBtnRef}
+              onClick={async () => {
+                // Capture current focus before undo.
+                lastFocusRef.current = captureFocusToken();
+                const ok = await undoLast();
+                if (ok) {
+                  // Sprint 8: restore focus + selection to the restored row when possible.
+                  const restoredId = undo?.meta?.bookId;
+                  if (restoredId) {
+                    const did = focusResultsAndSelectBook(restoredId);
+                    if (!did) focusResultsAndSelectFirst();
+                  } else {
+                    focusResultsAndSelectFirst();
+                  }
+                } else {
+                  // If undo fails, keep focus in a safe place.
+                  focusFirstMatch([
+                    `#${resultsId}`,
+                    'input[type="search"]',
+                    "input",
+                    "button",
+                  ]);
+                }
               }}
             >
               Undo
@@ -191,6 +301,13 @@ export function BooksPage() {
               variant="secondary"
               onClick={() => {
                 clearUndo();
+                // After dismissing undo, keep focus in the results flow.
+                focusFirstMatch([
+                  `#${resultsId}`,
+                  'input[type="search"]',
+                  "input",
+                  "button",
+                ]);
               }}
               aria-label="Dismiss undo"
               title="Dismiss"

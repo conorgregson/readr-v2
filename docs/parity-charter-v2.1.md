@@ -42,7 +42,7 @@ Once a feature reaches Tier 0 Lock:
 - [x] Sprint 5 — **Books Tier 0 Lock**
 - [x] Sprint 6 — Sessions Core
 - [x] Sprint 7 — **Sessions Tier 0 Lock**
-- [ ] Sprint 8 — Hardening & Accessibility Sweep
+- [x] Sprint 8 — Hardening & Accessibility Sweep
 - [ ] Sprint 9 — Tests & CI Baseline
 - [ ] Sprint 10 — Freeze & Stabilization
 
@@ -121,10 +121,12 @@ Sessions behavior is now frozen.
 
 | Area                        | Status |
 | --------------------------- | ------ |
-| Focus management            | ❌     |
-| Corrupt storage fallback    | ❌     |
-| Large dataset sanity check  | ❌     |
-| Rapid interaction stability | ❌     |
+| Focus management            | ✅     |
+| Corrupt storage fallback    | ✅     |
+| Large dataset sanity check  | ✅     |
+| Rapid interaction stability | ✅     |
+
+Sprint 8 Completion: **4 / 4**
 
 ---
 

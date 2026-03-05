@@ -2,6 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Book, BookStatus } from "../types";
 import { Button } from "../../../shared/ui/Button";
 import { useBooksStore } from "../store/books.store";
+import {
+  captureFocusToken,
+  restoreFocus,
+  type FocusToken,
+} from "../../../shared/a11y/focus";
 
 const STATUS_LABEL: Record<BookStatus, string> = {
   planned: "Planned",
@@ -43,6 +48,9 @@ export function BookCard({ book }: { book: Book }) {
   const [localError, setLocalError] = useState<string | null>(null);
 
   const titleRef = useRef<HTMLInputElement | null>(null);
+  const editBtnRef = useRef<HTMLButtonElement | null>(null);
+  const deleteBtnRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusRef = useRef<FocusToken>({ kind: "none" });
 
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<number | null>(null);
@@ -91,6 +99,8 @@ export function BookCard({ book }: { book: Book }) {
   }, [title, author]);
 
   function beginEdit() {
+    // Remeber where focus came from so it can be restored on Cancel/Save.
+    lastFocusRef.current = captureFocusToken();
     setLocalError(null);
     setError(undefined);
 
@@ -105,8 +115,8 @@ export function BookCard({ book }: { book: Book }) {
 
     setIsEditing(true);
 
-    // focus the title field next tick
-    queueMicrotask(() => titleRef.current?.focus());
+    // focus the title field next tick (setTimeout is safest across environments)
+    window.setTimeout(() => titleRef.current?.focus(), 0);
   }
 
   function cancelEdit() {
@@ -116,6 +126,12 @@ export function BookCard({ book }: { book: Book }) {
     setTitle(book.title);
     setAuthor(book.author);
     setStatus(book.status);
+
+    // Sprint 8: restore focus to the button that launched edit (fallback: Edit button).
+    restoreFocus(lastFocusRef.current, {
+      fallbackSelectors: [`[data-focus-id="book:${book.id}:edit"]`],
+      deferMs: 0,
+    });
   }
 
   async function saveEdit() {
@@ -154,6 +170,19 @@ export function BookCard({ book }: { book: Book }) {
       }, 1200);
 
       setError(undefined);
+
+      // Sprint 8: after a successful save, restore focus to Edit for this row.
+      // (Keeps keyboard flow stable; no "lost focus" on re-render.)
+      restoreFocus(
+        {
+          kind: "selector",
+          selector: `[data-focus-id="book:${book.id}:edit"]`,
+        },
+        {
+          fallbackSelectors: [`[data-focus-id="book:${book.id}:edit"]`],
+          deferMs: 0,
+        },
+      );
     } catch (e) {
       const msg = (e as Error)?.message ?? "Failed to save changes.";
       setLocalError(msg);
@@ -164,9 +193,19 @@ export function BookCard({ book }: { book: Book }) {
   }
 
   async function onDelete() {
+    // Capture focus before confirm so Cancel restores to a sensible place.
+    lastFocusRef.current = captureFocusToken();
+
     // keep it simple for parity phase (no modal)
     const ok = window.confirm(`Delete "${book.title}"?`);
-    if (!ok) return;
+    if (!ok) {
+      // Sprint 8: user canceled confirm → restore focus to Delete (or prior focus).
+      restoreFocus(lastFocusRef.current, {
+        fallbackSelectors: [`[data-focus-id="book:${book.id}:delete"]`],
+        deferMs: 0,
+      });
+      return;
+    }
 
     setLocalError(null);
     setError(undefined);
@@ -200,7 +239,7 @@ export function BookCard({ book }: { book: Book }) {
               </span>
               <input
                 ref={titleRef}
-                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2"
+                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
                 value={title}
                 aria-invalid={isTitleInvalid}
                 onChange={(e) => setTitle(e.target.value)}
@@ -221,7 +260,7 @@ export function BookCard({ book }: { book: Book }) {
                 Author *
               </span>
               <input
-                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2"
+                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
                 value={author}
                 aria-invalid={isAuthorInvalid}
                 onChange={(e) => setAuthor(e.target.value)}
@@ -240,7 +279,7 @@ export function BookCard({ book }: { book: Book }) {
             <label className="grid gap-1">
               <span className="text-xs font-medium text-slate-400">Status</span>
               <select
-                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2"
+                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as BookStatus)}
                 onKeyDown={(e) => {
@@ -311,6 +350,7 @@ export function BookCard({ book }: { book: Book }) {
                 variant="secondary"
                 onClick={cancelEdit}
                 disabled={isSaving}
+                aria-label={`Cancel edit for ${book.title}`}
               >
                 Cancel
               </Button>
@@ -318,6 +358,7 @@ export function BookCard({ book }: { book: Book }) {
                 onClick={saveEdit}
                 disabled={!canSave || isSaving || !hasChanges}
                 aria-busy={isSaving}
+                aria-label={`Save changes for ${book.title}`}
               >
                 {isSaving ? "Saving…" : "Save"}
               </Button>
@@ -325,17 +366,23 @@ export function BookCard({ book }: { book: Book }) {
           ) : (
             <>
               <Button
+                ref={editBtnRef}
                 variant="secondary"
                 onClick={beginEdit}
                 disabled={isDeleting}
+                data-focus-id={`book:${book.id}:edit`}
+                aria-label={`Edit ${book.title}`}
               >
                 Edit
               </Button>
               <Button
+                ref={deleteBtnRef}
                 variant="danger"
                 onClick={onDelete}
                 disabled={isDeleting}
                 aria-busy={isDeleting}
+                data-focus-id={`book:${book.id}:delete`}
+                aria-label={`Delete ${book.title}`}
               >
                 {isDeleting ? "Deleting…" : "Delete"}
               </Button>

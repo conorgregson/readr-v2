@@ -14,7 +14,7 @@ export type Session = {
 export type CreateSessionInput = {
   bookId: string;
   date: string; // "YYYY-MM-DD" (or raw date input that is normalized)
-  pagesRead?: number; // from UI (map → pages)
+  pages?: number; // from UI (map → pages)
   minutes?: number;
   notes?: string;
 };

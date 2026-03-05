@@ -5,11 +5,13 @@ import { SessionsRow } from "./SessionsRow";
 import { useSessionsStore } from "../store/sessions.store";
 
 type SessionsHistoryTableProps = {
+  id?: string;
   sessions: Session[];
   query?: string;
 };
 
 export function SessionsHistoryTable({
+  id = "sessions-results",
   sessions,
   query,
 }: SessionsHistoryTableProps) {
@@ -28,14 +30,31 @@ export function SessionsHistoryTable({
     }
   }, [selectedId, orderedIds, clearSelection]);
 
-  // row refs so we can focus the selected row without trapping Tab
+  // row refs the selected row can be focused without trapping Tab
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
 
   useEffect(() => {
     if (!selectedId) return;
     const el = rowRefs.current.get(selectedId);
-    if (el) el.focus();
-  }, [selectedId]);
+    if (!el) return;
+
+    // Sprint 8: don't steal focus if user is typing/editing elsewhere.
+    const root = document.getElementById(id);
+    const active = document.activeElement as HTMLElement | null;
+    const focusIsInside = !!(root && active && root.contains(active));
+    const focusIsBody = !active || active === document.body;
+    const focusIsTypingField =
+      !!active &&
+      (active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.tagName === "SELECT" ||
+        active.isContentEditable);
+
+    if (!focusIsTypingField && (focusIsInside || focusIsBody)) {
+      // Defer one frame so the row is definitely in the DOM and tabbable
+      requestAnimationFrame(() => el.focus());
+    }
+  }, [selectedId, id, orderedIds.length]);
 
   if (!sessions.length) {
     return (
@@ -56,45 +75,61 @@ export function SessionsHistoryTable({
         </div>
       </div>
 
-      <div className="mt-3 overflow-x-auto">
+      <div
+        id={id}
+        tabIndex={0}
+        role="region"
+        aria-label="Sessions history"
+        aria-activedescendant={
+          selectedId ? `session-row-${selectedId}` : undefined
+        }
+        className="mt-3 overflow-x-auto outline-none focus-visible:ring-2 focus-visible:ring-slate-300 rounded-md"
+        onKeyDown={(e) => {
+          // no keyboard trap: allow Tab to leave naturally
+          if (e.key === "Tab") return;
+
+          if (e.key === "Enter") {
+            // If nothing selected yet, select first row
+            if (!selectedId && orderedIds.length) {
+              e.preventDefault();
+              setSelectedId(orderedIds[0]);
+            }
+            return;
+          }
+
+          if (e.key === "Escape") {
+            e.preventDefault();
+            clearSelection();
+            return;
+          }
+
+          if (e.key === "Home") {
+            e.preventDefault();
+            moveSelection(orderedIds, "first");
+            return;
+          }
+
+          if (e.key === "End") {
+            e.preventDefault();
+            moveSelection(orderedIds, "last");
+            return;
+          }
+
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            moveSelection(orderedIds, "next");
+            return;
+          }
+
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            moveSelection(orderedIds, "prev");
+            return;
+          }
+        }}
+      >
         {/* Keyboard surface: do not block Tab */}
-        <table
-          className="w-full text-left"
-          onKeyDown={(e) => {
-            // no keyboard trap: allow Tab to leave naturally
-            if (e.key === "Tab") return;
-
-            if (e.key === "Escape") {
-              e.preventDefault();
-              clearSelection();
-              return;
-            }
-
-            if (e.key === "Home") {
-              e.preventDefault();
-              moveSelection(orderedIds, "first");
-              return;
-            }
-
-            if (e.key === "End") {
-              e.preventDefault();
-              moveSelection(orderedIds, "last");
-              return;
-            }
-
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              moveSelection(orderedIds, "next");
-              return;
-            }
-
-            if (e.key === "ArrowUp") {
-              e.preventDefault();
-              moveSelection(orderedIds, "prev");
-              return;
-            }
-          }}
-        >
+        <table className="w-full text-left">
           <thead>
             <tr className="text-xs text-slate-400">
               <th className="py-2 pr-3 font-medium">Date</th>

@@ -4,13 +4,23 @@ export function NoResultsState({
   query,
   description,
   action,
+  className = "",
+  ...props
 }: {
   query?: string;
   description?: string;
   action?: React.ReactNode;
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+    <div
+      {...props}
+      className={[
+        "rounded-xl border border-slate-800 bg-slate-900/40 p-6",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="text-base font-semibold text-slate-100">No results</div>
       <p className="mt-1 text-sm text-slate-300">
         {description ??

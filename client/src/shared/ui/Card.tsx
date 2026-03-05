@@ -1,10 +1,15 @@
-import React from "react";
+import * as React from "react";
+import { cn } from "./cn";
 
-type CardProps = {
-  children: React.ReactNode;
-  className?: string;
-};
+type CardProps = React.HTMLAttributes<HTMLDivElement>;
 
-export function Card({ children, className = "" }: CardProps) {
-  return <div className={`rounded border p-4 ${className}`}>{children}</div>;
-}
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(function Card(
+  { className, ...props },
+  ref,
+) {
+  return (
+    <div ref={ref} {...props} className={cn("rounded border p-4", className)} />
+  );
+});
+
+Card.displayName = "Card";

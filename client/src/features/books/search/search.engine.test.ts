@@ -165,7 +165,7 @@ describe("smartSearch()", () => {
   it("does not return everything for whitespace-only queries", () => {
     const items = [make({ title: "Dune" }), make({ title: "Hyperion" })];
     const res = smartSearch(items, "   ");
-    // tokenize() should return [], so smartSearch returns all (score 0) — ensure that’s what we want:
+    // tokenize() should return [], so smartSearch returns all (score 0):
     expect(res.length).toBe(2);
   });
 

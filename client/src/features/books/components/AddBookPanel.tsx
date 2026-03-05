@@ -22,6 +22,7 @@ function trimOrEmpty(s: string) {
 
 export function AddBookPanel({ onClose, onSubmit }: Props) {
   const titleRef = useRef<HTMLInputElement | null>(null);
+  // Parent handles focus restore. Keep this component render-pure.
 
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -35,24 +36,18 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const titleId = "add-book-title";
+  const descId = "add-book-desc";
+  const errorId = "add-book-error";
+
   const canSave = useMemo(() => {
     return trimOrEmpty(title).length > 0 && trimOrEmpty(author).length > 0;
   }, [title, author]);
 
   useEffect(() => {
-    // Focus first field on open
-    titleRef.current?.focus();
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+    // Focus first field on open (defer ensures DOM is ready)
+    window.setTimeout(() => titleRef.current?.focus(), 0);
+  }, []);
 
   async function handleSubmit() {
     setError(null);
@@ -92,28 +87,45 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
       className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      onKeyDown={(e) => {
+        // Sprint 8: avoid global listeners; handle Escape at the dialog surface.
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onClose();
+        }
+      }}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Add book</h2>
-          <p className="text-sm text-slate-600">
+          <h2 id={titleId} className="text-lg font-semibold text-slate-950">
+            Add book
+          </h2>
+          <p id={descId} className="text-sm text-slate-600">
             Title and author are required.
           </p>
         </div>
 
-        <Button variant="secondary" onClick={onClose}>
+        <Button
+          variant="secondary"
+          onClick={onClose}
+          aria-label="Close add book"
+        >
           Close
         </Button>
       </div>
 
-      <div className="mt-4 grip gap-3">
+      <div className="mt-4 grid gap-3">
         <label className="grid gap-1">
           <span className="text-sm font-medium text-slate-700">Title *</span>
           <input
             ref={titleRef}
-            className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+            className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
             value={title}
+            aria-invalid={!!error && trimOrEmpty(title).length === 0}
+            aria-describedby={error ? errorId : undefined}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSubmit();
@@ -124,8 +136,10 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
         <label className="grid gap-1">
           <span className="text-sm font-medium text-slate-700">Author *</span>
           <input
-            className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+            className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
             value={author}
+            aria-invalid={!!error && trimOrEmpty(author).length === 0}
+            aria-describedby={error ? errorId : undefined}
             onChange={(e) => setAuthor(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSubmit();
@@ -136,7 +150,7 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
         <label className="grid gap-1">
           <span className="text-sm font-medium text-slate-700">Status</span>
           <select
-            className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+            className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
             value={status}
             onChange={(e) => setStatus(e.target.value as BookStatus)}
           >
@@ -152,7 +166,7 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
           <label className="grid gap-1">
             <span className="text-sm font-medium text-slate-700">Genre</span>
             <input
-              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
             />
@@ -161,7 +175,7 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
           <label className="grid gap-1">
             <span className="text-sm font-medium text-slate-700">Series</span>
             <input
-              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
               value={series}
               onChange={(e) => setSeries(e.target.value)}
             />
@@ -170,7 +184,7 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
           <label className="grid gap-1">
             <span className="text-sm font-medium text-slate-700">ISBN</span>
             <input
-              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
               value={isbn}
               onChange={(e) => setIsbn(e.target.value)}
             />
@@ -182,7 +196,7 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
             </span>
             <input
               type="month"
-              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2"
+              className="h-10 rounded-md border border-slate-300 text-slate-600 px-3 outline-none focus:ring-2 focus:ring-slate-300"
               value={plannedMonth}
               onChange={(e) => setPlannedMonth(e.target.value)}
             />
@@ -191,7 +205,7 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
 
         {error ? (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
+            <span id={errorId}>{error}</span>
           </div>
         ) : null}
 

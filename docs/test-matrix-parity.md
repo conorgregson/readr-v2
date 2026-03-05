@@ -84,10 +84,10 @@ Tier 0 Lock requirement: All rows green before Sprint 7 closes.
 
 | Area                      | Unit | Component | Manual | Status |
 | ------------------------- | ---- | --------- | ------ | ------ |
-| Focus management          | ❌   | ❌        | ❌     | ❌     |
-| Corrupt storage fallback  | ❌   | ❌        | ❌     | ❌     |
-| Rapid interaction stress  | ❌   | ❌        | ❌     | ❌     |
-| Large dataset performance | ❌   | ❌        | ❌     | ❌     |
+| Focus management          | ❌   | ❌        | ✅     | 🟡     |
+| Corrupt storage fallback  | ❌   | ❌        | ✅     | 🟡     |
+| Rapid interaction stress  | ❌   | ❌        | ✅     | 🟡     |
+| Large dataset performance | ❌   | ❌        | ✅     | 🟡     |
 
 ---
 

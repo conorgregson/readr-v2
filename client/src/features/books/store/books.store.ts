@@ -24,6 +24,8 @@ function reqTrim(label: string, value: unknown): string {
   return s;
 }
 
+type CreateBookInput = Omit<Book, "id" | "createdAt" | "updatedAt">;
+
 function normalizeCreateInput(
   input: CreateBookInput,
 ): Omit<Book, "id" | "createdAt" | "updatedAt"> {
@@ -37,8 +39,6 @@ function normalizeCreateInput(
     plannedMonth: input.plannedMonth?.trim() || undefined,
   };
 }
-
-type CreateBookInput = Omit<Book, "id" | "createdAt" | "updatedAt">;
 
 type BooksState = {
   isBootstrapped: boolean;
@@ -84,6 +84,8 @@ type BooksState = {
 
   reset: () => void;
 };
+
+type SearchResult = Book | { ref: Book };
 
 let undoTimer: number | null = null;
 
@@ -360,10 +362,9 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const results = smartSearch(base, q, {
       fuzzyMaxDistance: searchFuzzyOverride ?? undefined,
       limit: 500,
-    });
+    }) as SearchResult[];
 
-    // allow either engine shape: [{ref}] or [Book]
-    return results.map((r) => r.ref);
+    return results.map((r) => ("ref" in r ? r.ref : r));
   },
 
   reset: () => set(() => ({ ...initialState })),
