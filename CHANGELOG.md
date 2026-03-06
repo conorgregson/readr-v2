@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1-sprint-9] — Tests & CI Baseline (2026-03-06)
+
+### Added
+
+- Search engine unit tests (`search.engine.test.ts`)
+- Books undo logic unit tests
+- Sessions sorting unit tests
+- Sessions keyboard navigation component tests
+- Books list keyboard navigation component tests
+- Books toolbar search behavior component tests
+- Test setup utilities for Vitest + Testing Library
+
+### Changed
+
+- Added CI pipeline validating client code on push and pull request
+
+### Fixed
+
+- Stabilized BookList keyboard navigation test behavior with controlled component rerender
+
+### Notes
+
+Regression-proof validation executed during this sprint.
+
+A temporary regression was introduced in `search.engine.ts` by modifying
+fuzzy-match acceptance logic (`d <= maxDist` → `d < maxDist`).
+
+Search engine tests failed as expected, confirming that CI guardrails
+detect behavioral regressions.
+
+The change was reverted and the test suite returned to green.
+
+---
+
+## [v2.1-sprint-8] — Hardening & Accessibility (2026-03-05)
+
+### Added
+
+- Settings data tools: JSON export/import for Books and Sessions.
+- Defensive import validation with safe failure on malformed or empty payloads.
+
+### Changed
+
+- Strengthened focus management around dialogs and undo flows.
+- Hardened persistence boundaries: UI remains IO-free; services own storage.
+
+### Fixed
+
+- Prevented invalid backup data from being written to local storage.
+- Eliminated crash paths during data ingest and edge-case state transitions.
+
+### Notes
+
+- Verified large dataset responsiveness (typing, scrolling, filters) and persistence after refresh.
+
+---
+
 ## [v2.1-sprint-7] — Sessions Tier 0 Lock (2026-03-02)
 
 ### Added

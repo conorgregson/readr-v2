@@ -37,7 +37,7 @@ Goal:
 | Empty vs NoResults          | ❌   | ✅        | ✅     | 🟡     |
 | Highlight rendering         | ❌   | ❌        | ❌     | ❌     |
 | Autocomplete suggestions    | ❌   | ❌        | ❌     | ❌     |
-| Dedicated Search button\*   | ❌   | ❌        | ❌     | ❌     |
+| Dedicated Search button\*   | ❌   | ✅        | ✅     | 🟡     |
 
 \* Only if applicable.
 
@@ -48,7 +48,7 @@ Goal:
 | Area                           | Unit | Component | Manual | Status |
 | ------------------------------ | ---- | --------- | ------ | ------ |
 | Undo timer window              | ✅   | ❌        | ✅     | 🟡     |
-| Object restoration integrity   | ✅   | ❌        | ✅     | 🟡     |
+| Object restoration integrity   | ✅   | ✅        | ✅     | ✅     |
 | Undo with active filters       | 🟡   | ❌        | ✅     | 🟡     |
 | Undo persistence after refresh | 🚫   | 🚫        | 🚫     | 🚫     |
 
@@ -62,7 +62,7 @@ Tier 0 Lock requirement: All rows green before Sprint 5 closes.
 
 | Area                | Unit | Component | Manual | Status |
 | ------------------- | ---- | --------- | ------ | ------ |
-| Sorting determinism | ❌   | ❌        | ✅     | 🟡     |
+| Sorting determinism | ✅   | ❌        | ✅     | 🟡     |
 | CRUD flows          | ❌   | 🟡        | ✅     | 🟡     |
 | Stable rendering    | ❌   | 🟡        | ✅     | 🟡     |
 
@@ -70,8 +70,8 @@ Tier 0 Lock requirement: All rows green before Sprint 5 closes.
 
 | Area                    | Unit | Component | Manual | Status |
 | ----------------------- | ---- | --------- | ------ | ------ |
-| Arrow/Home/End behavior | ❌   | 🟡        | ✅     | 🟡     |
-| Row navigation state    | ❌   | 🟡        | ✅     | 🟡     |
+| Arrow/Home/End behavior | ❌   | ✅        | ✅     | ✅     |
+| Row navigation state    | ❌   | ✅        | ✅     | ✅     |
 | Live region updates     | ❌   | 🟡        | ✅     | 🟡     |
 | Search highlight rows   | ❌   | 🟡        | ✅     | 🟡     |
 | Undo session delete     | ❌   | 🟡        | ✅     | 🟡     |
@@ -95,12 +95,27 @@ Tier 0 Lock requirement: All rows green before Sprint 7 closes.
 
 Before enabling CI badge:
 
-- [ ] Search logic unit tests stable
-- [ ] Undo unit tests implemented
-- [ ] Sessions sort unit tests implemented
-- [ ] At least one keyboard interaction component test
-- [ ] Regression-proof “intentional break” test exists
-- [ ] CI fails on regression
+- [x] Search logic unit tests stable
+- [x] Undo unit tests implemented
+- [x] Sessions sort unit tests implemented
+- [x] At least one keyboard interaction component test
+- [x] Regression-proof validation executed
+- [x] CI fails on regression
+
+Sprint 9 validation confirmed that the test suite correctly detects
+behavioral regressions.
+
+Proof exercise:
+
+A temporary regression was introduced in the fuzzy search logic
+(`d <= maxDist` → `d < maxDist`).
+
+Result:
+
+Search engine unit tests failed as expected, confirming that
+CI guardrails catch search behavior regressions.
+
+The change was reverted and the test suite returned to green.
 
 ---
 

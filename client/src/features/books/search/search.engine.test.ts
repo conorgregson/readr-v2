@@ -55,9 +55,9 @@ describe("smartSearch()", () => {
     expect(res.map((r) => r.ref.title)).toEqual(["Dune"]);
   });
 
-  it("supports fuzzy token matching", () => {
+  it("supports fuzzy token matching for near-miss typos", () => {
     const items = [make({ title: "The Hobbit", author: "Tolkien" })];
-    const res = smartSearch(items, "hobbit", { fuzzyMaxDistance: 2 });
+    const res = smartSearch(items, "hobbitt", { fuzzyMaxDistance: 2 });
     expect(res.length).toBe(1);
     expect(res[0].ref.title).toBe("The Hobbit");
   });
@@ -162,7 +162,7 @@ describe("smartSearch()", () => {
     expect(res[0].ref.title).toContain("Goblet");
   });
 
-  it("does not return everything for whitespace-only queries", () => {
+  it("returns all items for whitespace-only queries", () => {
     const items = [make({ title: "Dune" }), make({ title: "Hyperion" })];
     const res = smartSearch(items, "   ");
     // tokenize() should return [], so smartSearch returns all (score 0):

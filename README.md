@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql" />
   <img src="https://img.shields.io/badge/ORM-Prisma-0C344B?style=for-the-badge&logo=prisma" />
   <br/>
+  <img src="https://github.com/conorgregson/readr-v2/actions/workflows/ci.yml/badge.svg" />
   <img src="https://img.shields.io/badge/Status-Active%20Development-FFA500?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 </p>
@@ -16,7 +17,7 @@
 
 ## Overview
 
-**Readr v2** is a deliberate full-stack rewrite of my original offline-first reading tracker (**v1.0–v1.9**).
+**Readr v2** is a deliberate full-stack rewrite of my original offline-first reading tracker (**v1.0–v1.9**), redesigned to demonstrate modern frontend architecture, typed service layers, and CI-backed regression protection.
 
 The goal of v2 is not just a UI upgrade, but a structural evolution:
 
@@ -31,6 +32,29 @@ The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
 > Current focus: **v2.1 React frontend rebuild (feature parity phase).**
+
+---
+
+## Key Engineering Concepts
+
+Readr v2 was designed to demonstrate several real-world frontend engineering patterns:
+
+- **Behavioral Parity Testing**
+  The React frontend rebuild enforces v1.9 behavioral parity using automated tests to prevent regressions during architectural migration.
+
+- **Deterministic UI State**
+  Session history sorting is guaranteed deterministic so identical datasets always produce identical ordering.
+
+- **Undo Architecture**
+  Critical actions (delete / finish) support ~6s undo windows while preserving filters, search state, and list ordering.
+
+- **Local-First → API Migration Strategy**
+  v2.1 intentionally keeps local persistence while the backend is built, allowing UI parity to stabilize before switching to API-backed storage in v2.2.
+
+- **CI-Gated Development**
+  GitHub Actions enforces typecheck, lint, and test validation on every push and pull request.
+
+These patterns mirror practices used in production applications where architectural changes must not introduce behavioral regressions.
 
 ---
 
@@ -154,7 +178,7 @@ Only SemVer releases represent official “ship-ready” states.
 ## Roadmap (High-Level)
 
 - **v2.0.0** — Backend & CI foundation ✅
-- **v2.1.0** — React frontend rebuild (parity lock) 🚧
+- **v2.1.0** — React frontend rebuild with v1.9 behavioral parity (in progress)
 - **v2.2.0** — API integration & persistence
 - **v2.3.0+** — Accounts, analytics, and growth features
 
@@ -183,6 +207,41 @@ For detailed version history and architectural milestones, see [`roadmap.md`](./
 - Zod
 - Docker
 - GitHub Actions
+
+---
+
+## Testing & CI
+
+Readr includes automated validation to prevent behavioral regressions during development.
+
+### Test Coverage
+
+The project currently includes:
+
+- **Search engine logic tests** (tokenization, fuzzy matching, AND semantics)
+- **Books undo system tests** (delete/restore integrity)
+- **Sessions sorting tests** (deterministic ordering guarantees)
+- **Keyboard interaction tests** (navigation parity)
+
+Tests are implemented using:
+
+- **Vitest**
+- **React Testing Library**
+- **jsdom**
+
+### Continuous Integration
+
+GitHub Actions runs automated validation on **every push and pull request**.
+
+The CI pipeline performs:
+
+1. Type checking
+2. ESLint validation
+3. Test suite execution
+
+A regression-proof validation was executed during development by intentionally introducing a search regression to confirm the test suite and CI pipeline detect behavioral breakages.
+
+This ensures the React rebuild maintains **v1.9 behavioral parity guarantees**.
 
 ---
 

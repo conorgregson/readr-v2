@@ -43,14 +43,14 @@ Once a feature reaches Tier 0 Lock:
 - [x] Sprint 6 — Sessions Core
 - [x] Sprint 7 — **Sessions Tier 0 Lock**
 - [x] Sprint 8 — Hardening & Accessibility Sweep
-- [ ] Sprint 9 — Tests & CI Baseline
+- [x] Sprint 9 — Tests & CI Baseline
 - [ ] Sprint 10 — Freeze & Stabilization
 
 ---
 
 # v2.1 Tier 0 Progress Dashboard
 
-_Last updated: 2026-03-02_
+_Last updated: 2026-03-05_
 
 All rows must be complete before v2.1 freeze.
 
@@ -69,9 +69,9 @@ All rows must be complete before v2.1 freeze.
 | Looser search behavior                         | ✅     |
 | Highlight rendering parity                     | ❌     |
 | Autocomplete suggestions parity                | ❌     |
-| Dedicated Search button parity (if applicable) | ❌     |
+| Dedicated Search button parity (if applicable) | ✅     |
 
-Search Tier 0 Completion: **5 / 8**
+Search Tier 0 Completion: **6 / 8**
 
 ---
 
@@ -130,16 +130,33 @@ Sprint 8 Completion: **4 / 4**
 
 ---
 
-## Sprint 9 — CI Baseline
+## Sprint 9 — Tests & CI Baseline
 
-| Area                              | Status |
-| --------------------------------- | ------ |
-| Search unit suite stable          | 🟡     |
-| Undo unit tests implemented       | ❌     |
-| Sessions sort tests               | ❌     |
-| Keyboard interaction test         | ❌     |
-| Intentional regression proof test | ❌     |
-| CI gating enabled                 | 🟡     |
+| Area                             | Status |
+| -------------------------------- | ------ |
+| Search unit suite stable         | ✅     |
+| Undo unit tests implemented      | ✅     |
+| Sessions sort tests              | ✅     |
+| Keyboard interaction test        | ✅     |
+| Intentional regression proof run | ✅     |
+| CI gating enabled                | ✅     |
+
+Sprint 9 establishes automated guardrails for Tier 0 features.
+
+The following protections now exist:
+
+- Search engine logic covered by unit tests
+- Undo system logic covered by unit tests
+- Sessions sorting logic covered by unit tests
+- Keyboard navigation behavior covered by component tests
+- CI pipeline running typecheck, lint, and test suites on every push and PR
+
+A regression-proof validation was executed by temporarily introducing a fuzzy-match logic change in `search.engine.ts`.
+The test suite failed as expected, confirming that CI guardrails detect behavioral regressions.
+
+The change was reverted and the test suite returned to green.
+
+Sprint 9 Completion: **6 / 6**
 
 ---
 
