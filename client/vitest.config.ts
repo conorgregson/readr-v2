@@ -2,8 +2,12 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: "jsdom", // safe default for React projects
+    environment: "jsdom",
     globals: true,
-    include: ["src/**/*.test.ts"],
+    setupFiles: ["./src/test/setup.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    clearMocks: true,
+    restoreMocks: true,
+    mockReset: true,
   },
 });
