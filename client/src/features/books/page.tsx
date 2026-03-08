@@ -158,6 +158,7 @@ export function BooksPage() {
   return (
     <div className="space-y-4">
       <BooksToolbar
+        books={books}
         booksTotal={books.length}
         visibleCount={visibleBooks.length}
         filters={filters}
@@ -321,6 +322,7 @@ export function BooksPage() {
       <BookList
         id={resultsId}
         books={visibleBooks}
+        searchQuery={searchQuery}
         activeIndex={activeIndex}
         onActiveIndex={setActiveIndex}
         onEscapeToSearch={() => {

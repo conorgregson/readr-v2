@@ -97,6 +97,14 @@ Unit + component tests + GitHub Actions pipeline.
 
 ---
 
+### Sprint 10 — Freeze & Stabilization ✅
+
+Manual Tier 0 audit, cleanup, release validation, and final freeze.
+
+→ [Sprint 10 Blueprint](./sprint-10-blueprint.md)
+
+---
+
 ## How to Use These Docs
 
 - Always finish the current sprint before referencing the next.
@@ -112,4 +120,4 @@ This structure ensures:
 - Predictable progress
 - Clean freeze boundaries
 - No parity regressions
-- API readiness after Sprint 9
+- API readiness after Sprint 10

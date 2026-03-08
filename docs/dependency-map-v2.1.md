@@ -10,7 +10,7 @@ For behavioral requirements:
 
 ## Linear Progression View
 
-```mermaid
+````mermaid
 flowchart TB
 
 S0["Sprint 0<br/>Prep & Guardrails"]
@@ -23,13 +23,13 @@ S6["Sprint 6<br/>Sessions Core"]
 S7["Sprint 7<br/><b>Sessions Tier 0 Lock</b>"]
 S8["Sprint 8<br/>Hardening & Accessibility"]
 S9["Sprint 9<br/>Tests & CI Baseline"]
+S10["Sprint 10<br/><b>Freeze & Stabilization</b>"]
 
-S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8 --> S9
+S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8 --> S9 --> S10
 
 S5 -.-> BFREEZE{{"Books/Search Frozen"}}
 S7 -.-> SFREEZE{{"Sessions Frozen"}}
-S9 -.-> V22["v2.2 API Integration Begins"]
-```
+S10 -.-> V22["v2.2 API Integration Begins"]
 
 ## Risk-Based View
 
@@ -44,10 +44,11 @@ E["Sessions Core<br/>S6"]
 F["Sessions Tier 0 Lock<br/>S7"]
 G["Hardening<br/>S8"]
 H["CI Baseline<br/>S9"]
+I["Freeze & Stabilization<br/>S10"]
 
-A --> B --> C --> D --> E --> F --> G --> H
-H --> V22["v2.2 API Migration"]
-```
+A --> B --> C --> D --> E --> F --> G --> H --> I
+I --> V22["v2.2 API Migration"]
+````
 
 ## Freeze Boundary
 
@@ -57,6 +58,7 @@ v2.1 freeze boundary:
 - Sessions Tier 0 locked
 - Hardening complete
 - CI baseline active
+- Freeze validation complete
 
 After freeze:
 No new features until v2.2 branch begins.

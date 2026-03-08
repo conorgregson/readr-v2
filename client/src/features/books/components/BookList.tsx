@@ -6,12 +6,14 @@ import { BookCard } from "./BookCard";
 export function BookList({
   id,
   books,
+  searchQuery,
   activeIndex,
   onActiveIndex,
   onEscapeToSearch,
 }: {
   id: string;
   books: Book[];
+  searchQuery: string;
   activeIndex: number;
   onActiveIndex: (i: number) => void;
   onEscapeToSearch: () => void;
@@ -86,7 +88,7 @@ export function BookList({
             data-book-result-id={b.id}
           >
             <Card className={active ? "ring-2 ring-slate-300" : ""}>
-              <BookCard book={b} />
+              <BookCard book={b} searchQuery={searchQuery} />
             </Card>
           </li>
         );

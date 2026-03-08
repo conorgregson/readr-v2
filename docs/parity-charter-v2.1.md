@@ -44,13 +44,13 @@ Once a feature reaches Tier 0 Lock:
 - [x] Sprint 7 — **Sessions Tier 0 Lock**
 - [x] Sprint 8 — Hardening & Accessibility Sweep
 - [x] Sprint 9 — Tests & CI Baseline
-- [ ] Sprint 10 — Freeze & Stabilization
+- [x] Sprint 10 — **Freeze & Stabilization**
 
 ---
 
 # v2.1 Tier 0 Progress Dashboard
 
-_Last updated: 2026-03-05_
+_Last updated: 2026-03-07_
 
 All rows must be complete before v2.1 freeze.
 
@@ -67,11 +67,11 @@ All rows must be complete before v2.1 freeze.
 | Filters-before-search                          | ✅     |
 | Empty vs NoResults logic                       | ✅     |
 | Looser search behavior                         | ✅     |
-| Highlight rendering parity                     | ❌     |
-| Autocomplete suggestions parity                | ❌     |
+| Highlight rendering parity                     | ✅     |
+| Autocomplete suggestions parity                | ✅     |
 | Dedicated Search button parity (if applicable) | ✅     |
 
-Search Tier 0 Completion: **6 / 8**
+Search Tier 0 Completion: **8 / 8**
 
 ---
 
@@ -164,18 +164,18 @@ Sprint 9 Completion: **6 / 6**
 
 | Area                                | Status |
 | ----------------------------------- | ------ |
-| Full Tier 0 manual audit            | ❌     |
-| Architecture boundary audit         | ❌     |
-| Dead code removal                   | ❌     |
-| Console/runtime warning audit       | ❌     |
-| Dependency + typecheck verification | ❌     |
-| Regression confidence validation    | ❌     |
+| Full Tier 0 manual audit            | ✅     |
+| Architecture boundary audit         | ✅     |
+| Dead code removal                   | ✅     |
+| Console/runtime warning audit       | ✅     |
+| Dependency + typecheck verification | ✅     |
+| Regression confidence validation    | ✅     |
 
-Sprint 10 Completion: **0 / 6**
+Sprint 10 Completion: **6 / 6**
 
 Sprint 10 Freeze Condition:
 
-- All rows must be complete before tagging v2.1.0.
+- All rows must be complete before tagging `v2.1.0`
 - No new features may be introduced during this sprint.
 
 This sprint formally locks the React frontend as stable prior to API migration in v2.2.
@@ -192,7 +192,7 @@ This sprint formally locks the React frontend as stable prior to API migration i
 - Undo system
 - Keyboard parity
 - Highlighting
-- Autocomplete (if retained)
+- Autocomplete
 - Hardening + accessibility baseline
 - CI baseline
 

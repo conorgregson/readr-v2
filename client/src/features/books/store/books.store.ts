@@ -15,7 +15,7 @@ type UndoRecord = {
   expiresAtMs: number;
   label: string;
   before: Book[]; // full snapshot for perfect restore
-  meta?: { bookId: BookId; kind: "delete" };
+  meta?: { bookId: BookId; kind: "delete" | "finish" };
 };
 
 function reqTrim(label: string, value: unknown): string {
@@ -51,6 +51,7 @@ type BooksState = {
     patch: Partial<Omit<Book, "id" | "createdAt">>,
   ) => Promise<Book | null>;
   deleteBook: (id: BookId) => Promise<boolean>;
+  finishBook: (id: BookId) => Promise<Book | null>;
 
   loadBooks: () => Promise<void>;
 
@@ -263,6 +264,76 @@ export const useBooksStore = create<BooksState>((set, get) => ({
         },
       });
       return false;
+    }
+  },
+
+  finishBook: async (id) => {
+    const before = get().books;
+    const idx = before.findIndex((b) => b.id === id);
+    if (idx === -1) return null;
+
+    const prev = before[idx];
+    if (prev.status === "finished") return prev;
+
+    clearUndoTimer();
+
+    const nowIso = new Date().toISOString();
+
+    const finished: Book = {
+      ...prev,
+      status: "finished",
+      updatedAt: nowIso,
+      finishedAt: prev.finishedAt ?? nowIso,
+    };
+
+    const next = [...before];
+    next[idx] = finished;
+
+    const nowMS = Date.now();
+    const rec: UndoRecord = {
+      createdAtMs: nowMS,
+      expiresAtMs: nowMS + UNDO_MS,
+      label: `Mark Finished ${prev.title}`,
+      before,
+      meta: { bookId: id, kind: "finish" },
+    };
+
+    set({ books: next, undo: rec, page: { mode: "results" } });
+
+    undoTimer = window.setTimeout(() => {
+      const cur = get().undo;
+      if (cur && Date.now() > cur.expiresAtMs) {
+        set({ undo: null });
+      }
+      undoTimer = null;
+    }, UNDO_MS + 50);
+
+    try {
+      const saved = await BooksService.update(id, {
+        status: "finished",
+        ...(prev.finishedAt ? {} : { finishedAt: nowIso }),
+      });
+
+      if (!saved) throw new Error("Book not found");
+
+      set((s) => ({
+        books: s.books.map((b) => (b.id === id ? saved : b)),
+      }));
+
+      return saved;
+    } catch (e) {
+      clearUndoTimer();
+      set({
+        books: before,
+        undo: null,
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to mark book as finished",
+          },
+        },
+      });
+      return null;
     }
   },
 

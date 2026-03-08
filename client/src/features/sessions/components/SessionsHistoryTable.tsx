@@ -22,6 +22,11 @@ export function SessionsHistoryTable({
 
   const orderedIds = useMemo(() => sessions.map((s) => s.id), [sessions]);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  // row refs the selected row can be focused without trapping Tab
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
+  const rafRef = useRef<number | null>(null);
+
   // keep selection valid when list changes (filters/sort/delete)
   useEffect(() => {
     if (!selectedId) return;
@@ -30,31 +35,40 @@ export function SessionsHistoryTable({
     }
   }, [selectedId, orderedIds, clearSelection]);
 
-  // row refs the selected row can be focused without trapping Tab
-  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
-
+  // Keep keyboard focus on the container, not the row.
+  // Only scroll the selected row into view when needed.
   useEffect(() => {
     if (!selectedId) return;
-    const el = rowRefs.current.get(selectedId);
-    if (!el) return;
 
-    // Sprint 8: don't steal focus if user is typing/editing elsewhere.
-    const root = document.getElementById(id);
-    const active = document.activeElement as HTMLElement | null;
-    const focusIsInside = !!(root && active && root.contains(active));
-    const focusIsBody = !active || active === document.body;
-    const focusIsTypingField =
-      !!active &&
-      (active.tagName === "INPUT" ||
-        active.tagName === "TEXTAREA" ||
-        active.tagName === "SELECT" ||
-        active.isContentEditable);
+    const container = containerRef.current;
+    const row = rowRefs.current.get(selectedId);
+    if (!container || !row) return;
 
-    if (!focusIsTypingField && (focusIsInside || focusIsBody)) {
-      // Defer one frame so the row is definitely in the DOM and tabbable
-      requestAnimationFrame(() => el.focus());
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
     }
-  }, [selectedId, id, orderedIds.length]);
+
+    rafRef.current = requestAnimationFrame(() => {
+      const c = container.getBoundingClientRect();
+      const r = row.getBoundingClientRect();
+
+      const above = r.top < c.top;
+      const below = r.bottom > c.bottom;
+
+      if (above || below) {
+        row.scrollIntoView({ block: "nearest" });
+      }
+
+      rafRef.current = null;
+    });
+
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [selectedId]);
 
   if (!sessions.length) {
     return (
@@ -77,6 +91,7 @@ export function SessionsHistoryTable({
 
       <div
         id={id}
+        ref={containerRef}
         tabIndex={0}
         role="region"
         aria-label="Sessions history"

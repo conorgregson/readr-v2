@@ -8,6 +8,8 @@ import {
   type FocusToken,
 } from "../../../shared/a11y/focus";
 
+import { getHighlightParts, getHighlightTokens } from "../search/search.engine";
+
 const STATUS_LABEL: Record<BookStatus, string> = {
   planned: "Planned",
   reading: "Reading",
@@ -31,8 +33,15 @@ function formatDate(iso?: string) {
   }
 }
 
-export function BookCard({ book }: { book: Book }) {
+export function BookCard({
+  book,
+  searchQuery,
+}: {
+  book: Book;
+  searchQuery: string;
+}) {
   const updateBook = useBooksStore((s) => s.updateBook);
+  const finishBook = useBooksStore((s) => s.finishBook);
   const deleteBook = useBooksStore((s) => s.deleteBook);
   const setError = useBooksStore((s) => s.setError);
 
@@ -45,6 +54,7 @@ export function BookCard({ book }: { book: Book }) {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const titleRef = useRef<HTMLInputElement | null>(null);
@@ -223,10 +233,54 @@ export function BookCard({ book }: { book: Book }) {
     }
   }
 
+  async function onFinish() {
+    lastFocusRef.current = captureFocusToken();
+
+    setLocalError(null);
+    setError(undefined);
+
+    try {
+      setIsFinishing(true);
+      const saved = await finishBook(book.id);
+      if (!saved) throw new Error("Failed to mark book as finished.");
+    } catch (e) {
+      const msg = (e as Error)?.message ?? "Failed to mark book as finished.";
+      setLocalError(msg);
+      setError({ message: msg });
+    } finally {
+      setIsFinishing(false);
+    }
+  }
+
   const isTitleInvalid =
     !!localError && trimOrEmpty(title).length === 0 && isEditing;
   const isAuthorInvalid =
     !!localError && trimOrEmpty(author).length === 0 && isEditing;
+
+  const hasCommittedSearch = searchQuery.trim().length > 0;
+
+  const highlightTokens = useMemo(() => {
+    if (!hasCommittedSearch) return [];
+    return getHighlightTokens(searchQuery);
+  }, [hasCommittedSearch, searchQuery]);
+
+  function renderHighlighted(text: string) {
+    if (!hasCommittedSearch) return text;
+
+    const parts = getHighlightParts(text, highlightTokens);
+
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.match ? (
+            <mark key={`${text}-${i}`}>{part.text}</mark>
+          ) : (
+            <span key={`${text}-${i}`}>{part.text}</span>
+          ),
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="flex items-start justify-between gap-4">
@@ -307,8 +361,12 @@ export function BookCard({ book }: { book: Book }) {
           </div>
         ) : (
           <>
-            <div className="truncate font-medium">{book.title}</div>
-            <div className="truncate text-sm text-slate-400">{book.author}</div>
+            <div className="truncate font-medium">
+              {renderHighlighted(book.title)}
+            </div>
+            <div className="truncate text-sm text-slate-400">
+              {renderHighlighted(book.author)}
+            </div>
 
             {bits.length ? (
               <div className="mt-1 text-xs text-slate-400">
@@ -369,17 +427,29 @@ export function BookCard({ book }: { book: Book }) {
                 ref={editBtnRef}
                 variant="secondary"
                 onClick={beginEdit}
-                disabled={isDeleting}
+                disabled={isDeleting || isFinishing}
                 data-focus-id={`book:${book.id}:edit`}
                 aria-label={`Edit ${book.title}`}
               >
                 Edit
               </Button>
+
+              {book.status !== "finished" ? (
+                <Button
+                  onClick={onFinish}
+                  disabled={isDeleting || isFinishing}
+                  aria-busy={isFinishing}
+                  aria-label={`Mark ${book.title} as finished`}
+                >
+                  {isFinishing ? "Finishing…" : "Mark Finished"}
+                </Button>
+              ) : null}
+
               <Button
                 ref={deleteBtnRef}
                 variant="danger"
                 onClick={onDelete}
-                disabled={isDeleting}
+                disabled={isDeleting || isFinishing}
                 aria-busy={isDeleting}
                 data-focus-id={`book:${book.id}:delete`}
                 aria-label={`Delete ${book.title}`}

@@ -74,8 +74,7 @@ function readLocal(): ReadLocalResult {
       return { books, repaired: true };
     }
     return { books, repaired: false };
-  } catch (e) {
-    if (import.meta.env.DEV) console.warn("[BooksService] Bad storage JSON", e);
+  } catch {
     safeRemoveItem(STORAGE_KEY);
     return { books: [], repaired: true };
   }
@@ -214,9 +213,6 @@ export const BooksService = {
   async list(): Promise<Book[]> {
     if (USE_API) return apiFetchBooks();
     const res = readLocal();
-    if (import.meta.env.DEV && res.repaired) {
-      console.info("[BooksService] Storage repaired for", STORAGE_KEY);
-    }
     return res.books;
   },
 
