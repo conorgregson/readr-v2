@@ -1,6 +1,5 @@
 import { useRef, useMemo, useEffect, useState } from "react";
 import { Button } from "../../shared/ui/Button";
-import { DevStateBar } from "../../shared/ui/DevStateBar";
 import { AddSessionPanel } from "./components/AddSessionPanel";
 import { SessionsToolbar } from "./components/SessionsToolbar";
 import { SessionsHistoryTable } from "./components/SessionsHistoryTable";
@@ -112,17 +111,6 @@ export function SessionsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Sessions</h1>
-
-        <DevStateBar
-          mode={mode}
-          onMode={setMode}
-          onError={() =>
-            setError({
-              message:
-                "Failed to load sessions. (Simulated error state for Sprint 2)",
-            })
-          }
-        />
       </div>
 
       {mode === "loading" ? (

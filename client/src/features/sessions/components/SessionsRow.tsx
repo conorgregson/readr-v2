@@ -245,7 +245,7 @@ export function SessionsRow({
         isSelected ? "bg-slate-700" : ""
       }`}
       aria-selected={isSelected}
-      tabIndex={isSelected ? 0 : -1}
+      tabIndex={-1}
       data-session-row-id={session.id}
       onClick={() => {
         if (!isEditing) onSelect();

@@ -35,8 +35,8 @@ Goal:
 | Search + filter combination | ✅   | ✅        | ✅     | ✅     |
 | Looser search logic         | ✅   | ✅        | ✅     | ✅     |
 | Empty vs NoResults          | ❌   | ✅        | ✅     | 🟡     |
-| Highlight rendering         | ❌   | ❌        | ❌     | ❌     |
-| Autocomplete suggestions    | ❌   | ❌        | ❌     | ❌     |
+| Highlight rendering         | ❌   | ✅        | ✅     | 🟡     |
+| Autocomplete suggestions    | ❌   | ✅        | ✅     | 🟡     |
 | Dedicated Search button\*   | ❌   | ✅        | ✅     | 🟡     |
 
 \* Only if applicable.
@@ -52,7 +52,7 @@ Goal:
 | Undo with active filters       | 🟡   | ❌        | ✅     | 🟡     |
 | Undo persistence after refresh | 🚫   | 🚫        | 🚫     | 🚫     |
 
-Tier 0 Lock requirement: All rows green before Sprint 5 closes.
+Tier 0 Lock requirement: All retained rows green before release freeze.
 
 ---
 
@@ -76,7 +76,7 @@ Tier 0 Lock requirement: All rows green before Sprint 5 closes.
 | Search highlight rows   | ❌   | 🟡        | ✅     | 🟡     |
 | Undo session delete     | ❌   | 🟡        | ✅     | 🟡     |
 
-Tier 0 Lock requirement: All rows green before Sprint 7 closes.
+Tier 0 Lock requirement: All retained rows green before release freeze.
 
 ---
 
@@ -116,6 +116,18 @@ Search engine unit tests failed as expected, confirming that
 CI guardrails catch search behavior regressions.
 
 The change was reverted and the test suite returned to green.
+
+---
+
+# ✅ Sprint 10 Freeze Validation
+
+Manual freeze validation completed for:
+
+- Books add/edit/delete/undo/finish flows
+- Books search, highlight, autosuggest, and filter integrity
+- Sessions CRUD, sort, undo, and selection stability
+- Sessions keyboard navigation on both small and large datasets
+- Production build, typecheck, and test suite
 
 ---
 

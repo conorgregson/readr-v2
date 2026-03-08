@@ -31,7 +31,7 @@ Each version isolates a specific risk area (architecture, UX, persistence, or sc
 The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
-> Current focus: **v2.1 React frontend rebuild (feature parity phase).**
+> Current focus: **v2.2 — API integration & persistence.**
 
 ---
 
@@ -151,7 +151,7 @@ Readr uses two parallel versioning systems:
 Major milestones follow **SemVer** and represent stable, coherent deliverables:
 
 - `v2.0.0` — Backend & CI foundation
-- `v2.1.0` — React frontend rebuild (in progress)
+- `v2.1.0` — React frontend rebuild
 - Future versions increment semantically
 
 These releases are published in GitHub Releases.
@@ -178,8 +178,8 @@ Only SemVer releases represent official “ship-ready” states.
 ## Roadmap (High-Level)
 
 - **v2.0.0** — Backend & CI foundation ✅
-- **v2.1.0** — React frontend rebuild with v1.9 behavioral parity (in progress)
-- **v2.2.0** — API integration & persistence
+- **v2.1.0** — React frontend rebuild with v1.9 behavioral parity ✅
+- **v2.2.0** — API integration & persistence (in progress)
 - **v2.3.0+** — Accounts, analytics, and growth features
 
 For detailed version history and architectural milestones, see [`roadmap.md`](./roadmap.md).
@@ -253,15 +253,18 @@ The repository is organized by architectural responsibility rather than framewor
 readr-v2/
 │
 ├── client/                 # React frontend
+│   ├── scripts/
 │   ├── src/
 │   │   ├── app/            # App shell + router
 │   │   ├── features/       # Feature domains (books/sessions/settings)
 │   │   ├── shared/         # UI primitives + shared utilities
+│   │   ├── test/
 │   │   ├── index.css
 │   │   └── main.tsx
 │   ├── index.html
 │   ├── vite.config.ts
-│   └── vitest.config.ts
+│   ├── vitest.config.ts
+│   └── vercel.json
 │
 ├── server/                 # Express backend
 │   ├── src/
@@ -275,13 +278,18 @@ readr-v2/
 │   └── docker-compose.yml
 │
 ├── docs/
+│   ├── sprints/            # v2.1 sprint blueprints
+│   │   └── README.md       # v2.1 sprints README
 │   ├── v2.1-parity-charter.md
 │   ├── v2.1-architecture.md
 │   ├── v2.1-test-matrix.md
-│   └── v2.1-dependency-map.md
+│   ├── v2.1-dependency-map.md
+│   ├── v2.2-api-integration-blueprint.md
+│   └── v2.3-feature-expansion-blueprint.md
 │
 ├── CHANGELOG.md
 ├── roadmap.md
+├── LICENSE.md
 └── README.md
 ```
 

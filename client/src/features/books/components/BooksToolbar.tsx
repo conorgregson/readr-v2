@@ -2,9 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import type React from "react";
 import { Button } from "../../../shared/ui/Button";
 import { SearchStatus } from "../../../shared/ui/SearchStatus";
-import type { BooksFilters } from "../types";
+import type { BooksFilters, Book } from "../types";
+
+function uniqueValues(arr: string[]) {
+  return Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
 
 export function BooksToolbar({
+  books,
   booksTotal,
   visibleCount,
   filters,
@@ -15,6 +22,7 @@ export function BooksToolbar({
   onAddBook,
   addButtonRef,
 }: {
+  books: Book[];
   booksTotal: number;
   visibleCount: number;
   filters: BooksFilters;
@@ -29,6 +37,10 @@ export function BooksToolbar({
 
   // local "draft" query (v1.9-style)
   const [draftQuery, setDraftQuery] = useState(searchQuery);
+
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   // keep draft in sync if store query changes externally (e.g., clear filters)
   useEffect(() => {
@@ -76,10 +88,43 @@ export function BooksToolbar({
     return "";
   })();
 
-  const commitNow = () => onCommitQuery(draftQuery.trim());
+  function buildSuggestions(q: string) {
+    const needle = q.trim().toLowerCase();
+    if (!needle) {
+      setSuggestions([]);
+      return;
+    }
+
+    const titles = uniqueValues(books.map((b) => b.title));
+    const authors = uniqueValues(books.map((b) => b.author));
+    const series = uniqueValues(books.map((b) => b.series || ""));
+    const genres = uniqueValues(books.map((b) => b.genre || ""));
+
+    const pool = [...titles, ...authors, ...series, ...genres];
+
+    const filtered = pool
+      .filter((v) => v.toLowerCase().includes(needle))
+      .sort((a, b) => {
+        const ap = a.toLowerCase().startsWith(needle) ? 0 : 1;
+        const bp = b.toLowerCase().startsWith(needle) ? 0 : 1;
+        return ap - bp || a.localeCompare(b);
+      })
+      .slice(0, 8);
+
+    setSuggestions(filtered);
+    setActiveSuggestion(filtered.length ? 0 : -1);
+  }
+
+  const commitNow = () => {
+    setShowSuggest(false);
+    onCommitQuery(draftQuery.trim());
+  };
 
   const clearQuery = () => {
     setDraftQuery("");
+    setSuggestions([]);
+    setActiveSuggestion(-1);
+    setShowSuggest(false);
     onCommitQuery("");
     // Sprint 8: focus should be restored predictably after clear.
     window.setTimeout(() => {
@@ -92,50 +137,130 @@ export function BooksToolbar({
     }, 0);
   };
 
+  const pickSuggestion = (value: string) => {
+    setDraftQuery(value);
+    setSuggestions([]);
+    setActiveSuggestion(-1);
+    setShowSuggest(false);
+    onCommitQuery(value);
+
+    window.setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 0);
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold">Books</h1>
 
         <div className="flex items-center gap-2">
-          <label className="sr-only" htmlFor="books-search">
-            Search books
-          </label>
-          <input
-            id="books-search"
-            ref={searchInputRef}
-            type="search"
-            role="searchbox"
-            aria-controls={resultsId}
-            aria-label="Search books"
-            className="w-72 rounded-md border border-slate-300 px-3 py-2 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-            value={draftQuery}
-            placeholder="Search by title, author, series, genre, ISBN…"
-            onChange={(e) => {
-              setDraftQuery(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                commitNow();
-              } else if (e.key === "Escape") {
-                // Sprint 8: Escape should never trap keyboard users.
-                // If there is text, clear it; otherwise do nothing.
-                if (draftQuery.trim()) {
-                  e.preventDefault();
-                  clearQuery();
+          <div className="relative">
+            <label className="sr-only" htmlFor="books-search">
+              Search books
+            </label>
+            <input
+              id="books-search"
+              ref={searchInputRef}
+              type="search"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={showSuggest && suggestions.length > 0}
+              aria-haspopup="listbox"
+              aria-controls={resultsId}
+              aria-label="Search books"
+              className="w-72 rounded-md border border-slate-300 px-3 py-2 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+              value={draftQuery}
+              placeholder="Search by title, author, series, genre, ISBN…"
+              onChange={(e) => {
+                const val = e.target.value;
+                setDraftQuery(val);
+                buildSuggestions(val);
+                setShowSuggest(true);
+              }}
+              onFocus={() => {
+                buildSuggestions(draftQuery);
+                if (draftQuery.trim()) setShowSuggest(true);
+              }}
+              onBlur={() => {
+                window.setTimeout(() => setShowSuggest(false), 100);
+              }}
+              onKeyDown={(e) => {
+                if (showSuggest && suggestions.length > 0) {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveSuggestion((i) =>
+                      Math.min(i + 1, suggestions.length - 1),
+                    );
+                    return;
+                  }
+
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveSuggestion((i) => Math.max(i - 1, 0));
+                    return;
+                  }
+
+                  if (e.key === "Enter" && activeSuggestion >= 0) {
+                    e.preventDefault();
+                    pickSuggestion(suggestions[activeSuggestion]);
+                    return;
+                  }
+
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setShowSuggest(false);
+                    return;
+                  }
                 }
-              } else if (e.key === "ArrowDown") {
-                e.preventDefault();
-                onFocusResults();
-              }
-            }}
-          />
+
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitNow();
+                } else if (e.key === "Escape") {
+                  // Sprint 8: Escape should never trap keyboard users.
+                  // If there is text, clear it; otherwise do nothing.
+                  if (draftQuery.trim()) {
+                    e.preventDefault();
+                    clearQuery();
+                  }
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  onFocusResults();
+                }
+              }}
+            />
+
+            {showSuggest && suggestions.length > 0 ? (
+              <div
+                role="listbox"
+                className="absolute z-20 mt-1 w-72 rounded-md border border-slate-200 text-slate-700 bg-white shadow-lg"
+              >
+                {suggestions.map((s, i) => (
+                  <div
+                    key={`${s}-${i}`}
+                    role="option"
+                    aria-selected={i === activeSuggestion}
+                    className={`cursor-pointer px-3 py-2 text-sm ${
+                      i === activeSuggestion ? "bg-slate-100" : ""
+                    }`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pickSuggestion(s);
+                    }}
+                    onMouseEnter={() => setActiveSuggestion(i)}
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           <Button
             variant={hasUncommittedChange ? "primary" : "secondary"}
             disabled={!hasUncommittedChange}
-            onClick={() => commitNow()}
+            onClick={commitNow}
             data-focus-id="books:search"
             aria-label="Run search"
           >

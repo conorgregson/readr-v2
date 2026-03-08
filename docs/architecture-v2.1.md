@@ -33,6 +33,7 @@ Behavioral accuracy > new features.
 - Keyboard parity (sessions + editing) and live region announcements where applicable
 - Hardening/a11y baseline + performance sanity check
 - CI baseline (typecheck + tests)
+- Freeze validation and dead-code cleanup
 
 ### Deferred (does not block v2.1)
 
@@ -78,13 +79,13 @@ Behavioral accuracy > new features.
 
 Routes:
 
-- `/` — Books page (list + filters + search + add/edit)
+- `/` — Books page
 - `/sessions` — Session History
-- `/settings` — Settings (page or panel)
+- `/settings` — Settings
 
 Layout:
 
-- `AppShell` (header/nav) + `<Outlet />` for page content
+- `AppShell` + `<Outlet />`
 
 Goal: layout persists across routes with no reset/jank.
 
@@ -93,15 +94,13 @@ Goal: layout persists across routes with no reset/jank.
 ```bash
 src/
   app/
-    App.tsx
     router.tsx
     AppShell.tsx
-    providers.tsx
 
   features/
     books/
       components/
-      hooks/
+      search/
       services/
         books.service.ts
       store/
@@ -111,7 +110,6 @@ src/
 
     sessions/
       components/
-      hooks/
       services/
         sessions.service.ts
       store/
@@ -120,31 +118,32 @@ src/
       page.tsx
 
     settings/
-      components/
-      services/
-      store/
       page.tsx
 
   shared/
+    a11y/
+    data/
     ui/
+      states/
       Button.tsx
       Card.tsx
       Input.tsx
       Select.tsx
       Spinner.tsx
-    services/
-      storage/
-      apiClient.ts # future placeholder for v2.2
-    utils/
-      formatting.ts
-      validation.ts
+    types/
+
+  test/
+
+  index.css
+  main.tsx
 ```
 
 Notes:
 
+- Directory tree abbreviated for clarity. Only representative files and folders are shown.
 - Domain types live inside each feature
-- Avoid `shared/types/` unless truly global types emerge.
 - Shared UI components remain primitive and reusable
+- Dev-only scaffolding was removed during Sprint 10 freeze cleanup
 
 ## Domain Model (TypeScript as Source of Truth)
 
@@ -156,7 +155,7 @@ Core types:
 - `Session` (id, bookId, date, minutes/pages, notes, etc.)
 - Enums/constants: `BookStatus`, sort modes, filter states
 
-If backend shapes differ later, introduce a mapping/adapter layer (API → domain) without changing UI code.
+If backend shapes differ later, introduce a mapping layer without rewriting UI code.
 
 ## State Management (Zustand)
 
@@ -167,6 +166,8 @@ State:
 - `books[]`
 - `filters`
 - `searchQuery`
+- `searchFuzzyOverride`
+- `undo`
 - derived selector: `visibleBooks`
 
 Actions:
@@ -175,80 +176,76 @@ Actions:
 - `addBook`
 - `updateBook`
 - `deleteBook`
-- `setFilter`
-- `setSearch`
-
-Tier 0 lock actions (Sprint 5):
-
-- `undoLastBookAction` (or equivalent)
-- `setLooserSearch` (if modeled explicitly)
-- highlight + autocomplete state (if stored)
+- `finishBook`
+- `undoLast`
+- `setFilters`
+- `clearFilters`
+- `setSearchQuery`
+- `enableLooserSearch`
 
 ### sessionsStore
 
 State:
 
 - `sessions[]`
-- `sort`
-- `activeEdits` (or editing state)
-- optional: row selection state for keyboard navigation
+- `filters`
+- `sortKey`
+- `selectedId`
+- `liveMessage`
+- `undo`
 
 Actions:
 
 - `loadSessions`
-- `logSession`
+- `addSession`
 - `updateSession`
 - `deleteSession`
-- `setSort`
+- `undoDelete`
+- `setFilters`
+- `clearFilters`
+- `setSortKey`
+- selection helpers and announcements
 
-Tier 0 lock actions (Sprint 7):
+Sorting remains deterministic and stable.
 
-- `undoLastSessionAction` (or equivalent)
-- keyboard navigation actions (selection movement, focus sync)
+### Local UI State
 
-Sorting must be deterministic and stable.
+Local component state is used for:
 
-### uiStore (Global UI Only)
-
-State:
-
-- toasts
-- global banners
-- app-level modals
-- global loading flags
+- inline edit drafts
+- modal/panel open state
+- transient focus management
+- autosuggest UI state
 
 Guardrail:
 
-Feature-specific modal/edit state should live inside that feature’s store or local component state.
-
-Guideline:
-
-- Global store: shared domain data and cross-page state
-- Local component state: form inputs and transient UI
+- shared domain data lives in feature stores
+- transient UI state stays local unless cross-page reuse is required
 
 ---
 
 ## Service Layer (Local-First now, API-Ready later)
 
-All IO is behind `services/`. Components call services via store/actions/hooks.
+All IO is behind `services/`.
 
 v2.1 services:
 
 - `BooksService`
-  - `list()`, `create()`, `update()`, `remove()`
+  - `list()`, `create()`, `update()`, `remove()`, `replaceAll()`
 - `SessionsService`
-  - `list()`, `log()`, `update()`, `remove()`
+  - `list()`, `create()/log()`, `update()`, `remove()`, `upsert()`
 
 Implementation in v2.1:
 
-- Local persistence (localStorage/IndexedDB) or in-memory adapter (dev)
+- local persistence adapter
+- storage sanitization and corruption fallback where required
 
 Swap later (v2.2):
 
-- Replace service implementations with API calls to Express/Prisma
-- UI and store APIs remain stable
+- replace service internals with API calls
+- store and UI contracts remain stable
 
-Rule: no direct localStorage/IndexedDB usage in components.
+Rule: no direct localStorage usage in components.
 
 ---
 
@@ -256,30 +253,20 @@ Rule: no direct localStorage/IndexedDB usage in components.
 
 ### Loading
 
-- Minimal loading state (avoid unnecessary blocking)
-- Avoid flicker/jank during rapid interactions
+- Minimal loading state
+- Avoid unnecessary blocking or flicker
 
 ### Empty vs No Results
 
 - `EmptyState`: no data exists yet
-- `NoResultsState`: filters/search return none
-  - Includes "Try looser search" parity behavior
+- `NoResultsState`: search/filters return none
+- Includes "Try looser search" parity behavior where applicable
 
 ### Errors
 
 - User-facing actionable messaging
 - Retry/reset patterns
-- Developer logs remain console-only
-
-Optional error shape:
-
-```ts
-interface AppError {
-  code: string;
-  message: string;
-  detail?: string;
-}
-```
+- No debug scaffolding in production code
 
 ---
 
@@ -288,12 +275,10 @@ interface AppError {
 Books:
 
 - list view with filters + search
-- inline or modal edit
-- preserve v1.9 save/cancel semantics
-- keyboard parity:
-  - Enter = confirm
-  - Escape = cancel
-  - Arrow navigation where applicable
+- add/edit/delete/finish flows
+- undo delete + undo finish
+- autosuggest + highlight parity
+- keyboard-safe save/cancel behavior
 
 Sessions:
 
@@ -301,12 +286,14 @@ Sessions:
 - history table/list
 - sort + edit/delete parity
 - keyboard navigation parity (ArrowUp/Down/Home/End) where applicable
+- undo delete
+- row highlight parity
 
 Accessibility:
 
-- focus management
-- ARIA where appropriate
-- no regression from v1.9 behavior
+- focus restoration
+- live regions where applicable
+- keyboard parity maintained through freeze
 
 ---
 
@@ -314,13 +301,15 @@ Accessibility:
 
 Focus on parity-critical logic:
 
-- store actions + selectors
-- filtering + looser search behavior
+- search engine semantics
 - undo timing + restore integrity
-- add/edit/delete flows
-- session logging + sorting determinism
+- add/edit/delete/finish flows
+- session sorting determinism
 - empty vs no-results logic
-- keyboard navigation + live region updates (sessions)
+- keyboard navigation
+- autosuggest behavior
+- highlight rendering
+- build/type/test freeze validation
 
 Tracking source of truth:
 
@@ -350,5 +339,6 @@ v2.1 is complete when:
 - Persistence fully abstracted behind services
 - State boundaries are stable
 - Loading/empty/error patterns are consistent
-- A test baseline exists and is stable
+- Test baseline exists and is stable
 - CI is green and gating PRs
+- Freeze cleanup and release validation are complete

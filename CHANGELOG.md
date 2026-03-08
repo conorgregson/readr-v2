@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.1-sprint-10] — Freeze & Stabilization (2026-03-07)
+
+### Added
+
+- Restored Books **Mark Finished** action with ~6s undo parity.
+- Added Books search result highlighting for title and author matches.
+- Added Books autosuggest with keyboard navigation and suggestion commit behavior.
+- Added final Sprint 10 manual freeze validation across Books and Sessions flows.
+
+### Changed
+
+- Updated Books toolbar behavior and tests to support autosuggest and committed search parity.
+- Updated Book list rendering to support highlight-aware search query propagation.
+- Improved Sessions keyboard navigation stability by keeping focus on the table container and using `aria-activedescendant`.
+- Refined Sessions selection behavior so rapid navigation remains stable on large datasets.
+- Updated parity docs, sprint docs, and freeze tracking to reflect v2.1 completion.
+
+### Removed
+
+- Removed legacy Books dev scaffold page.
+- Removed legacy Books dev store.
+- Removed `DevStateBar` dev helper and remaining Sprint scaffolding usage.
+- Removed dev-only console logging from `BooksService`.
+- Removed stale router references to deleted dev-only routes.
+
+### Notes
+
+- v2.1 React frontend parity is now formally frozen against the defined v1.9 scope.
+- Build, typecheck, tests, and manual Tier 0 audit all passed at freeze.
+- v2.2 will begin API integration on top of the now-stable React frontend foundation.
+
+---
+
 ## [v2.1-sprint-9] — Tests & CI Baseline (2026-03-06)
 
 ### Added

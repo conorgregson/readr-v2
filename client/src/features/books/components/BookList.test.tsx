@@ -42,6 +42,7 @@ describe("BookList keyboard navigation", () => {
           makeBook({ id: "b", title: "Hyperion" }),
           makeBook({ id: "c", title: "Foundation" }),
         ]}
+        searchQuery=""
         activeIndex={-1}
         onActiveIndex={onActiveIndex}
         onEscapeToSearch={onEscapeToSearch}
@@ -73,6 +74,7 @@ describe("BookList keyboard navigation", () => {
           makeBook({ id: "a", title: "Dune" }),
           makeBook({ id: "b", title: "Hyperion" }),
         ]}
+        searchQuery=""
         activeIndex={0}
         onActiveIndex={onActiveIndex}
         onEscapeToSearch={onEscapeToSearch}
@@ -101,6 +103,7 @@ describe("BookList keyboard navigation", () => {
       <BookList
         id="books-results"
         books={books}
+        searchQuery=""
         activeIndex={0}
         onActiveIndex={onActiveIndex}
         onEscapeToSearch={onEscapeToSearch}
@@ -117,6 +120,7 @@ describe("BookList keyboard navigation", () => {
       <BookList
         id="books-results"
         books={books}
+        searchQuery=""
         activeIndex={5}
         onActiveIndex={onActiveIndex}
         onEscapeToSearch={onEscapeToSearch}

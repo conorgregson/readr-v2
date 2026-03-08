@@ -129,39 +129,30 @@ Released: Dec 2025
 
 ---
 
-## 🚧 Version 2.1 — React Frontend Rebuild (In Progress)
+## ✅ Version 2.1 — React Frontend Rebuild
 
-**Focus:** Rebuild the v1.9 UI in React + TypeScript while preserving feature parity before introducing API-backed persistence.
+**Focus:** Rebuild the v1.9 UI in React + TypeScript while preserving feature parity before API-backed persistence.
 
-v2.1 is executed in structured, time-boxed sprints (Sprint 0–7), each isolating a specific risk area:
+### Completed Work
 
-- Foundation
-- UI patterns
-- Search parity
-- CRUD flows
-- Sessions parity
-- Hardening
-- Test & CI lock-in
+- React + TypeScript frontend rebuild
+- Tailwind-based UI system and routing
+- Books CRUD + search/filter parity
+- Undo delete + undo finish
+- Search highlighting + autosuggest
+- Sessions logging + history
+- Deterministic sorting + keyboard navigation
+- Accessibility and focus hardening
+- Frontend test baseline + CI
+- Freeze validation and dead-code cleanup
 
-### Goals
+### Notes
 
-- Rebuild the v1.9 UI in React + TypeScript
-- Preserve feature parity before introducing API-backed persistence
-- Establish a clean component and state architecture
+- v2.1 is complete and formally frozen.
+- Persistence remains local-first for this release.
+- v2.2 will replace local storage with API-backed persistence.
 
-### Planned Work
-
-- React app scaffolding and routing (Vite)
-- Tailwind-based design system
-- Core layout and navigation
-- Book list, filters, and search UI
-- Add/edit book flows
-- Session logging and history (frontend-only)
-- Centralized state management
-- Error, loading, and empty-state patterns
-- Initial frontend test coverage + CI
-
-Planned: Q1 2026
+Released: Mar 2026
 
 ---
 
