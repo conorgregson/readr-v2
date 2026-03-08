@@ -2,16 +2,46 @@
 
 ### _Turn pages into progress._
 
+A versioned full-stack reading tracker built to demonstrate modern frontend architecture, behavioral parity testing, and CI-gated development.
+
 <p align="center">
-  <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
-  <img src="https://img.shields.io/badge/Backend-Express%20%2B%20Node-003366?style=for-the-badge&logo=node.js" />
-  <img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql" />
-  <img src="https://img.shields.io/badge/ORM-Prisma-0C344B?style=for-the-badge&logo=prisma" />
-  <br/>
-  <img src="https://github.com/conorgregson/readr-v2/actions/workflows/ci.yml/badge.svg" />
-  <img src="https://img.shields.io/badge/Status-Active%20Development-FFA500?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
+
+<a href="https://readr-v2-app.vercel.app">
+  <img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Deployment-000000?style=for-the-badge&logo=vercel" />
+</a>
+
+<a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.1.0">
+  <img src="https://img.shields.io/badge/Version-v2.1.0-4CAF50?style=for-the-badge" />
+</a>
+
+<img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
+<img src="https://img.shields.io/badge/Backend-Express%20%2B%20Node-003366?style=for-the-badge&logo=node.js" />
+<img src="https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql" />
+<img src="https://img.shields.io/badge/ORM-Prisma-0C344B?style=for-the-badge&logo=prisma" />
+
+<br/>
+
+<a href="https://github.com/conorgregson/readr-v2/actions/workflows/ci.yml">
+  <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/ci.yml?style=for-the-badge&label=CI&logo=github" />
+</a>
+
+<img src="https://img.shields.io/badge/Status-v2.1%20Released-FFA500?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
+
 </p>
+
+---
+
+## Live Demo
+
+Try the deployed frontend here:
+
+https://readr-v2-app.vercel.app
+
+The demo currently runs **client-side only** using localStorage.
+Your reading data is stored in your browser and will persist until site data is cleared.
+
+Server-backed persistence will be introduced in **v2.2**.
 
 ---
 
@@ -409,7 +439,9 @@ Engineering choices are documented to emphasize maintainability and long-term sc
 
 ## Screenshots
 
-> Screenshots will be added as the v2.1 parity phase stabilizes.
+The UI below reflects the **v2.1 React parity release**.
+
+> Screenshots will be updated again once API persistence (v2.2) lands.
 
 - Dashboard _(coming soon)_
 - Library / Book List _(coming soon)_
