@@ -26,7 +26,7 @@ This roadmap is both a planning document and a technical narrative explaining _w
 ## Goals
 
 - Provide a minimal, offline-first reading log (v1.x).
-- Evolve into a scalable full-stack application with cloud sync (v2.x).
+- Evolve into a scalable full-stack application with API-backed persistence first, then cloud-ready user features (v2.x).
 - Maintain usability, accessibility, and performance at every stage.
 - Avoid premature complexity while building a strong architectural foundation.
 
@@ -158,19 +158,27 @@ Released: Mar 2026
 
 ## 🌐 Version 2.2 — API Integration & Persistence
 
-**Focus:** Replace local storage with API-backed persistence
+**Focus:** Replace local-first persistence with API-backed storage while preserving the v2.1 React UI and behavioral parity guarantees.
 
 ### Planned Work
 
-- Connect React frontend to existing API
-- CRUD flows for books and sessions
-- Server-side search, filters, and pagination
-- Import/export via API
-- Shared validation schemas (Zod)
-- Security baseline (CORS, Helmet, rate limiting)
-- Logging and centralized error handling
+- Reconcile the v2.0 backend scaffold with the finalized v2.1 frontend domain types
+- Update Prisma schema to match canonical frontend models
+- Stabilize Books and Sessions API contracts
+- Introduce typed client API services
+- Migrate frontend persistence from localStorage to API-backed storage
+- Preserve parity-sensitive behaviors (undo, deterministic sorting, keyboard flows)
+- Remove active localStorage persistence from Books and Sessions flows
+- Strengthen server baseline (CORS, Helmet, centralized error handling)
+- Re-run parity validation after migration
 
-Planned: Q1–Q2 2026
+### Notes
+
+- v2.2 is a **persistence migration**, not a UX redesign.
+- The React UI should remain materially unchanged.
+- Frontend domain types from v2.1 are treated as the canonical contract.
+
+Planned: Q2 2026
 
 ---
 

@@ -21,13 +21,16 @@ async function main() {
     data: {
       title: "Readr v2 Test Book",
       author: "Conor",
-      status: BookStatus.READING,
+      status: BookStatus.reading,
       genre: "Productivity",
-      pageCount: 300,
-      currentPage: 25,
+      seriesType: "standalone",
+      format: "digital",
+      formatSubtype: "PDF",
+      startedAt: new Date(),
       sessions: {
         create: [
           {
+            pages: 12,
             minutes: 25,
             notes: "First session logged via Prisma seed",
             date: new Date(),

@@ -20,7 +20,7 @@ import type { Book } from "@prisma/client";
 
 const router = Router();
 
-// GET /books
+// GET /api/books
 router.get("/", validateQuery(ListBooksQuerySchema), async (req, res, next) => {
   try {
     const { search, status, limit, offset } = (req as any).validatedQuery ?? {};
@@ -36,6 +36,8 @@ router.get("/", validateQuery(ListBooksQuerySchema), async (req, res, next) => {
         { title: { contains: search, mode: "insensitive" } },
         { author: { contains: search, mode: "insensitive" } },
         { genre: { contains: search, mode: "insensitive" } },
+        { series: { contains: search, mode: "insensitive" } },
+        { isbn: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -49,10 +51,15 @@ router.get("/", validateQuery(ListBooksQuerySchema), async (req, res, next) => {
     const response = BookListResponseSchema.parse(
       books.map((b: Book) => ({
         ...b,
-        author: b.author ?? null,
         genre: b.genre ?? null,
-        pageCount: b.pageCount ?? null,
-        currentPage: b.currentPage ?? null,
+        series: b.series ?? null,
+        seriesType: b.seriesType ?? null,
+        format: b.format ?? null,
+        formatSubtype: b.formatSubtype ?? null,
+        isbn: b.isbn ?? null,
+        plannedMonth: b.plannedMonth ?? null,
+        startedAt: b.startedAt?.toISOString() ?? null,
+        finishedAt: b.finishedAt?.toISOString() ?? null,
         createdAt: b.createdAt.toISOString(),
         updatedAt: b.updatedAt.toISOString(),
       })),
@@ -64,7 +71,7 @@ router.get("/", validateQuery(ListBooksQuerySchema), async (req, res, next) => {
   }
 });
 
-// POST /books
+// POST /api/books
 router.post("/", validateBody(CreateBookSchema), async (req, res, next) => {
   try {
     const body = (req as any).validatedBody;
@@ -73,19 +80,28 @@ router.post("/", validateBody(CreateBookSchema), async (req, res, next) => {
       data: {
         title: body.title,
         author: body.author,
-        genre: body.genre,
         status: body.status,
-        pageCount: body.pageCount,
-        currentPage: body.currentPage,
+        genre: body.genre,
+        series: body.series,
+        seriesType: body.seriesType,
+        format: body.format,
+        formatSubtype: body.formatSubtype,
+        isbn: body.isbn,
+        plannedMonth: body.plannedMonth,
       },
     });
 
     const response = BookResponseSchema.parse({
       ...created,
-      author: created.author ?? null,
       genre: created.genre ?? null,
-      pageCount: created.pageCount ?? null,
-      currentPage: created.currentPage ?? null,
+      series: created.series ?? null,
+      seriesType: created.seriesType ?? null,
+      format: created.format ?? null,
+      formatSubtype: created.formatSubtype ?? null,
+      isbn: created.isbn ?? null,
+      plannedMonth: created.plannedMonth ?? null,
+      startedAt: created.startedAt?.toISOString() ?? null,
+      finishedAt: created.finishedAt?.toISOString() ?? null,
       createdAt: created.createdAt.toISOString(),
       updatedAt: created.updatedAt.toISOString(),
     });
@@ -96,7 +112,7 @@ router.post("/", validateBody(CreateBookSchema), async (req, res, next) => {
   }
 });
 
-// PATCH /books/:id
+// PATCH /api/books/:id
 router.patch(
   "/:id",
   validateParams(BookIdParamSchema),
@@ -121,10 +137,15 @@ router.patch(
 
       const response = BookResponseSchema.parse({
         ...updated,
-        author: updated.author ?? null,
         genre: updated.genre ?? null,
-        pageCount: updated.pageCount ?? null,
-        currentPage: updated.currentPage ?? null,
+        series: updated.series ?? null,
+        seriesType: updated.seriesType ?? null,
+        format: updated.format ?? null,
+        formatSubtype: updated.formatSubtype ?? null,
+        isbn: updated.isbn ?? null,
+        plannedMonth: updated.plannedMonth ?? null,
+        startedAt: updated.startedAt?.toISOString() ?? null,
+        finishedAt: updated.finishedAt?.toISOString() ?? null,
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       });
@@ -136,7 +157,7 @@ router.patch(
   },
 );
 
-// DELETE /books/:id
+// DELETE /api/books/:id
 router.delete(
   "/:id",
   validateParams(BookIdParamSchema),
@@ -152,7 +173,6 @@ router.delete(
         });
       }
 
-      await prisma.session.deleteMany({ where: { bookId: id } });
       await prisma.book.delete({ where: { id } });
 
       sendOk(res, { id });

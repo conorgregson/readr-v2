@@ -1,26 +1,7 @@
-import express from "express";
-import cors from "cors";
-import { json } from "body-parser";
 import type { Server } from "node:http";
 
+import app from "./app";
 import { prisma } from "./db/client";
-import { booksRouter } from "./modules/books/books.router";
-import { sessionsRouter } from "./modules/sessions/sessions.router";
-import { errorHandler } from "./utils/http";
-
-const app = express();
-
-app.use(cors());
-app.use(json());
-
-app.get("/health", (_req, res) => {
-  res.json({ ok: true, status: "healthy" });
-});
-
-app.use("/books", booksRouter);
-app.use("/sessions", sessionsRouter);
-
-app.use(errorHandler);
 
 const PORT = Number(process.env.PORT ?? 4000);
 
