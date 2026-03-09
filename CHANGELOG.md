@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2-sprint-0] — Schema & Contract Audit (2026-03-08)
+
+### Added
+
+- Express backend architecture with modular routing
+- PostgreSQL database configured via Prisma
+- Prisma schema for Books and Sessions models
+- relational link between books and reading sessions
+- Zod request validation for all API routes
+- response schema validation for API outputs
+- HTTP helper utilities and AppError error system
+- Prisma seed script for development data
+
+### Changed
+
+- project architecture updated to support full-stack development
+- backend now replaces the local-only data model used in v1.9
+
+### Notes
+
+- establishes the core backend data layer for Readr v2
+- prepares the project for React frontend API integration in Sprint 1
+
+---
+
 ## [v2.1-sprint-10] — Freeze & Stabilization (2026-03-07)
 
 ### Added
