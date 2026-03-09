@@ -8,40 +8,70 @@ datasource db {
 }
 
 enum BookStatus {
-  PLANNED
-  READING
-  FINISHED
-  ABANDONED
+  planned
+  reading
+  finished
+}
+
+enum SeriesType {
+  series
+  standalone
+}
+
+enum FormatParent {
+  digital
+  physical
+}
+
+enum FormatSubtype {
+  Hardcover
+  Paperback
+  ebook
+  Audiobook
+  PDF
 }
 
 model Book {
-  id          String      @id @default(cuid())
-  title       String
-  author      String?
-  genre       String?
-  status      BookStatus  @default(PLANNED)
+  id            String      @id @default(cuid())
+  title         String
+  author        String
 
-  pageCount   Int?
-  currentPage Int?        @default(0)
+  status        BookStatus  @default(planned)
 
-  sessions    Session[]
+  startedAt     DateTime?
+  finishedAt    DateTime?
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  genre         String?
+  series        String?
+  seriesType    SeriesType?
+  format        FormatParent?
+  formatSubtype FormatSubtype?
+  isbn          String?
+  plannedMonth  String?
+
+  sessions      Session[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([status])
   @@index([title])
+  @@index([author])
+  @@index([genre])
+  @@index([series])
+  @@index([plannedMonth])
 }
 
 model Session {
   id        String   @id @default(cuid())
   bookId    String
-  book      Book     @relation(fields: [bookId], references: [id])
-
-  minutes   Int
-  notes     String?
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   date      DateTime
+  pages     Int?
+  minutes   Int?
+  notes     String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

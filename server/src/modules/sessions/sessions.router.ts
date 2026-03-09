@@ -20,50 +20,56 @@ import type { Session } from "@prisma/client";
 
 const router = Router();
 
-// GET /sessions
-router.get("/", validateQuery(ListSessionsQuerySchema), async (req, res, next) => {
-  try {
-    const { bookId, search, from, to, limit, offset } =
-      (req as any).validatedQuery ?? {};
+// GET /api/sessions
+router.get(
+  "/",
+  validateQuery(ListSessionsQuerySchema),
+  async (req, res, next) => {
+    try {
+      const { bookId, search, from, to, limit, offset } =
+        (req as any).validatedQuery ?? {};
 
-    const where: any = {};
+      const where: any = {};
 
-    if (bookId) where.bookId = bookId;
+      if (bookId) where.bookId = bookId;
 
-    if (from || to) {
-      where.date = {};
-      if (from) where.date.gte = from;
-      if (to) where.date.lte = to;
+      if (from || to) {
+        where.date = {};
+        if (from) where.date.gte = from;
+        if (to) where.date.lte = to;
+      }
+
+      if (search) {
+        where.OR = [{ notes: { contains: search, mode: "insensitive" } }];
+      }
+
+      const sessions = await prisma.session.findMany({
+        where,
+        orderBy: { date: "desc" },
+        skip: offset ?? 0,
+        take: limit ?? 50,
+      });
+
+      const response = SessionListResponseSchema.parse(
+        sessions.map((s: Session) => ({
+          ...s,
+          pages: s.pages ?? null,
+          minutes: s.minutes ?? null,
+          notes: s.notes ?? null,
+          date: s.date.toISOString(),
+          createdAt: s.createdAt.toISOString(),
+          updatedAt: s.updatedAt.toISOString(),
+        })),
+      );
+
+      sendOk(res, response);
+    } catch (error) {
+      next(error);
     }
+  },
+);
 
-    if (search) {
-      where.notes = { contains: search, mode: "insensitive" };
-    }
-
-    const sessions = await prisma.session.findMany({
-      where,
-      orderBy: { date: "desc" },
-      skip: offset ?? 0,
-      take: limit ?? 50,
-    });
-
-    const response = SessionListResponseSchema.parse(
-      sessions.map((s: Session) => ({
-        ...s,
-        notes: s.notes ?? null,
-        date: s.date.toISOString(),
-        createdAt: s.createdAt.toISOString(),
-        updatedAt: s.updatedAt.toISOString(),
-      })),
-    );
-
-    sendOk(res, response);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// GET /sessions/:id
+// GET /api/sessions/:id
 router.get(
   "/:id",
   validateParams(SessionIdParamSchema),
@@ -82,6 +88,8 @@ router.get(
 
       const response = SessionResponseSchema.parse({
         ...session,
+        pages: session.pages ?? null,
+        minutes: session.minutes ?? null,
         notes: session.notes ?? null,
         date: session.date.toISOString(),
         createdAt: session.createdAt.toISOString(),
@@ -95,7 +103,7 @@ router.get(
   },
 );
 
-// POST /sessions
+// POST /api/sessions
 router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
   try {
     const body = (req as any).validatedBody;
@@ -111,6 +119,7 @@ router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
     const created = await prisma.session.create({
       data: {
         bookId: body.bookId,
+        pages: body.pages,
         minutes: body.minutes,
         notes: body.notes,
         date: body.date,
@@ -119,6 +128,8 @@ router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
 
     const response = SessionResponseSchema.parse({
       ...created,
+      pages: created.pages ?? null,
+      minutes: created.minutes ?? null,
       notes: created.notes ?? null,
       date: created.date.toISOString(),
       createdAt: created.createdAt.toISOString(),
@@ -131,7 +142,7 @@ router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
   }
 });
 
-// PATCH /sessions/:id
+// PATCH /api/sessions/:id
 router.patch(
   "/:id",
   validateParams(SessionIdParamSchema),
@@ -150,7 +161,9 @@ router.patch(
       }
 
       if (body.bookId) {
-        const book = await prisma.book.findUnique({ where: { id: body.bookId } });
+        const book = await prisma.book.findUnique({
+          where: { id: body.bookId },
+        });
         if (!book) {
           throw new AppError("Book not found for this session", {
             status: 404,
@@ -163,6 +176,7 @@ router.patch(
         where: { id },
         data: {
           bookId: body.bookId ?? existing.bookId,
+          pages: body.pages ?? existing.pages,
           minutes: body.minutes ?? existing.minutes,
           notes: body.notes ?? existing.notes,
           date: body.date ?? existing.date,
@@ -171,6 +185,8 @@ router.patch(
 
       const response = SessionResponseSchema.parse({
         ...updated,
+        pages: updated.pages ?? null,
+        minutes: updated.minutes ?? null,
         notes: updated.notes ?? null,
         date: updated.date.toISOString(),
         createdAt: updated.createdAt.toISOString(),
@@ -184,7 +200,7 @@ router.patch(
   },
 );
 
-// DELETE /sessions/:id
+// DELETE /api/sessions/:id
 router.delete(
   "/:id",
   validateParams(SessionIdParamSchema),
