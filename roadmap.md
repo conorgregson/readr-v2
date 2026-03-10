@@ -174,9 +174,10 @@ Released: Mar 2026
 
 ### Notes
 
-- v2.2 is a **persistence migration**, not a UX redesign.
+- v2.2 is a persistence migration, not a UX redesign.
 - The React UI should remain materially unchanged.
 - Frontend domain types from v2.1 are treated as the canonical contract.
+- A client-only demo is already deployed via Vercel; v2.2 will connect the UI to the API layer.
 
 Planned: Q2 2026
 
@@ -216,14 +217,16 @@ Planned: TBD
 
 ## 🌍 Version 3.0 — Deployment & Growth
 
-**Focus:** Transition Readr from a local development project into a production-ready, publicly accessible application.
+**Focus:** Harden Readr for production infrastructure and public hosting at scale.
 
 ### Planned Work
 
-- Cloud deployment (frontend + backend)
-- CI/CD pipeline
-- Public demo environment
+- Production hosting architecture
+- CI/CD deployment pipelines
 - Environment-based configuration
+- Production database infrastructure
+- Public demo environment stabilization
+- Monitoring and logging baseline
 
 Planned: TBD
 

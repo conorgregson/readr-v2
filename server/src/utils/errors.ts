@@ -28,10 +28,9 @@ export class AppError extends Error {
 }
 
 export function zodToAppError(error: ZodError): AppError {
-  const formatted = error.format();
   return new AppError("Validation failed", {
     status: 400,
     code: "VALIDATION_ERROR",
-    details: formatted,
+    details: error.format(),
   });
 }

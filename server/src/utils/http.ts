@@ -61,11 +61,15 @@ export function validateParams(schema: ZodTypeAny) {
 }
 
 export function sendOk(res: Response, data: unknown) {
-  res.status(200).json({ ok: true, data });
+  return res.status(200).json({ ok: true, data });
 }
 
 export function sendCreated(res: Response, data: unknown) {
-  res.status(201).json({ ok: true, data });
+  return res.status(201).json({ ok: true, data });
+}
+
+export function sendNoContent(res: Response) {
+  return res.status(204).send();
 }
 
 /**
