@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2-sprint-1] — Books API Contract (2026-03-10)
+
+### Added
+
+- Implemented Books CRUD endpoints for `GET`, `POST`, `PATCH`, and `DELETE`
+- Added Books DTO mapper for stable frontend-facing response shapes
+- Added Books service layer for Prisma-backed persistence
+- Added status transition timestamp handling for `planned`, `reading`, and `finished`
+
+### Changed
+
+- Tightened Books Zod schemas for create, update, params, query, and response validation
+- Standardized delete behavior to return `204 No Content`
+- Synced Prisma schema and database contract for current Books fields
+
+### Fixed
+
+- Resolved local schema/database mismatch causing Prisma read failures
+- Fixed timestamp update typo affecting status transition PATCH behavior
+- Fixed Zod v4 startup issue in sessions schema by using `.safeExtend()`
+
+### Notes
+
+- Postman validation passed for valid CRUD flows, invalid payloads, missing resources, and timestamp contract behavior
+
+---
+
 ## [v2.2-sprint-0] — Schema & Contract Audit (2026-03-08)
 
 ### Added

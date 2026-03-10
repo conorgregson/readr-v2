@@ -25,7 +25,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/ci.yml?style=for-the-badge&label=CI&logo=github" />
 </a>
 
-<img src="https://img.shields.io/badge/Status-v2.1%20Released-FFA500?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v2.2%20In%20Development-orange?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -39,9 +39,9 @@ Try the deployed frontend here:
 https://readr-v2-app.vercel.app
 
 The demo currently runs **client-side only** using localStorage.
-Your reading data is stored in your browser and will persist until site data is cleared.
+Your reading data is stored in your browser and will persist until site data is cleared. This reflects the **v2.1 parity release**.
 
-Server-backed persistence will be introduced in **v2.2**.
+Server-backed persistence will be introduced in **v2.2**, connecting the deployed UI to the API layer.
 
 ---
 
@@ -207,10 +207,12 @@ Only SemVer releases represent official “ship-ready” states.
 
 ## Roadmap (High-Level)
 
-- **v2.0.0** — Backend & CI foundation ✅
-- **v2.1.0** — React frontend rebuild with v1.9 behavioral parity ✅
-- **v2.2.0** — API integration & persistence (in progress)
-- **v2.3.0+** — Accounts, analytics, and growth features
+- **v2.0.0** — Backend & CI foundation (Express + Prisma + PostgreSQL) ✅
+- **v2.1.0** — React frontend rebuild with full v1.9 behavioral parity ✅
+- **v2.2.0** — API integration & persistence migration (local-first → API) 🚧
+- **v2.3.0** — Authentication, accounts, and multi-user data boundaries
+- **v2.4.0** — Server-driven badges, statistics, and engagement systems
+- **v3.0.0** — Production infrastructure & hosted deployment architecture
 
 For detailed version history and architectural milestones, see [`roadmap.md`](./roadmap.md).
 

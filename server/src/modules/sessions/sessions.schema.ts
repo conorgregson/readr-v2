@@ -66,7 +66,7 @@ const SessionBaseSchema = z
     }
   });
 
-export const CreateSessionSchema = SessionBaseSchema.extend({
+export const CreateSessionSchema = SessionBaseSchema.safeExtend({
   bookId: z.cuid("Invalid book id"),
 });
 
