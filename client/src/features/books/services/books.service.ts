@@ -1,164 +1,99 @@
-import type { Book, BookId } from "../types";
+import type {
+  Book,
+  BookId,
+  BookStatus,
+  FormatParent,
+  FormatSubtype,
+  SeriesType,
+} from "../types";
 
-// local-first for v2.1
-const USE_API = false;
-if (USE_API) throw new Error("API mode not supported in v2.1");
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
-// ----------------------------
-// Local (localStorage) adapter
-// ----------------------------
+type ApiEnvelope<T> = {
+  ok: boolean;
+  data: T;
+};
 
-const STORAGE_KEY = "readr_books_v2_1";
+type ApiErrorEnvelope = {
+  ok?: false;
+  error?: {
+    message?: string;
+    code?: string;
+    details?: unknown;
+  };
+};
 
-function nowIso() {
-  return new Date().toISOString();
+type ApiBook = {
+  id: string;
+  title: string;
+  author: string;
+  status: BookStatus;
+
+  genre: string | null;
+  series: string | null;
+  seriesType: SeriesType | null;
+  format: FormatParent | null;
+  formatSubtype: FormatSubtype | null;
+  isbn: string | null;
+  plannedMonth: string | null;
+
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateBookInput = {
+  title: string;
+  author: string;
+  status: BookStatus;
+
+  genre?: string;
+  series?: string;
+  seriesType?: SeriesType;
+  format?: FormatParent;
+  formatSubtype?: FormatSubtype;
+  isbn?: string;
+  plannedMonth?: string;
+};
+
+export type UpdateBookInput = Partial<{
+  title: string;
+  author: string;
+  status: BookStatus;
+
+  genre: string | null;
+  series: string | null;
+  seriesType: SeriesType | null;
+  format: FormatParent | null;
+  formatSubtype: FormatSubtype | null;
+  isbn: string | null;
+  plannedMonth: string | null;
+}>;
+
+function nonEmpty(label: string, value: unknown): string {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  if (!trimmed) throw new Error(`${label} is required`);
+  return trimmed;
 }
 
-function uuid(): string {
-  // Prefer built-in UUID when available
-  const c = globalThis.crypto as Crypto | undefined;
-  if (c && "randomUUID" in c && typeof c.randomUUID === "function") {
-    return c.randomUUID();
-  }
-
-  // Fallback: RFC4122-ish v4 using getRandomValues when available
-  if (c && "getRandomValues" in c && typeof c.getRandomValues === "function") {
-    const bytes = new Uint8Array(16);
-    c.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-  }
-
-  // Last-resort fallback (still stable enough for local-first)
-  return `id_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+function sanitizeOptionalString(value: unknown): string | undefined {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return trimmed ? trimmed : undefined;
 }
 
-type ReadLocalResult = { books: Book[]; repaired: boolean };
+function sanitizeNullableString(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
 
-function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return trimmed ? trimmed : null;
 }
-
-function safeSetItem(key: string, value: string): boolean {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function safeRemoveItem(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // ignore
-  }
-}
-
-function readLocal(): ReadLocalResult {
-  const raw = safeGetItem(STORAGE_KEY);
-  if (!raw) return { books: [], repaired: false };
-
-  try {
-    const parsed = JSON.parse(raw);
-    const { books, droppedCount } = sanitizeLoadedBooks(parsed);
-    if (droppedCount > 0) {
-      writeLocal(books);
-      return { books, repaired: true };
-    }
-    return { books, repaired: false };
-  } catch {
-    safeRemoveItem(STORAGE_KEY);
-    return { books: [], repaired: true };
-  }
-}
-
-function writeLocal(books: Book[]) {
-  safeSetItem(STORAGE_KEY, JSON.stringify(books));
-}
-
-function nonEmpty(label: string, s: unknown): string {
-  const v = typeof s === "string" ? s.trim() : "";
-  if (!v) throw new Error(`${label} is required`);
-  return v;
-}
-
-function sanitizeOptional(s: unknown): string | undefined {
-  const v = typeof s === "string" ? s.trim() : "";
-  return v ? v : undefined;
-}
-
-function sanitizeLoadedBooks(raw: unknown): {
-  books: Book[];
-  droppedCount: number;
-} {
-  if (!Array.isArray(raw)) return { books: [], droppedCount: 0 };
-
-  const out: Book[] = [];
-  let dropped = 0;
-  for (const item of raw) {
-    // Best-effort sanitize to prevent runtime crashes.
-    // Strict parity: drop invalid items instead of inventing authors.
-    try {
-      const b = item as Partial<Book>;
-      const id = typeof b.id === "string" ? b.id : uuid();
-      const title = nonEmpty("Title", b.title);
-      const author = nonEmpty("Author", b.author);
-
-      const createdAt =
-        typeof b.createdAt === "string" ? b.createdAt : nowIso();
-      const updatedAt =
-        typeof b.updatedAt === "string" ? b.updatedAt : createdAt;
-
-      const status =
-        b.status === "planned" ||
-        b.status === "reading" ||
-        b.status === "finished"
-          ? b.status
-          : "planned";
-      out.push({
-        id,
-        title,
-        author,
-        status,
-        createdAt,
-        updatedAt,
-        startedAt: typeof b.startedAt === "string" ? b.startedAt : undefined,
-        finishedAt: typeof b.finishedAt === "string" ? b.finishedAt : undefined,
-
-        genre: sanitizeOptional(b.genre),
-        series: sanitizeOptional(b.series),
-        seriesType: b.seriesType,
-        format: b.format,
-        formatSubtype: b.formatSubtype,
-        isbn: sanitizeOptional(b.isbn),
-        plannedMonth: sanitizeOptional(b.plannedMonth),
-      });
-    } catch {
-      // Drop invalid record
-      dropped += 1;
-    }
-  }
-  return { books: out, droppedCount: dropped };
-}
-
-// ----------------------------
-// API adapter
-// ----------------------------
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
 
-  const resp = await fetch(url, {
+  const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
@@ -166,166 +101,145 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...options,
   });
 
-  const payload = await resp.json().catch(() => null);
+  if (response.status === 204) {
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+    return undefined as T;
+  }
 
-  if (!resp.ok) {
+  const payload = (await response.json().catch(() => null)) as
+    | ApiEnvelope<T>
+    | ApiErrorEnvelope
+    | null;
+
+  if (!response.ok) {
     const message =
-      payload?.error?.message || `Request failed with status ${resp.status}`;
+      payload && "error" in payload
+        ? payload.error?.message ||
+          `Request failed with status ${response.status}`
+        : `Request failed with status ${response.status}`;
+
     throw new Error(message);
   }
 
-  // backend shape: { ok: boolean, data: ... }
-  return payload.data as T;
+  if (!payload || !("data" in payload)) {
+    throw new Error("Invalid API response");
+  }
+
+  return payload.data;
 }
 
-async function apiFetchBooks(): Promise<Book[]> {
-  return request<Book[]>("/books", { method: "GET" });
+function toClientBook(apiBook: ApiBook): Book {
+  return {
+    id: apiBook.id,
+    title: nonEmpty("Title", apiBook.title),
+    author: nonEmpty("Author", apiBook.author),
+    status: apiBook.status,
+
+    createdAt: apiBook.createdAt,
+    updatedAt: apiBook.updatedAt,
+    startedAt: apiBook.startedAt ?? undefined,
+    finishedAt: apiBook.finishedAt ?? undefined,
+
+    genre: apiBook.genre ?? undefined,
+    series: apiBook.series ?? undefined,
+    seriesType: apiBook.seriesType ?? undefined,
+    format: apiBook.format ?? undefined,
+    formatSubtype: apiBook.formatSubtype ?? undefined,
+    isbn: apiBook.isbn ?? undefined,
+    plannedMonth: apiBook.plannedMonth ?? undefined,
+  };
 }
 
-async function apiCreateBook(
-  input: Omit<Book, "id" | "createdAt" | "updatedAt">,
-): Promise<Book> {
-  return request<Book>("/books", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+function normalizeCreateInput(input: CreateBookInput): CreateBookInput {
+  return {
+    title: nonEmpty("Title", input.title),
+    author: nonEmpty("Author", input.author),
+    status: input.status,
+
+    ...(sanitizeOptionalString(input.genre) !== undefined
+      ? { genre: sanitizeOptionalString(input.genre) }
+      : {}),
+    ...(sanitizeOptionalString(input.series) !== undefined
+      ? { series: sanitizeOptionalString(input.series) }
+      : {}),
+    ...(input.seriesType !== undefined ? { seriesType: input.seriesType } : {}),
+    ...(input.format !== undefined ? { format: input.format } : {}),
+    ...(input.formatSubtype !== undefined
+      ? { formatSubtype: input.formatSubtype }
+      : {}),
+    ...(sanitizeOptionalString(input.isbn) !== undefined
+      ? { isbn: sanitizeOptionalString(input.isbn) }
+      : {}),
+    ...(sanitizeOptionalString(input.plannedMonth) !== undefined
+      ? { plannedMonth: sanitizeOptionalString(input.plannedMonth) }
+      : {}),
+  };
 }
 
-async function apiUpdateBook(
-  id: BookId,
-  patch: Partial<Omit<Book, "id" | "createdAt">>,
-): Promise<Book> {
-  return request<Book>(`/books/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(patch),
-  });
-}
+function normalizeUpdateInput(patch: UpdateBookInput): UpdateBookInput {
+  return {
+    ...(patch.title !== undefined
+      ? { title: nonEmpty("Title", patch.title) }
+      : {}),
+    ...(patch.author !== undefined
+      ? { author: nonEmpty("Author", patch.author) }
+      : {}),
+    ...(patch.status !== undefined ? { status: patch.status } : {}),
 
-async function apiDeleteBook(id: BookId): Promise<void> {
-  await request<void>(`/books/${id}`, { method: "DELETE" });
+    ...(patch.genre !== undefined
+      ? { genre: sanitizeNullableString(patch.genre) ?? null }
+      : {}),
+    ...(patch.series !== undefined
+      ? { series: sanitizeNullableString(patch.series) ?? null }
+      : {}),
+    ...(patch.seriesType !== undefined ? { seriesType: patch.seriesType } : {}),
+    ...(patch.format !== undefined ? { format: patch.format } : {}),
+    ...(patch.formatSubtype !== undefined
+      ? { formatSubtype: patch.formatSubtype }
+      : {}),
+    ...(patch.isbn !== undefined
+      ? { isbn: sanitizeNullableString(patch.isbn) ?? null }
+      : {}),
+    ...(patch.plannedMonth !== undefined
+      ? { plannedMonth: sanitizeNullableString(patch.plannedMonth) ?? null }
+      : {}),
+  };
 }
-
-// ----------------------------
-// Public service (single interface)
-// ----------------------------
 
 export const BooksService = {
   async list(): Promise<Book[]> {
-    if (USE_API) return apiFetchBooks();
-    const res = readLocal();
-    return res.books;
+    const books = await request<ApiBook[]>("/books?limit=100", {
+      method: "GET",
+    });
+
+    return books.map(toClientBook);
   },
 
-  async create(
-    input: Omit<Book, "id" | "createdAt" | "updatedAt">,
-  ): Promise<Book> {
-    if (USE_API) return apiCreateBook(input);
+  async create(input: CreateBookInput): Promise<Book> {
+    const created = await request<ApiBook>("/books", {
+      method: "POST",
+      body: JSON.stringify(normalizeCreateInput(input)),
+    });
 
-    const books = readLocal().books;
-    const book: Book = {
-      ...input,
-      title: nonEmpty("Title", input.title),
-      author: nonEmpty("Author", input.author),
-      genre: sanitizeOptional(input.genre),
-      series: sanitizeOptional(input.series),
-      isbn: sanitizeOptional(input.isbn),
-      plannedMonth: sanitizeOptional(input.plannedMonth),
-      id: uuid(),
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    };
-    const next = [book, ...books];
-    writeLocal(next);
-    return book;
+    return toClientBook(created);
   },
 
-  async update(
-    id: BookId,
-    patch: Partial<Omit<Book, "id" | "createdAt">>,
-  ): Promise<Book | null> {
-    if (USE_API) return apiUpdateBook(id, patch);
+  async update(id: BookId, patch: UpdateBookInput): Promise<Book | null> {
+    const updated = await request<ApiBook>(`/books/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(normalizeUpdateInput(patch)),
+    });
 
-    const books = readLocal().books;
-    const idx = books.findIndex((currentBook) => currentBook.id === id);
-    if (idx === -1) return null;
-
-    const updated: Book = {
-      ...books[idx],
-      ...patch,
-      title:
-        patch.title !== undefined
-          ? nonEmpty("Title", patch.title)
-          : books[idx].title,
-      author:
-        patch.author !== undefined
-          ? nonEmpty("Author", patch.author)
-          : books[idx].author,
-      genre:
-        patch.genre !== undefined
-          ? sanitizeOptional(patch.genre)
-          : books[idx].genre,
-      series:
-        patch.series !== undefined
-          ? sanitizeOptional(patch.series)
-          : books[idx].series,
-      isbn:
-        patch.isbn !== undefined
-          ? sanitizeOptional(patch.isbn)
-          : books[idx].isbn,
-      plannedMonth:
-        patch.plannedMonth !== undefined
-          ? sanitizeOptional(patch.plannedMonth)
-          : books[idx].plannedMonth,
-      updatedAt: nowIso(),
-    };
-    const next = [...books];
-    next[idx] = updated;
-    writeLocal(next);
-    return updated;
+    return toClientBook(updated);
   },
 
   async remove(id: BookId): Promise<boolean> {
-    if (USE_API) {
-      await apiDeleteBook(id);
-      return true;
-    }
+    await request<void>(`/books/${id}`, {
+      method: "DELETE",
+    });
 
-    const books = readLocal().books;
-    const next = books.filter((currentBook) => currentBook.id !== id);
-    if (next.length === books.length) return false;
-    writeLocal(next);
     return true;
-  },
-
-  async replaceAll(nextBooks: Book[]): Promise<void> {
-    if (USE_API) {
-      // v2.2 can implement: PUT /books or bulk sync endpoint
-      throw new Error("replaceAll not supported in API mode yet");
-    }
-
-    // sanitize on write to avoid peristing junk
-    const safe: Book[] = nextBooks.map((b) => ({
-      ...b,
-      title: nonEmpty("Title", b.title),
-      author: nonEmpty("Author", b.author),
-      genre: sanitizeOptional(b.genre),
-      series: sanitizeOptional(b.series),
-      isbn: sanitizeOptional(b.isbn),
-      plannedMonth: sanitizeOptional(b.plannedMonth),
-
-      createdAt: typeof b.createdAt === "string" ? b.createdAt : nowIso(),
-      updatedAt: typeof b.updatedAt === "string" ? b.updatedAt : nowIso(),
-      startedAt: typeof b.startedAt === "string" ? b.startedAt : undefined,
-      finishedAt: typeof b.finishedAt === "string" ? b.finishedAt : undefined,
-      status:
-        b.status === "planned" ||
-        b.status === "reading" ||
-        b.status === "finished"
-          ? b.status
-          : "planned",
-      id: typeof b.id === "string" ? b.id : uuid(),
-    }));
-
-    writeLocal(safe);
   },
 };
