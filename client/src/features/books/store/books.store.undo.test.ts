@@ -91,20 +91,21 @@ describe("BooksStore Undo (Sprint 5)", () => {
     expect(result).toBe(false);
   });
 
-  it("rollback if delete persistence fails", async () => {
+  it("returns true immediately and sets undo for delayed delete", async () => {
     const books = seedBooks();
 
     useBooksStore.setState({ books });
 
-    vi.mocked(BooksService.remove).mockResolvedValue(false);
+    vi.mocked(BooksService.remove).mockResolvedValue(true);
 
     const ok = await useBooksStore.getState().deleteBook("1");
 
-    expect(ok).toBe(false);
+    expect(ok).toBe(true);
 
     const state = useBooksStore.getState();
-    expect(state.books).toEqual(books);
-    expect(state.undo).toBeNull();
+    expect(state.books).toHaveLength(1);
+    expect(state.books[0].id).toBe("2");
+    expect(state.undo).not.toBeNull();
   });
 
   it("does not call remove when undo happens before expiration", async () => {
