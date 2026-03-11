@@ -3,7 +3,7 @@ import type { Server } from "node:http";
 import app from "./app";
 import { prisma } from "./db/client";
 
-const PORT = Number(process.env.PORT ?? 4000);
+const port = Number(process.env.PORT) || 4000;
 
 let server: Server | undefined;
 let shuttingDown = false;
@@ -14,20 +14,17 @@ async function shutdown(signal: string) {
 
   console.log(`[shutdown] Received ${signal}. Closing server...`);
 
-  // Failsafe: don't hang forever (useful in CI)
   const forceTimer = setTimeout(() => {
     console.error("[shutdown] Force exit after timeout");
     process.exit(1);
   }, 10_000);
 
   try {
-    // Stop accepting new connections
     await new Promise<void>((resolve) => {
       if (!server) return resolve();
       server.close(() => resolve());
     });
 
-    // Close Prisma connections
     await prisma.$disconnect();
 
     console.log("[shutdown] Clean shutdown complete.");
@@ -53,6 +50,6 @@ process.on("unhandledRejection", (err) => {
   void shutdown("unhandledRejection");
 });
 
-server = app.listen(PORT, () => {
-  console.log(`Readr v2 API listening on http://localhost:${PORT}`);
+server = app.listen(port, () => {
+  console.log(`Readr v2 API listening on port ${port}`);
 });

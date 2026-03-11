@@ -15,7 +15,7 @@ type UndoRecord = {
   expiresAtMs: number;
   label: string;
   before: Book[]; // full snapshot for perfect restore
-  meta?: { bookId: BookId; kind: "delete" | "finish" };
+  meta?: { bookId: BookId; kind: "delete" };
 };
 
 function reqTrim(label: string, value: unknown): string {
@@ -42,6 +42,7 @@ function normalizeCreateInput(
 
 type BooksState = {
   isBootstrapped: boolean;
+  isLoading: boolean;
 
   addBook: (
     input: Omit<Book, "id" | "createdAt" | "updatedAt">,
@@ -89,18 +90,21 @@ type BooksState = {
 type SearchResult = Book | { ref: Book };
 
 let undoTimer: number | null = null;
+let pendingDeleteBookId: BookId | null = null;
 
 function clearUndoTimer() {
   if (undoTimer !== null) {
     window.clearTimeout(undoTimer);
     undoTimer = null;
   }
+  pendingDeleteBookId = null;
 }
 
 const initialState: Pick<
   BooksState,
   | "page"
   | "isBootstrapped"
+  | "isLoading"
   | "books"
   | "filters"
   | "searchQuery"
@@ -109,8 +113,9 @@ const initialState: Pick<
 > = {
   page: { mode: "results" },
   isBootstrapped: false,
+  isLoading: false,
 
-  // Sprint 4: load from BooksService (local-first)
+  // Sprint 2: server-backed books list
   books: [],
 
   filters: defaultBooksFilters(),
@@ -235,36 +240,46 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       meta: { bookId: id, kind: "delete" },
     };
 
-    // optimistic UI update + set undo slot
+    // optimistic UI removal only
     set({ books: next, undo: rec, page: { mode: "results" } });
 
-    // start expiration timer (just clears the slot)
-    undoTimer = window.setTimeout(() => {
-      // only clear if it's still the same record and now expired
+    pendingDeleteBookId = id;
+
+    undoTimer = window.setTimeout(async () => {
       const cur = get().undo;
-      if (cur && Date.now() > cur.expiresAtMs) {
-        set({ undo: null });
+      const deleteId = pendingDeleteBookId;
+
+      // Only finalize if this is still the active delete undo record
+      if (
+        cur &&
+        deleteId &&
+        cur.meta?.kind === "delete" &&
+        cur.meta.bookId === deleteId &&
+        Date.now() > cur.expiresAtMs
+      ) {
+        try {
+          await BooksService.remove(deleteId);
+          set({ undo: null });
+        } catch (e) {
+          // server delete failed; restore UI snapshot
+          set({
+            books: cur.before,
+            undo: null,
+            page: {
+              mode: "error",
+              error: {
+                message: (e as Error)?.message ?? "Failed to delete book",
+              },
+            },
+          });
+        }
       }
+
       undoTimer = null;
+      pendingDeleteBookId = null;
     }, UNDO_MS + 50);
 
-    try {
-      const ok = await BooksService.remove(id);
-      if (!ok) throw new Error("Delete failed");
-      return true;
-    } catch (e) {
-      // rollback UI + clear undo (since delete didn't happen)
-      clearUndoTimer();
-      set({
-        books: before,
-        undo: null,
-        page: {
-          mode: "error",
-          error: { message: (e as Error)?.message ?? "Failed to delete book" },
-        },
-      });
-      return false;
-    }
+    return true;
   },
 
   finishBook: async (id) => {
@@ -289,24 +304,7 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const next = [...before];
     next[idx] = finished;
 
-    const nowMS = Date.now();
-    const rec: UndoRecord = {
-      createdAtMs: nowMS,
-      expiresAtMs: nowMS + UNDO_MS,
-      label: `Mark Finished ${prev.title}`,
-      before,
-      meta: { bookId: id, kind: "finish" },
-    };
-
-    set({ books: next, undo: rec, page: { mode: "results" } });
-
-    undoTimer = window.setTimeout(() => {
-      const cur = get().undo;
-      if (cur && Date.now() > cur.expiresAtMs) {
-        set({ undo: null });
-      }
-      undoTimer = null;
-    }, UNDO_MS + 50);
+    set({ books: next, page: { mode: "results" } });
 
     try {
       const saved = await BooksService.update(id, {
@@ -353,39 +351,38 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       return false;
     }
 
-    // One-shot: clear undo immediately to avoid double-click races
     clearUndoTimer();
-    set({ undo: null, page: { mode: "results" }, books: rec.before });
 
-    try {
-      // Persist exact snapshot (atomic restore)
-      await BooksService.replaceAll(rec.before);
-      return true;
-    } catch (e) {
-      set({
-        page: {
-          mode: "error",
-          error: { message: (e as Error)?.message ?? "Failed to undo" },
-        },
-      });
-      return false;
-    }
+    // Restore local snapshot only.
+    // For delete undo, server delete has not happened yet.
+    set({
+      undo: null,
+      page: { mode: "results" },
+      books: rec.before,
+    });
+
+    return true;
   },
 
   loadBooks: async () => {
     try {
-      set({ page: { mode: "loading" } });
+      set({
+        isLoading: true,
+        page: { mode: "loading" },
+      });
 
       const books = await BooksService.list();
 
       set({
         books,
         isBootstrapped: true,
+        isLoading: false,
         page: { mode: "results" },
       });
     } catch (e) {
       set({
         isBootstrapped: true,
+        isLoading: false,
         page: {
           mode: "error",
           error: { message: (e as Error)?.message ?? "Failed to load books" },
@@ -438,5 +435,8 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     return results.map((r) => ("ref" in r ? r.ref : r));
   },
 
-  reset: () => set(() => ({ ...initialState })),
+  reset: () => {
+    clearUndoTimer();
+    set(() => ({ ...initialState }));
+  },
 }));
