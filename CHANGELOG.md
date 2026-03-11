@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.0-sprint-2] — Books Persistence Migration (2026-03-10)
+
+### Added
+
+- Typed Books API client for backend persistence
+- API-backed create/update/delete flows
+- Environment-based API configuration via `VITE_API_BASE`
+
+### Changed
+
+- Migrated Books persistence from localStorage to API
+- Zustand store updated for async persistence
+- Delete undo flow now delays server commit until expiration
+
+### Removed
+
+- localStorage persistence for Books
+
+---
+
 ## [v2.2-sprint-1] — Books API Contract (2026-03-10)
 
 ### Added
