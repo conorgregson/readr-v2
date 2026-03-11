@@ -59,11 +59,10 @@ export async function importBackup(raw: unknown): Promise<{
 
   const booksPre = sanitizeBooks(booksRaw);
 
-  try {
-    // In your repo, replaceAll is likely async too (or at least safe to await)
-    await BooksService.replaceAll(booksPre.books);
-  } catch (e) {
-    throw new Error((e as Error)?.message ?? "Books import failed.");
+  if (booksPre.books.length > 0) {
+    throw new Error(
+      "Books import is temporarily unavailable during the API persistence migration.",
+    );
   }
 
   // SessionsService is sync right now

@@ -58,7 +58,6 @@ describe("BooksStore Undo (Sprint 5)", () => {
     useBooksStore.setState({ books });
 
     vi.mocked(BooksService.remove).mockResolvedValue(true);
-    vi.mocked(BooksService.replaceAll).mockResolvedValue(undefined);
 
     await useBooksStore.getState().deleteBook("1");
 
@@ -68,6 +67,7 @@ describe("BooksStore Undo (Sprint 5)", () => {
 
     expect(state.books).toEqual(books); // exact deep equality
     expect(state.undo).toBeNull();
+    expect(BooksService.remove).not.toHaveBeenCalled();
   });
 
   it("undo fail after expiration", async () => {
@@ -107,17 +107,16 @@ describe("BooksStore Undo (Sprint 5)", () => {
     expect(state.undo).toBeNull();
   });
 
-  it("calls replaceAll during undo", async () => {
+  it("does not call remove when undo happens before expiration", async () => {
     const books = seedBooks();
 
     useBooksStore.setState({ books });
 
     vi.mocked(BooksService.remove).mockResolvedValue(true);
-    vi.mocked(BooksService.replaceAll).mockResolvedValue(undefined);
 
     await useBooksStore.getState().deleteBook("1");
     await useBooksStore.getState().undoLast();
 
-    expect(BooksService.replaceAll).toHaveBeenCalledTimes(1);
+    expect(BooksService.remove).not.toHaveBeenCalled();
   });
 });

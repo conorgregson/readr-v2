@@ -66,7 +66,6 @@ describe("BooksPage undo flow", () => {
     const user = userEvent.setup();
 
     vi.mocked(BooksService.remove).mockResolvedValue(true);
-    vi.mocked(BooksService.replaceAll).mockResolvedValue(undefined);
 
     useBooksStore.setState({
       isBootstrapped: true,
@@ -102,6 +101,6 @@ describe("BooksPage undo flow", () => {
 
     expect(screen.getByText("Dune")).toBeInTheDocument();
     expect(screen.getByText("Hyperion")).toBeInTheDocument();
-    expect(BooksService.replaceAll).toHaveBeenCalledTimes(1);
+    expect(BooksService.remove).not.toHaveBeenCalled();
   });
 });
