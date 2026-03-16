@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.0-sprint-3] — Sessions API Contract (2026-03-16)
+
+### Added
+
+- Full Sessions CRUD API (`GET`, `POST`, `PATCH`, `DELETE`)
+- Zod validation schemas for sessions requests and responses
+- Query filtering support (`bookId`, `search`, `from`, `to`)
+- Pagination parameters (`limit`, `offset`)
+- Deterministic sorting (`date DESC`, `createdAt DESC`, `id DESC`)
+- Postman contract test suite for Sessions endpoints
+
+### Changed
+
+- Sessions responses now normalize empty `notes` values to `null`
+
+### Notes
+
+- Manual API contract verification completed via Postman test collection
+- All Sessions CRUD, validation, filtering, and sorting scenarios validated
+
+---
+
 ## [v2.2.0-sprint-2] — Books Persistence Migration (2026-03-10)
 
 ### Added

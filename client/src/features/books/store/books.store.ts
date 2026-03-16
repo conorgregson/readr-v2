@@ -70,12 +70,14 @@ type BooksState = {
   // controls
   filters: BooksFilters;
   searchQuery: string;
+  highlightQuery: string;
 
   // v1.9-style fuzzy override (null = default; 2 = loosen once)
   searchFuzzyOverride: number | null;
 
   // actions
   setSearchQuery: (q: string) => void;
+  setHighlightQuery: (q: string) => void;
   enableLooserSearch: () => void;
 
   setFilters: (next: Partial<BooksFilters>) => void;
@@ -87,7 +89,7 @@ type BooksState = {
   reset: () => void;
 };
 
-type SearchResult = Book | { ref: Book };
+type VisibleSearchResult = { ref: Book; score: number };
 
 let undoTimer: number | null = null;
 let pendingDeleteBookId: BookId | null = null;
@@ -108,6 +110,7 @@ const initialState: Pick<
   | "books"
   | "filters"
   | "searchQuery"
+  | "highlightQuery"
   | "searchFuzzyOverride"
   | "undo"
 > = {
@@ -120,6 +123,7 @@ const initialState: Pick<
 
   filters: defaultBooksFilters(),
   searchQuery: "",
+  highlightQuery: "",
   searchFuzzyOverride: null,
   undo: null,
 };
@@ -403,6 +407,11 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       searchFuzzyOverride: null,
     })),
 
+  setHighlightQuery: (q) =>
+    set(() => ({
+      highlightQuery: q,
+    })),
+
   enableLooserSearch: () => set(() => ({ searchFuzzyOverride: 2 })),
 
   setFilters: (next) =>
@@ -430,9 +439,9 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const results = smartSearch(base, q, {
       fuzzyMaxDistance: searchFuzzyOverride ?? undefined,
       limit: 500,
-    }) as SearchResult[];
+    }) as VisibleSearchResult[];
 
-    return results.map((r) => ("ref" in r ? r.ref : r));
+    return results.map((r) => r.ref);
   },
 
   reset: () => {

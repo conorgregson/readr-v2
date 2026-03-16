@@ -1,10 +1,4 @@
-import { useMemo } from "react";
-import type { Book, BooksFilters, BookStatus } from "../types";
-
-function uniqSorted(values: Array<string | undefined>): string[] {
-  const set = new Set(values.map((v) => (v ?? "").trim()).filter(Boolean));
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
-}
+import type { BooksFilters, BookStatus } from "../types";
 
 const STATUS_OPTIONS: Array<{ value: BookStatus; label: string }> = [
   { value: "planned", label: "Planned" },
@@ -13,29 +7,20 @@ const STATUS_OPTIONS: Array<{ value: BookStatus; label: string }> = [
 ];
 
 export function BooksFiltersPanel({
-  books,
   filters,
+  authorOptions,
+  genreOptions,
+  seriesOptions,
   onChange,
   onClear,
 }: {
-  books: Book[];
   filters: BooksFilters;
+  authorOptions: string[];
+  genreOptions: string[];
+  seriesOptions: string[];
   onChange: (next: Partial<BooksFilters>) => void;
   onClear: () => void;
 }) {
-  const authorOptions = useMemo(
-    () => uniqSorted(books.map((b) => b.author)),
-    [books],
-  );
-  const genreOptions = useMemo(
-    () => uniqSorted(books.map((b) => b.genre)),
-    [books],
-  );
-  const seriesOptions = useMemo(
-    () => uniqSorted(books.map((b) => b.series)),
-    [books],
-  );
-
   const setMulti = (
     key: "status" | "authors" | "genres" | "series",
     selected: string[],
@@ -58,7 +43,6 @@ export function BooksFiltersPanel({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-        {/* Status */}
         <label className="space-y-1">
           <div className="text-xs text-slate-300">Status</div>
           <select
@@ -75,7 +59,6 @@ export function BooksFiltersPanel({
           </select>
         </label>
 
-        {/* Authors */}
         <label className="space-y-1">
           <div className="text-xs text-slate-300">Authors</div>
           <select
@@ -92,7 +75,6 @@ export function BooksFiltersPanel({
           </select>
         </label>
 
-        {/* Genres */}
         <label className="space-y-1">
           <div className="text-xs text-slate-300">Genres</div>
           <select
@@ -109,7 +91,6 @@ export function BooksFiltersPanel({
           </select>
         </label>
 
-        {/* Series */}
         <label className="space-y-1">
           <div className="text-xs text-slate-300">Series</div>
           <select
@@ -126,7 +107,6 @@ export function BooksFiltersPanel({
           </select>
         </label>
 
-        {/* TBR */}
         <div className="space-y-2">
           <div className="text-xs text-slate-300">TBR</div>
 

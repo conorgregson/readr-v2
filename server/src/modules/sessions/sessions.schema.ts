@@ -1,32 +1,101 @@
 import { z } from "zod";
 
+const ISO_DATETIME_RE =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseDateInput(value: string): Date {
+  const jsDate = DATE_ONLY_RE.test(value)
+    ? new Date(value + "T00:00:00.000Z")
+    : new Date(value);
+
+  if (Number.isNaN(jsDate.getTime())) {
+    throw new Error("Invalid date");
+  }
+
+  return jsDate;
+}
+
 const DateInputSchema = z
   .string()
   .min(1, "Date is required")
   .superRefine((value: string, ctx) => {
-    const isoMatch =
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
-    const dateOnlyMatch = /^\d{4}-\d{2}-\d{2}$/;
-
-    if (!isoMatch.test(value) && !dateOnlyMatch.test(value)) {
+    if (!ISO_DATETIME_RE.test(value) && !DATE_ONLY_RE.test(value)) {
       ctx.addIssue({
         code: "custom",
         message:
           "Date must be an ISO datetime or a YYYY-MM-DD string (e.g., 2025-12-11 or 2025-12-11T10:00:00Z)",
       });
+      return;
     }
-  })
-  .transform((value: string) => {
-    const dateOnlyMatch = /^\d{4}-\d{2}-\d{2}$/;
-    const jsDate = dateOnlyMatch.test(value)
+
+    const jsDate = DATE_ONLY_RE.test(value)
       ? new Date(value + "T00:00:00.000Z")
       : new Date(value);
 
     if (Number.isNaN(jsDate.getTime())) {
-      throw new Error("Invalid date");
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid date",
+      });
+    }
+  })
+  .transform((value: string) => parseDateInput(value));
+
+const FromDateQuerySchema = z
+  .string()
+  .min(1)
+  .superRefine((value, ctx) => {
+    if (!ISO_DATETIME_RE.test(value) && !DATE_ONLY_RE.test(value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "from must be an ISO datetime or a YYYY-MM-DD string",
+      });
+      return;
     }
 
-    return jsDate;
+    const jsDate = DATE_ONLY_RE.test(value)
+      ? new Date(value + "T00:00:00.000Z")
+      : new Date(value);
+
+    if (Number.isNaN(jsDate.getTime())) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid from date",
+      });
+    }
+  })
+  .transform((value) => parseDateInput(value));
+
+const ToDateQuerySchema = z
+  .string()
+  .min(1)
+  .superRefine((value, ctx) => {
+    if (!ISO_DATETIME_RE.test(value) && !DATE_ONLY_RE.test(value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "to must be an ISO datetime or a YYYY-MM-DD string",
+      });
+      return;
+    }
+
+    const jsDate = DATE_ONLY_RE.test(value)
+      ? new Date(value + "T23:59:59.999Z")
+      : new Date(value);
+
+    if (Number.isNaN(jsDate.getTime())) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid to date",
+      });
+    }
+  })
+  .transform((value) => {
+    if (DATE_ONLY_RE.test(value)) {
+      return new Date(value + "T23:59:59.999Z");
+    }
+    return parseDateInput(value);
   });
 
 const SessionBaseSchema = z
@@ -78,18 +147,21 @@ export const UpdateSessionSchema = z
       .int("Pages must be an integer")
       .min(0, "Pages cannot be negative")
       .max(10_000, "Pages is too large")
+      .nullable()
       .optional(),
     minutes: z
       .number()
       .int("Minutes must be an integer")
       .min(0, "Minutes cannot be negative")
       .max(1_440, "Minutes in a single session cannot exceed 1440 (24h)")
+      .nullable()
       .optional(),
     notes: z
       .string()
       .max(2_000, "Notes must be at most 2000 characters")
+      .nullable()
       .optional()
-      .or(z.literal("").transform(() => undefined)),
+      .or(z.literal("").transform(() => null)),
     date: DateInputSchema.optional(),
   })
   .refine(
@@ -105,23 +177,8 @@ export const ListSessionsQuerySchema = z
   .object({
     bookId: z.cuid("Invalid book id").optional(),
     search: z.string().min(1).max(200).optional(),
-
-    from: z
-      .string()
-      .min(1)
-      .optional()
-      .transform((value: string | undefined) =>
-        value ? DateInputSchema.parse(value) : undefined,
-      ),
-
-    to: z
-      .string()
-      .min(1)
-      .optional()
-      .transform((value: string | undefined) =>
-        value ? DateInputSchema.parse(value) : undefined,
-      ),
-
+    from: FromDateQuerySchema.optional(),
+    to: ToDateQuerySchema.optional(),
     limit: z
       .string()
       .optional()
@@ -132,7 +189,6 @@ export const ListSessionsQuerySchema = z
         (v) => v === undefined || (Number.isFinite(v) && v >= 1 && v <= 200),
         { message: "limit must be between 1 and 200" },
       ),
-
     offset: z
       .string()
       .optional()
@@ -143,14 +199,23 @@ export const ListSessionsQuerySchema = z
         message: "offset must be >= 0",
       }),
   })
-  .partial();
+  .partial()
+  .superRefine((data, ctx) => {
+    if (data.from && data.to && data.from > data.to) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["from"],
+        message: "from must be less than or equal to to",
+      });
+    }
+  });
 
 export const SessionResponseSchema = z.object({
   id: z.cuid(),
   bookId: z.cuid(),
   pages: z.number().int().nullable(),
   minutes: z.number().int().nullable(),
-  notes: z.string().nullable(),
+  notes: z.string().max(2_000).nullable(),
   date: z.iso.datetime(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),

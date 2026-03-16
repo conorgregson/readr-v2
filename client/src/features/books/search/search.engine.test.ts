@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tokenize, smartSearch, editDistanceDamerau } from "./search.engine";
+import { tokenize, smartSearch, editDistance } from "./search.engine";
 import type { Book } from "../types";
 
 const make = (p: Partial<Book>): Book => ({
@@ -37,9 +37,9 @@ describe("tokenize()", () => {
   });
 });
 
-describe("editDistanceDamerau()", () => {
+describe("editDistance()", () => {
   it("handles transposition (hobbot ~ hobbit)", () => {
-    expect(editDistanceDamerau("hobbot", "hobbit")).toBe(1);
+    expect(editDistance("hobbot", "hobbit")).toBe(1);
   });
 });
 
@@ -76,19 +76,15 @@ describe("smartSearch()", () => {
     expect(loose[0].ref.author).toBe("Dan Simmons");
   });
 
-  it("gives phrase matches a bonus over split tokens", () => {
+  it("matches exact quoted phrases only", () => {
     const items = [
       make({ title: "Harry Potter", author: "Rowling" }),
       make({ title: "Potter Harry", author: "Rowling" }),
     ];
 
-    const phrase = smartSearch(items, '"harry potter"');
-    const split = smartSearch(items, "harry potter");
+    const res = smartSearch(items, '"harry potter"');
 
-    // Phrase query should rank the exact phrase title first
-    expect(phrase[0].ref.title).toBe("Harry Potter");
-    // Split still returns both but may tie-break
-    expect(split.length).toBe(2);
+    expect(res.map((r) => r.ref.title)).toEqual(["Harry Potter"]);
   });
 
   it("uses word-start bonus to influence order", () => {
@@ -173,5 +169,25 @@ describe("smartSearch()", () => {
     const items = [make({ title: "Dune" }), make({ title: "A Dune Story" })];
     const res = smartSearch(items, "dune");
     expect(res[0].ref.title).toBe("Dune");
+  });
+
+  it("returns deterministic order for equal scores", () => {
+    const items = [
+      make({ title: "Alpha", author: "Zed" }),
+      make({ title: "Beta", author: "Zed" }),
+    ];
+
+    const res = smartSearch(items, "zed");
+    expect(res.map((r) => r.ref.title)).toEqual(["Alpha", "Beta"]);
+  });
+
+  it("falls back to stable alphabetical title ordering on equal scores", () => {
+    const items = [
+      make({ title: "Alpha", author: "Shared" }),
+      make({ title: "Beta", author: "Shared" }),
+    ];
+
+    const res = smartSearch(items, "shared");
+    expect(res.map((r) => r.ref.title)).toEqual(["Alpha", "Beta"]);
   });
 });

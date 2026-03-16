@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
 import { BooksToolbar } from "./BooksToolbar";
@@ -42,8 +42,9 @@ function makeBooks(): Book[] {
 }
 
 describe("BooksToolbar committed search", () => {
-  it("does not commit search until Search is clicked", async () => {
+  it("debounces preview search while typing", async () => {
     const user = userEvent.setup();
+    const onPreviewQuery = vi.fn();
     const onCommitQuery = vi.fn();
 
     render(
@@ -53,6 +54,8 @@ describe("BooksToolbar committed search", () => {
         visibleCount={2}
         filters={makeFilters()}
         searchQuery=""
+        committedQuery=""
+        onPreviewQuery={onPreviewQuery}
         onCommitQuery={onCommitQuery}
         onFocusResults={vi.fn()}
         searchInputRef={createRef<HTMLInputElement>()}
@@ -62,17 +65,44 @@ describe("BooksToolbar committed search", () => {
     );
 
     const input = screen.getByRole("combobox", { name: /search books/i });
-    const button = screen.getByRole("button", { name: /run search/i });
 
     await user.type(input, "dune");
-    expect(onCommitQuery).not.toHaveBeenCalled();
 
-    await user.click(button);
-    expect(onCommitQuery).toHaveBeenCalledWith("dune");
+    expect(onPreviewQuery).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(onPreviewQuery).toHaveBeenCalledWith("dune");
+    });
+
+    expect(onCommitQuery).not.toHaveBeenCalled();
   });
 
-  it("commits search on Enter when no suggestion is actively selected", async () => {
+  it("keeps the Search button visible when preview query matches the draft but explicit commit has not happened", () => {
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery="dune"
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /run search/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("commits immediately when Search is clicked", async () => {
     const user = userEvent.setup();
+    const onPreviewQuery = vi.fn();
     const onCommitQuery = vi.fn();
 
     render(
@@ -82,6 +112,8 @@ describe("BooksToolbar committed search", () => {
         visibleCount={2}
         filters={makeFilters()}
         searchQuery=""
+        committedQuery=""
+        onPreviewQuery={onPreviewQuery}
         onCommitQuery={onCommitQuery}
         onFocusResults={vi.fn()}
         searchInputRef={createRef<HTMLInputElement>()}
@@ -92,10 +124,12 @@ describe("BooksToolbar committed search", () => {
 
     const input = screen.getByRole("combobox", { name: /search books/i });
 
-    await user.type(input, "zzz");
-    await user.keyboard("{Enter}");
+    await user.type(input, "dune");
 
-    expect(onCommitQuery).toHaveBeenCalledWith("zzz");
+    const button = await screen.findByRole("button", { name: /run search/i });
+    await user.click(button);
+
+    expect(onCommitQuery).toHaveBeenCalledWith("dune");
   });
 
   it("moves through suggestions on ArrowDown before sending focus to results", async () => {
@@ -109,6 +143,8 @@ describe("BooksToolbar committed search", () => {
         visibleCount={2}
         filters={makeFilters()}
         searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
         onCommitQuery={vi.fn()}
         onFocusResults={onFocusResults}
         searchInputRef={createRef<HTMLInputElement>()}
@@ -137,6 +173,8 @@ describe("BooksToolbar committed search", () => {
         visibleCount={2}
         filters={makeFilters()}
         searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
         onCommitQuery={vi.fn()}
         onFocusResults={onFocusResults}
         searchInputRef={createRef<HTMLInputElement>()}
@@ -153,7 +191,7 @@ describe("BooksToolbar committed search", () => {
     expect(onFocusResults).toHaveBeenCalledTimes(1);
   });
 
-  it("commits a suggestion on Enter when one is active", async () => {
+  it("commits a suggestion on Enter when one is actively selected", async () => {
     const user = userEvent.setup();
     const onCommitQuery = vi.fn();
 
@@ -164,6 +202,38 @@ describe("BooksToolbar committed search", () => {
         visibleCount={2}
         filters={makeFilters()}
         searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={onCommitQuery}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    const input = screen.getByRole("combobox", { name: /search books/i });
+
+    await user.type(input, "du");
+    await user.keyboard("{ArrowDown}");
+    await user.keyboard("{Enter}");
+
+    expect(onCommitQuery).toHaveBeenCalledWith("Dune");
+  });
+
+  it("commits the typed query on Enter when no suggestion is selected", async () => {
+    const user = userEvent.setup();
+    const onCommitQuery = vi.fn();
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
         onCommitQuery={onCommitQuery}
         onFocusResults={vi.fn()}
         searchInputRef={createRef<HTMLInputElement>()}
@@ -177,6 +247,6 @@ describe("BooksToolbar committed search", () => {
     await user.type(input, "du");
     await user.keyboard("{Enter}");
 
-    expect(onCommitQuery).toHaveBeenCalledWith("Dune");
+    expect(onCommitQuery).toHaveBeenCalledWith("du");
   });
 });

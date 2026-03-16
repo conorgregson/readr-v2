@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { Button } from "../../../shared/ui/Button";
 import { SearchStatus } from "../../../shared/ui/SearchStatus";
@@ -16,6 +16,8 @@ export function BooksToolbar({
   visibleCount,
   filters,
   searchQuery,
+  committedQuery,
+  onPreviewQuery,
   onCommitQuery,
   onFocusResults,
   searchInputRef,
@@ -26,7 +28,9 @@ export function BooksToolbar({
   booksTotal: number;
   visibleCount: number;
   filters: BooksFilters;
-  searchQuery: string; // executed query
+  searchQuery: string; // executed/filtering query
+  committedQuery: string; // explicit Search/Enter query for highlight/button state
+  onPreviewQuery: (q: string) => void;
   onCommitQuery: (q: string) => void;
   onFocusResults: () => void;
   searchInputRef: React.RefObject<HTMLInputElement | null>;
@@ -41,6 +45,7 @@ export function BooksToolbar({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const [showSuggest, setShowSuggest] = useState(false);
+  const commitTimerRef = useRef<number | null>(null);
 
   // keep draft in sync if store query changes externally (e.g., clear filters)
   useEffect(() => {
@@ -48,8 +53,38 @@ export function BooksToolbar({
   }, [searchQuery]);
 
   const hasUncommittedChange = useMemo(() => {
-    return draftQuery.trim() !== searchQuery.trim();
-  }, [draftQuery, searchQuery]);
+    return draftQuery.trim() !== committedQuery.trim();
+  }, [draftQuery, committedQuery]);
+
+  useEffect(() => {
+    const next = draftQuery.trim();
+    const prev = searchQuery.trim();
+
+    if (next === prev) return;
+
+    if (commitTimerRef.current !== null) {
+      window.clearTimeout(commitTimerRef.current);
+    }
+
+    commitTimerRef.current = window.setTimeout(() => {
+      onPreviewQuery(next);
+      commitTimerRef.current = null;
+    }, 200);
+
+    return () => {
+      if (commitTimerRef.current !== null) {
+        window.clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = null;
+      }
+    };
+  }, [draftQuery, searchQuery, onPreviewQuery]);
+
+  const flushPendingCommit = () => {
+    if (commitTimerRef.current !== null) {
+      window.clearTimeout(commitTimerRef.current);
+      commitTimerRef.current = null;
+    }
+  };
 
   const filtersActive =
     filters.status.length > 0 ||
@@ -61,8 +96,8 @@ export function BooksToolbar({
 
   const statusText = (() => {
     const q = searchQuery.trim();
-    const x = visibleCount; // after filters + search
-    const y = booksTotal; // total books
+    const x = visibleCount;
+    const y = booksTotal;
 
     if (q) {
       if (x === 0) return `No results for "${q}"`;
@@ -92,6 +127,7 @@ export function BooksToolbar({
     const needle = q.trim().toLowerCase();
     if (!needle) {
       setSuggestions([]);
+      setActiveSuggestion(-1);
       return;
     }
 
@@ -100,7 +136,7 @@ export function BooksToolbar({
     const series = uniqueValues(books.map((b) => b.series || ""));
     const genres = uniqueValues(books.map((b) => b.genre || ""));
 
-    const pool = [...titles, ...authors, ...series, ...genres];
+    const pool = uniqueValues([...titles, ...authors, ...series, ...genres]);
 
     const filtered = pool
       .filter((v) => v.toLowerCase().includes(needle))
@@ -112,15 +148,17 @@ export function BooksToolbar({
       .slice(0, 8);
 
     setSuggestions(filtered);
-    setActiveSuggestion(filtered.length ? 0 : -1);
+    setActiveSuggestion(-1);
   }
 
   const commitNow = () => {
+    flushPendingCommit();
     setShowSuggest(false);
     onCommitQuery(draftQuery.trim());
   };
 
   const clearQuery = () => {
+    flushPendingCommit();
     setDraftQuery("");
     setSuggestions([]);
     setActiveSuggestion(-1);
@@ -138,6 +176,7 @@ export function BooksToolbar({
   };
 
   const pickSuggestion = (value: string) => {
+    flushPendingCommit();
     setDraftQuery(value);
     setSuggestions([]);
     setActiveSuggestion(-1);
@@ -190,14 +229,14 @@ export function BooksToolbar({
                   if (e.key === "ArrowDown") {
                     e.preventDefault();
                     setActiveSuggestion((i) =>
-                      Math.min(i + 1, suggestions.length - 1),
+                      Math.min(i < 0 ? 0 : i + 1, suggestions.length - 1),
                     );
                     return;
                   }
 
                   if (e.key === "ArrowUp") {
                     e.preventDefault();
-                    setActiveSuggestion((i) => Math.max(i - 1, 0));
+                    setActiveSuggestion((i) => Math.max(i - 1, -1));
                     return;
                   }
 
@@ -257,15 +296,15 @@ export function BooksToolbar({
             ) : null}
           </div>
 
-          <Button
-            variant={hasUncommittedChange ? "primary" : "secondary"}
-            disabled={!hasUncommittedChange}
-            onClick={commitNow}
-            data-focus-id="books:search"
-            aria-label="Run search"
-          >
-            Search
-          </Button>
+          {hasUncommittedChange ? (
+            <Button
+              onClick={commitNow}
+              data-focus-id="books:search"
+              aria-label="Run search"
+            >
+              Search
+            </Button>
+          ) : null}
 
           <Button
             variant="secondary"
