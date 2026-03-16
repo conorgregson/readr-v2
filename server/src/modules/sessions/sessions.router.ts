@@ -18,6 +18,10 @@ import {
 import { AppError } from "../../utils/errors";
 import type { Session } from "@prisma/client";
 
+function normalizeNotes(notes: string | null | undefined) {
+  return notes && notes.length > 0 ? notes : null;
+}
+
 const router = Router();
 
 // GET /api/sessions
@@ -45,7 +49,7 @@ router.get(
 
       const sessions = await prisma.session.findMany({
         where,
-        orderBy: { date: "desc" },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }, { id: "desc" }],
         skip: offset ?? 0,
         take: limit ?? 50,
       });
@@ -55,7 +59,7 @@ router.get(
           ...s,
           pages: s.pages ?? null,
           minutes: s.minutes ?? null,
-          notes: s.notes ?? null,
+          notes: normalizeNotes(s.notes),
           date: s.date.toISOString(),
           createdAt: s.createdAt.toISOString(),
           updatedAt: s.updatedAt.toISOString(),
@@ -90,7 +94,7 @@ router.get(
         ...session,
         pages: session.pages ?? null,
         minutes: session.minutes ?? null,
-        notes: session.notes ?? null,
+        notes: normalizeNotes(session.notes),
         date: session.date.toISOString(),
         createdAt: session.createdAt.toISOString(),
         updatedAt: session.updatedAt.toISOString(),
@@ -130,7 +134,7 @@ router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
       ...created,
       pages: created.pages ?? null,
       minutes: created.minutes ?? null,
-      notes: created.notes ?? null,
+      notes: normalizeNotes(created.notes),
       date: created.date.toISOString(),
       createdAt: created.createdAt.toISOString(),
       updatedAt: created.updatedAt.toISOString(),
@@ -172,13 +176,31 @@ router.patch(
         }
       }
 
+      const nextPages = body.pages !== undefined ? body.pages : existing.pages;
+
+      const nextMinutes =
+        body.minutes !== undefined ? body.minutes : existing.minutes;
+
+      if (nextPages == null && nextMinutes == null) {
+        throw new AppError("Validation failed", {
+          status: 400,
+          code: "VALIDATION_ERROR",
+          details: {
+            _errors: [],
+            pages: {
+              _errors: ["At least one of pages or minutes must be provided"],
+            },
+          },
+        });
+      }
+
       const updated = await prisma.session.update({
         where: { id },
         data: {
           bookId: body.bookId ?? existing.bookId,
-          pages: body.pages ?? existing.pages,
-          minutes: body.minutes ?? existing.minutes,
-          notes: body.notes ?? existing.notes,
+          pages: nextPages,
+          minutes: nextMinutes,
+          notes: body.notes !== undefined ? body.notes : existing.notes,
           date: body.date ?? existing.date,
         },
       });
@@ -187,7 +209,7 @@ router.patch(
         ...updated,
         pages: updated.pages ?? null,
         minutes: updated.minutes ?? null,
-        notes: updated.notes ?? null,
+        notes: normalizeNotes(updated.notes),
         date: updated.date.toISOString(),
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),

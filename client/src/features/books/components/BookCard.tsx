@@ -8,7 +8,7 @@ import {
   type FocusToken,
 } from "../../../shared/a11y/focus";
 
-import { getHighlightParts, getHighlightTokens } from "../search/search.engine";
+import { getHighlightParts, getHighlightTokens } from "../search/highlight";
 
 const STATUS_LABEL: Record<BookStatus, string> = {
   planned: "Planned",

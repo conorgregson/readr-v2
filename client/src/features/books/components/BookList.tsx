@@ -60,6 +60,11 @@ export function BookList({
         if (!keys.includes(e.key)) return;
         e.preventDefault();
 
+        if (books.length === 0) {
+          if (e.key === "Escape") onEscapeToSearch();
+          return;
+        }
+
         const current = activeIndex;
 
         if (e.key === "ArrowDown")

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../shared/ui/Button";
 
 import { LoadingState } from "../../shared/ui/states/LoadingState";
@@ -16,6 +16,12 @@ import {
   restoreFocus,
   focusFirstMatch,
 } from "../../shared/a11y/focus";
+
+function uniqueSorted(values: Array<string | undefined>): string[] {
+  return [...new Set(values.map((v) => (v ?? "").trim()).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b),
+  );
+}
 
 export function BooksPage() {
   const loadBooks = useBooksStore((s) => s.loadBooks);
@@ -37,6 +43,10 @@ export function BooksPage() {
 
   const searchQuery = useBooksStore((s) => s.searchQuery);
   const setSearchQuery = useBooksStore((s) => s.setSearchQuery);
+
+  const highlightQuery = useBooksStore((s) => s.highlightQuery);
+  const setHighlightQuery = useBooksStore((s) => s.setHighlightQuery);
+
   const enableLooserSearch = useBooksStore((s) => s.enableLooserSearch);
 
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -47,6 +57,21 @@ export function BooksPage() {
 
   const getVisibleBooks = useBooksStore((s) => s.visibleBooks);
   const visibleBooks = isBootstrapped ? getVisibleBooks() : [];
+
+  const authorOptions = useMemo(
+    () => uniqueSorted(books.map((b) => b.author)),
+    [books],
+  );
+
+  const genreOptions = useMemo(
+    () => uniqueSorted(books.map((b) => b.genre)),
+    [books],
+  );
+
+  const seriesOptions = useMemo(
+    () => uniqueSorted(books.map((b) => b.series)),
+    [books],
+  );
 
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const resultsId = "books-results";
@@ -163,9 +188,15 @@ export function BooksPage() {
         visibleCount={visibleBooks.length}
         filters={filters}
         searchQuery={searchQuery}
+        committedQuery={highlightQuery}
+        onPreviewQuery={(q) => {
+          setActiveIndex(-1);
+          setSearchQuery(q);
+        }}
         onCommitQuery={(q) => {
           setActiveIndex(-1);
           setSearchQuery(q);
+          setHighlightQuery(q);
         }}
         onFocusResults={focusResultsAndSelectFirst}
         searchInputRef={searchRef}
@@ -178,8 +209,10 @@ export function BooksPage() {
       />
 
       <BooksFiltersPanel
-        books={books}
         filters={filters}
+        authorOptions={authorOptions}
+        genreOptions={genreOptions}
+        seriesOptions={seriesOptions}
         onChange={(next) => {
           setActiveIndex(-1);
           setFilters(next);
@@ -242,6 +275,7 @@ export function BooksPage() {
                 variant="secondary"
                 onClick={() => {
                   setSearchQuery("");
+                  setHighlightQuery("");
                   setActiveIndex(-1);
                   // Sprint 8: search clear must restore focus to search input.
                   const el = searchRef.current;
@@ -322,7 +356,7 @@ export function BooksPage() {
       <BookList
         id={resultsId}
         books={visibleBooks}
-        searchQuery={searchQuery}
+        searchQuery={highlightQuery}
         activeIndex={activeIndex}
         onActiveIndex={setActiveIndex}
         onEscapeToSearch={() => {
