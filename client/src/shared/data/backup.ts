@@ -1,3 +1,7 @@
+// TODO(v2.3): Restore backup import support for Sessions through a backend bulk-import endpoint.
+// Sessions are now API-backed, so the old client-side replaceAll flow is intentionally disabled.
+// Re-enable import only after server-side validation, deduplication, and foreign-key-safe bulk writes exist.
+
 import { BooksService } from "../../features/books/services/books.service";
 import { SessionsService } from "../../features/sessions/services/sessions.service";
 import type { Book } from "../../features/books/types";
@@ -30,10 +34,9 @@ function sanitizeBooks(raw: unknown[]): { books: Book[]; dropped: number } {
 }
 
 export async function exportBackup(): Promise<ReadrBackupV21> {
-  // BooksService.list() is async in your repo (returns Promise<Book[]>)
   const [books, sessions] = await Promise.all([
     BooksService.list(),
-    Promise.resolve(SessionsService.list()),
+    SessionsService.list(),
   ]);
 
   return {
@@ -59,25 +62,21 @@ export async function importBackup(raw: unknown): Promise<{
 
   const booksPre = sanitizeBooks(booksRaw);
 
-  if (booksPre.books.length > 0) {
+  if (booksPre.books.length > 0 || sessionsRaw.length > 0) {
     throw new Error(
-      "Books import is temporarily unavailable during the API persistence migration.",
+      "Backup import is temporarily unavailable during the API persistence migration. Export is still supported.",
     );
   }
 
-  // SessionsService is sync right now
-  const sessionsWrite = SessionsService.replaceAll(sessionsRaw);
-
-  // Re-read canonical lists
   const books = await BooksService.list();
-  const sessions = SessionsService.list();
+  const sessions = await SessionsService.list();
 
   return {
     books,
     sessions,
     dropped: {
       books: booksPre.dropped,
-      sessions: sessionsWrite.dropped,
+      sessions: 0,
     },
   };
 }

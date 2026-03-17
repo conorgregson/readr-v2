@@ -1,195 +1,98 @@
 import type { CreateSessionInput, Session } from "../types";
-import { normalizeCreateInput, normalizeSession } from "./sessions.normalize";
+import {
+  normalizeCreateSessionInput,
+  normalizeSessionFromApi,
+  normalizeUpdateSessionPatch,
+  type SessionApiResponse,
+} from "./sessions.normalize";
 
-const SESSIONS_KEY = "readr.sessions.v1";
-const STORAGE_VERSION = 1;
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
+  "http://localhost:4000";
 
-type SessionsEnvelopeV1 = {
-  v: 1;
-  sessions: unknown[];
+type ApiEnvelope<T> = {
+  ok: boolean;
+  data: T;
 };
 
-function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
+type DeleteSessionResponse = {
+  id: string;
+};
 
-function safeSetItem(key: string, value: string): boolean {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch {
-    return false;
-  }
-}
+async function readJson<T>(res: Response): Promise<T> {
+  const json = (await res.json().catch(() => null)) as T | null;
 
-function safeRemoveItem(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // ignore
-  }
-}
-
-function safeParse(raw: string | null): unknown {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return !!v && typeof v === "object" && !Array.isArray(v);
-}
-
-function normalizeArray(rawArr: unknown[]): Session[] {
-  const out: Session[] = [];
-  for (const item of rawArr) {
-    const s = normalizeSession(item);
-    if (s) out.push(s);
-  }
-  return out;
-}
-
-function sanitizeSessions(raw: unknown[]): {
-  sessions: Session[];
-  dropped: number;
-} {
-  const out: Session[] = [];
-  let dropped = 0;
-
-  for (const item of raw) {
-    const s = normalizeSession(item);
-    if (s) out.push(s);
-    else dropped += 1;
+  if (!res.ok) {
+    const message =
+      (json as { error?: { message?: string } } | null)?.error?.message ??
+      `Request failed (${res.status})`;
+    throw new Error(message);
   }
 
-  return { sessions: out, dropped };
-}
-
-function writeEnvelopeV1(sessions: Session[]) {
-  const env: SessionsEnvelopeV1 = { v: 1, sessions };
-  safeSetItem(SESSIONS_KEY, JSON.stringify(env));
-}
-
-/**
- * Reads sessions from storage with migration:
- * - v1 envelope: { v: 1, sessions: [...] }
- * - legacy:      [ ... ]  (array of sessions)
- * Any successful legacy read is rewritten to v1.
- */
-function readAll(): Session[] {
-  const raw = safeGetItem(SESSIONS_KEY);
-  const parsed = safeParse(raw);
-
-  // Corrupt JSON or blocked storage: treat as empty.
-  // If JSON was present but unparseable, clear it once to prevent repeated failures.
-  if (raw && parsed === null) {
-    safeRemoveItem(SESSIONS_KEY);
-    return [];
+  if (!json) {
+    throw new Error("Invalid server response.");
   }
 
-  // v1 envelope
-  if (isRecord(parsed) && parsed.v === 1 && Array.isArray(parsed.sessions)) {
-    const sessions = normalizeArray(parsed.sessions as unknown[]);
-
-    // Repair-on-read: if invalid rows were dropped, persist the cleaned list.
-    const rawCount = (parsed.sessions as unknown[]).length;
-    if (sessions.length !== rawCount) {
-      writeEnvelopeV1(sessions);
-    }
-
-    return sessions;
-  }
-
-  // legacy array
-  if (Array.isArray(parsed)) {
-    const sessions = normalizeArray(parsed);
-    writeEnvelopeV1(sessions); // migrate
-    return sessions;
-  }
-
-  // empty/unknown payload
-  return [];
-}
-
-function writeAll(sessions: Session[]) {
-  writeEnvelopeV1(sessions);
+  return json;
 }
 
 export const SessionsService = {
-  list(): Session[] {
-    return readAll();
+  async list(): Promise<Session[]> {
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const json = await readJson<ApiEnvelope<SessionApiResponse[]>>(res);
+    return json.data.map(normalizeSessionFromApi);
   },
 
-  create(input: CreateSessionInput): Session {
-    const created = normalizeCreateInput(input);
-    const all = readAll();
-    const next = [created, ...all];
-    writeAll(next);
-    return created;
+  async create(input: CreateSessionInput): Promise<Session> {
+    const safeInput = normalizeCreateSessionInput(input);
+
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(safeInput),
+    });
+
+    const json = await readJson<ApiEnvelope<SessionApiResponse>>(res);
+    return normalizeSessionFromApi(json.data);
   },
 
-  update(updated: Session): Session {
-    const safe = normalizeSession(updated);
-    if (!safe) throw new Error("Invalid session update payload.");
+  async update(
+    id: string,
+    patch: Partial<Omit<Session, "id" | "createdAt">>,
+  ): Promise<Session> {
+    const safePatch = normalizeUpdateSessionPatch(patch);
 
-    const all = readAll();
-    const idx = all.findIndex((s) => s.id === safe.id);
-    if (idx === -1) throw new Error("Session not found.");
+    const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(safePatch),
+    });
 
-    const next = all.slice();
-    next[idx] = { ...next[idx], ...safe, updatedAt: new Date().toISOString() };
-    writeAll(next);
-    return next[idx];
+    const json = await readJson<ApiEnvelope<SessionApiResponse>>(res);
+    return normalizeSessionFromApi(json.data);
   },
 
-  upsert(session: Session): Session {
-    const safe = normalizeSession(session);
-    if (!safe) throw new Error("Invalid session payload.");
+  async remove(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
 
-    const all = readAll();
-    const idx = all.findIndex((s) => s.id === safe.id);
-
-    const next = all.slice();
-    if (idx === -1) {
-      next.unshift(safe);
-      writeAll(next);
-      return safe;
-    }
-
-    next[idx] = {
-      ...next[idx],
-      ...safe,
-      updatedAt: new Date().toISOString(),
-    };
-    writeAll(next);
-    return next[idx];
+    await readJson<ApiEnvelope<DeleteSessionResponse>>(res);
   },
 
-  remove(id: string): void {
-    const all = readAll();
-    const next = all.filter((s) => s.id !== id);
-    writeAll(next);
-  },
+  async restore(session: Session): Promise<Session> {
+    const res = await fetch(`${API_BASE}/api/sessions/restore`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(session),
+    });
 
-  clear(): void {
-    safeRemoveItem(SESSIONS_KEY);
-  },
-
-  replaceAll(nextSessions: unknown[]): { wrote: number; dropped: number } {
-    const { sessions, dropped } = sanitizeSessions(nextSessions);
-    writeAll(sessions);
-    return { wrote: sessions.length, dropped };
-  },
-
-  // reserved for future migrations
-  getStorageVersion(): number {
-    return STORAGE_VERSION;
+    const json = await readJson<ApiEnvelope<SessionApiResponse>>(res);
+    return normalizeSessionFromApi(json.data);
   },
 };
