@@ -87,7 +87,7 @@ type SessionsState = {
 
   // undo (Sprint 7)
   undo: UndoDeleteSession | null;
-  undoDelete: () => void;
+  undoDelete: () => Promise<void>;
   canUndo: () => boolean;
 
   // lifecycle
@@ -213,9 +213,10 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
     return !!u && Date.now() < u.expiresAt;
   },
 
-  undoDelete: () => {
+  undoDelete: async () => {
     const u = get().undo;
     if (!u) return;
+
     if (Date.now() >= u.expiresAt) {
       set({ undo: null });
       get().announce("Undo expired.");
@@ -225,32 +226,40 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
     clearUndoTimer();
 
     try {
-      SessionsService.upsert(u.session);
-    } catch {
-      // ignore
-    }
+      const restored = await SessionsService.restore(u.session);
 
-    persistUI({ filters: u.prevFilters, sortKey: u.prevSortKey });
+      persistUI({ filters: u.prevFilters, sortKey: u.prevSortKey });
 
-    set((s) => {
-      const exists = s.sessions.some((x) => x.id === u.session.id);
-      const merged = exists ? s.sessions : [u.session, ...s.sessions];
+      set((s) => {
+        const exists = s.sessions.some((x) => x.id === restored.id);
+        const merged = exists ? s.sessions : [restored, ...s.sessions];
 
-      const sorted = sortSessions(merged, u.prevSortKey);
-      const restoredId = u.session.id;
-      const nextSelectedId = u.prevSelectedId ?? restoredId;
+        const sorted = sortSessions(merged, u.prevSortKey);
+        const restoredId = restored.id;
+        const nextSelectedId = u.prevSelectedId ?? restoredId;
 
-      return {
-        sessions: sorted,
+        return {
+          sessions: sorted,
+          undo: null,
+          selectedId: nextSelectedId,
+          sortKey: u.prevSortKey,
+          filters: u.prevFilters,
+          page: { mode: sorted.length ? "results" : "empty" },
+        };
+      });
+
+      get().announce("Undo complete. Session restored.");
+    } catch (e) {
+      set({
         undo: null,
-        selectedId: nextSelectedId,
-        sortKey: u.prevSortKey,
-        filters: u.prevFilters,
-        page: { mode: sorted.length ? "results" : "empty" },
-      };
-    });
-
-    get().announce("Undo complete. Session restored.");
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to restore session",
+          },
+        },
+      });
+    }
   },
 
   // ---------- filters/sort ----------
@@ -281,7 +290,7 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
     try {
       set({ page: { mode: "loading" } });
 
-      const listed = SessionsService.list();
+      const listed = await SessionsService.list();
       const sorted = sortSessions(listed, get().sortKey);
 
       set({
@@ -305,7 +314,7 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
   // ---------- CRUD ----------
   addSession: async (input) => {
     try {
-      const created = SessionsService.create(input);
+      const created = await SessionsService.create(input);
 
       set((s) => ({
         sessions: sortSessions([created, ...s.sessions], s.sortKey),
@@ -326,18 +335,7 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
 
   updateSession: async (id, patch) => {
     try {
-      const existing = get().sessions.find((x) => x.id === id);
-      if (!existing) throw new Error("Session not found.");
-
-      const next: Session = {
-        ...existing,
-        ...patch,
-        id: existing.id,
-        createdAt: existing.createdAt,
-        updatedAt: new Date().toISOString(),
-      };
-
-      const saved = SessionsService.update(next);
+      const saved = await SessionsService.update(id, patch);
 
       set((s) => ({
         sessions: sortSessions(
@@ -369,13 +367,13 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
       clearUndoTimer();
       set({ undo: null });
 
-      SessionsService.remove(id);
+      await SessionsService.remove(id);
 
       const prevSelectedId = get().selectedId;
       const prevSortKey = get().sortKey;
       const prevFilters = get().filters;
 
-      // Optimistically remove from store
+      // Remove from store after successful API delete
       set((s) => {
         const next = s.sessions.filter((x) => x.id !== id);
         const nextSorted = sortSessions(next, s.sortKey);

@@ -3,6 +3,7 @@ import { prisma } from "../../db/client";
 import {
   CreateSessionSchema,
   ListSessionsQuerySchema,
+  RestoreSessionSchema,
   SessionIdParamSchema,
   SessionListResponseSchema,
   SessionResponseSchema,
@@ -16,7 +17,6 @@ import {
   sendOk,
 } from "../../utils/http";
 import { AppError } from "../../utils/errors";
-import type { Session } from "@prisma/client";
 
 function normalizeNotes(notes: string | null | undefined) {
   return notes && notes.length > 0 ? notes : null;
@@ -54,19 +54,84 @@ router.get(
         take: limit ?? 50,
       });
 
-      const response = SessionListResponseSchema.parse(
-        sessions.map((s: Session) => ({
-          ...s,
-          pages: s.pages ?? null,
-          minutes: s.minutes ?? null,
-          notes: normalizeNotes(s.notes),
-          date: s.date.toISOString(),
-          createdAt: s.createdAt.toISOString(),
-          updatedAt: s.updatedAt.toISOString(),
-        })),
-      );
+      const mapped = sessions.map((s) => ({
+        ...s,
+        pages: s.pages ?? null,
+        minutes: s.minutes ?? null,
+        notes: normalizeNotes(s.notes),
+        date: s.date.toISOString(),
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+      }));
+
+      const response = SessionListResponseSchema.parse(mapped);
 
       sendOk(res, response);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// POST /api/sessions/restore
+router.post(
+  "/restore",
+  validateBody(RestoreSessionSchema),
+  async (req, res, next) => {
+    try {
+      const body = (req as any).validatedBody;
+
+      const book = await prisma.book.findUnique({ where: { id: body.bookId } });
+      if (!book) {
+        throw new AppError("Book not found for this session", {
+          status: 404,
+          code: "NOT_FOUND",
+        });
+      }
+
+      const existing = await prisma.session.findUnique({
+        where: { id: body.id },
+      });
+
+      if (existing) {
+        const response = SessionResponseSchema.parse({
+          ...existing,
+          pages: existing.pages ?? null,
+          minutes: existing.minutes ?? null,
+          notes: normalizeNotes(existing.notes),
+          date: existing.date.toISOString(),
+          createdAt: existing.createdAt.toISOString(),
+          updatedAt: existing.updatedAt.toISOString(),
+        });
+
+        sendOk(res, response);
+        return;
+      }
+
+      const restored = await prisma.session.create({
+        data: {
+          id: body.id,
+          bookId: body.bookId,
+          pages: body.pages ?? null,
+          minutes: body.minutes ?? null,
+          notes: body.notes ?? null,
+          date: body.date,
+          createdAt: new Date(body.createdAt),
+          updatedAt: new Date(body.updatedAt),
+        },
+      });
+
+      const response = SessionResponseSchema.parse({
+        ...restored,
+        pages: restored.pages ?? null,
+        minutes: restored.minutes ?? null,
+        notes: normalizeNotes(restored.notes),
+        date: restored.date.toISOString(),
+        createdAt: restored.createdAt.toISOString(),
+        updatedAt: restored.updatedAt.toISOString(),
+      });
+
+      sendCreated(res, response);
     } catch (error) {
       next(error);
     }

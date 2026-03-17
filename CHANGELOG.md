@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.0-sprint-4] — Sessions Persistence Migration (2026-03-17)
+
+### Added
+
+- Added API-backed Sessions restore support for undo delete via `POST /api/sessions/restore`.
+
+### Changed
+
+- Migrated Sessions persistence from localStorage to backend API storage.
+- Updated the Sessions store to load, create, update, delete, and restore Sessions asynchronously through the API.
+- Normalized Sessions API responses into the frontend’s date-only Session shape.
+- Normalized Sessions update payloads before PATCH requests to keep request data consistent.
+
+### Removed
+
+- Removed the active localStorage-backed persistence path for Sessions records.
+
+### Notes
+
+- Deterministic Sessions sorting remained intact after load and mutation flows.
+- Keyboard navigation, selection behavior, and undo parity were preserved after the persistence migration.
+
+---
+
 ## [v2.2.0-sprint-3] — Sessions API Contract (2026-03-16)
 
 ### Added

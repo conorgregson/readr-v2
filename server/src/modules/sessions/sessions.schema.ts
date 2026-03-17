@@ -169,6 +169,48 @@ export const UpdateSessionSchema = z
     "At least one field must be provided to update a session",
   );
 
+export const RestoreSessionSchema = z
+  .object({
+    id: z.cuid("Invalid session id"),
+    bookId: z.cuid("Invalid book id"),
+    pages: z
+      .number()
+      .int("Pages must be an integer")
+      .min(0, "Pages cannot be negative")
+      .max(10_000, "Pages is too large")
+      .nullable()
+      .optional(),
+    minutes: z
+      .number()
+      .int("Minutes must be an integer")
+      .min(0, "Minutes cannot be negative")
+      .max(1_440, "Minutes in a single session cannot exceed 1440 (24h)")
+      .nullable()
+      .optional(),
+    notes: z
+      .string()
+      .max(2_000, "Notes must be at most 2000 characters")
+      .nullable()
+      .optional(),
+    date: DateInputSchema,
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+  })
+  .superRefine((data, ctx) => {
+    const hasPages = typeof data.pages === "number";
+    const hasMinutes = typeof data.minutes === "number";
+
+    if (!hasPages && !hasMinutes) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pages"],
+        message: "At least one of pages or minutes must be provided",
+      });
+    }
+  });
+
+export type ResoreSessionInput = z.infer<typeof RestoreSessionSchema>;
+
 export const SessionIdParamSchema = z.object({
   id: z.cuid("Invalid session id"),
 });
@@ -211,11 +253,14 @@ export const ListSessionsQuerySchema = z
   });
 
 export const SessionResponseSchema = z.object({
-  id: z.cuid(),
-  bookId: z.cuid(),
+  id: z.string(),
+  bookId: z.string(),
+
   pages: z.number().int().nullable(),
   minutes: z.number().int().nullable(),
-  notes: z.string().max(2_000).nullable(),
+
+  notes: z.string().nullable(),
+
   date: z.iso.datetime(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),

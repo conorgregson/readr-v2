@@ -32,6 +32,8 @@ export function SessionsPage() {
   const setSortKey = useSessionsStore((s) => s.setSortKey);
 
   const books = useBooksStore((s) => s.books);
+  const booksBootstrapped = useBooksStore((s) => s.isBootstrapped);
+  const loadBooks = useBooksStore((s) => s.loadBooks);
 
   const addSession = useSessionsStore((s) => s.addSession); // Sprint 6 store action
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -56,6 +58,11 @@ export function SessionsPage() {
       });
     }, 0);
   };
+
+  useEffect(() => {
+    if (booksBootstrapped) return;
+    void loadBooks();
+  }, [booksBootstrapped, loadBooks]);
 
   useEffect(() => {
     if (isBootstrapped) return;
@@ -113,8 +120,8 @@ export function SessionsPage() {
         <h1 className="text-xl font-semibold">Sessions</h1>
       </div>
 
-      {mode === "loading" ? (
-        <LoadingState label="Loading sessions..." />
+      {mode === "loading" || !booksBootstrapped ? (
+        <LoadingState label="Loading sessions and books..." />
       ) : mode === "empty" ? (
         <>
           <SessionsLiveRegion />
