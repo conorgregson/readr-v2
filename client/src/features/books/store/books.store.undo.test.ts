@@ -38,7 +38,7 @@ describe("BooksStore Undo (Sprint 5)", () => {
 
     useBooksStore.setState({ books });
 
-    vi.mocked(BooksService.remove).mockResolvedValue(true);
+    vi.mocked(BooksService.remove).mockResolvedValue(undefined);
 
     const ok = await useBooksStore.getState().deleteBook("1");
 
@@ -57,7 +57,7 @@ describe("BooksStore Undo (Sprint 5)", () => {
 
     useBooksStore.setState({ books });
 
-    vi.mocked(BooksService.remove).mockResolvedValue(true);
+    vi.mocked(BooksService.remove).mockResolvedValue(undefined);
 
     await useBooksStore.getState().deleteBook("1");
 
@@ -75,7 +75,7 @@ describe("BooksStore Undo (Sprint 5)", () => {
 
     useBooksStore.setState({ books });
 
-    vi.mocked(BooksService.remove).mockResolvedValue(true);
+    vi.mocked(BooksService.remove).mockResolvedValue(undefined);
 
     await useBooksStore.getState().deleteBook("1");
 
@@ -96,7 +96,7 @@ describe("BooksStore Undo (Sprint 5)", () => {
 
     useBooksStore.setState({ books });
 
-    vi.mocked(BooksService.remove).mockResolvedValue(true);
+    vi.mocked(BooksService.remove).mockResolvedValue(undefined);
 
     const ok = await useBooksStore.getState().deleteBook("1");
 
@@ -113,7 +113,7 @@ describe("BooksStore Undo (Sprint 5)", () => {
 
     useBooksStore.setState({ books });
 
-    vi.mocked(BooksService.remove).mockResolvedValue(true);
+    vi.mocked(BooksService.remove).mockResolvedValue(undefined);
 
     await useBooksStore.getState().deleteBook("1");
     await useBooksStore.getState().undoLast();

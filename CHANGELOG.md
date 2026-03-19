@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.2.0] — API Persistence Migration (2026-03-19)
+
+### Added
+
+- API-backed persistence for Books and Sessions
+- Unified request handling across client service layer
+- Export backup system using live API data
+
+### Changed
+
+- Migrated from localStorage to Express + PostgreSQL persistence
+- Standardized error handling and API response validation
+- Updated Settings page messaging for backup system
+- README updated to reflect API-backed architecture
+
+### Removed
+
+- Legacy localStorage persistence for Books and Sessions
+- Obsolete storage adapters and dead persistence helpers
+- Dual persistence pathways (client vs server)
+
+### Fixed
+
+- Inconsistent service layer behavior between Books and Sessions
+- Edge cases in undo behavior under API persistence
+- Stale assumptions tied to local-first architecture
+
+### Notes
+
+- Backup import is temporarily disabled and will return in v2.3
+- v2.2 marks completion of the local-first → API migration
+
+---
+
 ## [v2.2.0-sprint-4] — Sessions Persistence Migration (2026-03-17)
 
 ### Added

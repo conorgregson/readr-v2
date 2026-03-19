@@ -15,16 +15,28 @@ type ApiEnvelope<T> = {
   data: T;
 };
 
+type ApiErrorEnvelope = {
+  ok?: false;
+  error?: {
+    message?: string;
+    code?: string;
+    details?: unknown;
+  };
+};
+
 type DeleteSessionResponse = {
   id: string;
 };
 
 async function readJson<T>(res: Response): Promise<T> {
-  const json = (await res.json().catch(() => null)) as T | null;
+  const json = (await res.json().catch(() => null)) as
+    | T
+    | ApiErrorEnvelope
+    | null;
 
   if (!res.ok) {
     const message =
-      (json as { error?: { message?: string } } | null)?.error?.message ??
+      (json as ApiErrorEnvelope | null)?.error?.message ??
       `Request failed (${res.status})`;
     throw new Error(message);
   }
@@ -33,7 +45,7 @@ async function readJson<T>(res: Response): Promise<T> {
     throw new Error("Invalid server response.");
   }
 
-  return json;
+  return json as T;
 }
 
 export const SessionsService = {

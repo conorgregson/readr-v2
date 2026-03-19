@@ -41,9 +41,9 @@ export function SessionsUndoBar() {
       <Button
         ref={undoBtnRef}
         variant="secondary"
-        onClick={() => {
+        onClick={async () => {
           const restoredSessionId = undo.session.id;
-          undoDelete();
+          await undoDelete();
 
           window.setTimeout(() => {
             const row = document.getElementById(
