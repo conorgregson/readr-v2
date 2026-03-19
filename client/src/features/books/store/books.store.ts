@@ -62,7 +62,7 @@ type BooksState = {
   // domain
   books: Book[];
 
-  // undo (Sprint 5)
+  // undo
   undo: UndoRecord | null;
   undoLast: () => Promise<boolean>;
   clearUndo: () => void;
@@ -118,7 +118,7 @@ const initialState: Pick<
   isBootstrapped: false,
   isLoading: false,
 
-  // Sprint 2: server-backed books list
+  // server-backed books list
   books: [],
 
   filters: defaultBooksFilters(),
@@ -206,7 +206,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       set({ books: next, page: { mode: "results" } });
 
       const saved = await BooksService.update(id, persistPatch);
-      if (!saved) throw new Error("Book not found");
 
       // Sync store to persisted record
       set((s) => ({
@@ -315,8 +314,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
         status: "finished",
         ...(prev.finishedAt ? {} : { finishedAt: nowIso }),
       });
-
-      if (!saved) throw new Error("Book not found");
 
       set((s) => ({
         books: s.books.map((b) => (b.id === id ? saved : b)),

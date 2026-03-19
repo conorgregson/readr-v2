@@ -22,18 +22,7 @@ class ErrorBoundary extends React.Component<
         <pre style={{ whiteSpace: "pre-wrap" }}>
           {String(this.state.error.stack || this.state.error.message)}
         </pre>
-        <button
-          onClick={() => {
-            try {
-              localStorage.clear();
-            } catch {
-              // ignore
-            }
-            location.reload();
-          }}
-        >
-          Clear storage & reload
-        </button>
+        <button onClick={() => location.reload()}>Reload app</button>
       </div>
     );
   }

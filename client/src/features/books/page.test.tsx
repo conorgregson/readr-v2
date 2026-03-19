@@ -56,7 +56,6 @@ function makeBook(overrides: Partial<Book> = {}): Book {
 }
 
 beforeEach(() => {
-  localStorage.clear();
   useBooksStore.getState().reset();
   vi.clearAllMocks();
 });
@@ -65,7 +64,7 @@ describe("BooksPage undo flow", () => {
   it("restores a deleted book when Undo is clicked", async () => {
     const user = userEvent.setup();
 
-    vi.mocked(BooksService.remove).mockResolvedValue(true);
+    vi.mocked(BooksService.remove).mockResolvedValue(undefined);
 
     useBooksStore.setState({
       isBootstrapped: true,

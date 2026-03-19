@@ -113,6 +113,7 @@ type SessionsState = {
   reset: () => void;
 };
 
+// UI-only persistence: view preferences survive refresh, but session data is API-backed.
 const persistedUI = safeParse<{
   filters?: SessionsFilters;
   sortKey?: SessionsSortKey;

@@ -3,7 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 
 const OUTPUT_DIR = path.resolve(process.cwd(), "scripts", "out");
-const OUTPUT_FILE = path.join(OUTPUT_DIR, "readr-backup-v2.1-seed.json");
+const OUTPUT_FILE = path.join(OUTPUT_DIR, "readr-backup-v2.2-seed.json");
 
 // Change these counts anytime
 const BOOKS_COUNT = 500;
@@ -202,7 +202,7 @@ function main() {
 
   const backup = {
     app: "readr",
-    version: "2.1",
+    version: "2.2",
     exportedAt: isoNow(),
     books,
     sessions,

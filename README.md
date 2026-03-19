@@ -25,7 +25,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/ci.yml?style=for-the-badge&label=CI&logo=github" />
 </a>
 
-<img src="https://img.shields.io/badge/Status-v2.2%20In%20Development-orange?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v2.2%20Ready%20for%20Release-4CAF50?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -34,14 +34,20 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 
 ## Live Demo
 
-Try the deployed frontend here:
+Try the deployed full-stack app here:
 
-https://readr-v2-app.vercel.app
+**▶** https://readr-v2-app.vercel.app
 
-The demo currently runs **client-side only** using localStorage.
-Your reading data is stored in your browser and will persist until site data is cleared. This reflects the **v2.1 parity release**.
+The demo is now connected to the **Express + PostgreSQL backend**, with all reading data persisted via the API.
 
-Server-backed persistence will be introduced in **v2.2**, connecting the deployed UI to the API layer.
+### Notes
+
+- Data is now **server-backed (v2.2)** instead of localStorage
+- Changes (add/edit/delete) persist across sessions and devices
+- **Backup export is supported**
+- **Backup import is temporarily disabled** during the persistence migration (planned for v2.3 via a safe bulk-import endpoint)
+
+> v2.2 marks the transition from local-first storage to a fully API-backed architecture.
 
 ---
 
@@ -61,7 +67,7 @@ Each version isolates a specific risk area (architecture, UX, persistence, or sc
 The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
-> Current focus: **v2.2 — API integration & persistence.**
+> Current focus: **v2.2 — API-backed persistence (release-ready).**
 
 ---
 
@@ -79,7 +85,12 @@ Readr v2 was designed to demonstrate several real-world frontend engineering pat
   Critical actions (delete / finish) support ~6s undo windows while preserving filters, search state, and list ordering.
 
 - **Local-First → API Migration Strategy**
-  v2.1 intentionally keeps local persistence while the backend is built, allowing UI parity to stabilize before switching to API-backed storage in v2.2.
+  Readr evolved through a staged migration to reduce system-wide risk:
+  - v1.x: fully offline-first (localStorage)
+  - v2.1: React rebuild maintained local persistence for parity lock
+  - v2.2: full migration to API-backed persistence (Express + PostgreSQL)
+
+  This approach ensured UI behavior remained stable while replacing the underlying data layer.
 
 - **CI-Gated Development**
   GitHub Actions enforces typecheck, lint, and test validation on every push and pull request.
@@ -338,8 +349,8 @@ readr-v2/
                      └─────────────┬────────────┘
                                    │
                                    ▼
-                      Client Services Layer (v2.1)
-                        local-first persistence
+                          Client Services Layer
+                      API-backed persistence (v2.2)
 
                                    │
                                    ▼
@@ -374,7 +385,7 @@ readr-v2/
 flowchart TD
 
 A[React Frontend<br/>Vite + TypeScript + Tailwind]
-  --> B[Client Services Layer<br/>local-first in v2.1]
+  --> B[Client Services Layer<br/>API-backed (v2.2)]
 
 B -->|v2.2+| C[Express Server<br/>Node + TypeScript]
 
@@ -441,9 +452,7 @@ Engineering choices are documented to emphasize maintainability and long-term sc
 
 ## Screenshots
 
-The UI below reflects the **v2.1 React parity release**.
-
-> Screenshots will be updated again once API persistence (v2.2) lands.
+The UI below reflects the **v2.2 full-stack release** with API-backed persistence.
 
 - Dashboard _(coming soon)_
 - Library / Book List _(coming soon)_

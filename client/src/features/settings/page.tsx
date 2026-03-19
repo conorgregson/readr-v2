@@ -7,21 +7,12 @@ import {
   importBackup,
   downloadJson,
 } from "../../shared/data/backup";
-import { useBooksStore } from "../books/store/books.store";
-import { useSessionsStore } from "../sessions/store/sessions.store";
 
 export function SettingsPage() {
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
 
   const fileRef = useRef<HTMLInputElement | null>(null);
-
-  const loadBooks = useBooksStore((s) => s.loadBooks);
-  const loadSessions = useSessionsStore((s) => s.loadSessions);
-
-  async function refresh() {
-    await Promise.all([loadBooks(), loadSessions()]);
-  }
 
   return (
     <div className="space-y-4">
@@ -31,8 +22,8 @@ export function SettingsPage() {
         <div className="space-y-2">
           <h2 className="text-sm font-semibold">Data</h2>
           <p className="text-sm text-slate-500">
-            Import/export your local data as JSON. This is the fastest way to
-            load hundreds of books and sessions.
+            Export your current data as JSON. Backup import is temporarily
+            unavailable during the API persistence migration.
           </p>
 
           {status ? (
@@ -55,7 +46,7 @@ export function SettingsPage() {
 
                 const data = await exportBackup();
                 const stamp = data.exportedAt.slice(0, 10);
-                downloadJson(`readr-backup-v2.1-${stamp}.json`, data);
+                downloadJson(`readr-backup-v2.2-${stamp}.json`, data);
 
                 setStatus(
                   `Exported ${data.books.length} books and ${data.sessions.length} sessions.`,
@@ -67,11 +58,8 @@ export function SettingsPage() {
 
             <Button
               variant="secondary"
-              onClick={() => {
-                setError("");
-                setStatus("");
-                fileRef.current?.click();
-              }}
+              disabled
+              title="Import is temporarily unavailable in v2.2"
             >
               Import JSON
             </Button>
@@ -83,25 +71,18 @@ export function SettingsPage() {
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0] ?? null;
-                e.target.value = ""; // allow re-importing same file
+                e.target.value = "";
                 if (!file) return;
 
                 setError("");
-                setStatus("Importing…");
+                setStatus("");
 
                 try {
                   const text = await file.text();
-                  const parsed = JSON.parse(text);
+                  JSON.parse(text); // validate JSON file shape at a basic level
 
-                  const res = await importBackup(parsed);
-                  await refresh();
-
-                  setStatus(
-                    `Imported ${res.books.length} books and ${res.sessions.length} sessions. ` +
-                      `Dropped: ${res.dropped.books} book item(s), ${res.dropped.sessions} session item(s).`,
-                  );
+                  await importBackup();
                 } catch (err) {
-                  setStatus("");
                   setError((err as Error)?.message ?? "Import failed.");
                 }
               }}

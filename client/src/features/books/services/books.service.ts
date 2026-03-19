@@ -7,7 +7,9 @@ import type {
   SeriesType,
 } from "../types";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
+  "http://localhost:4000";
 
 type ApiEnvelope<T> = {
   ok: boolean;
@@ -91,7 +93,7 @@ function sanitizeNullableString(value: unknown): string | null | undefined {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE}${path}`;
+  const url = `${API_BASE}/api${path}`;
 
   const response = await fetch(url, {
     headers: {
@@ -226,7 +228,7 @@ export const BooksService = {
     return toClientBook(created);
   },
 
-  async update(id: BookId, patch: UpdateBookInput): Promise<Book | null> {
+  async update(id: BookId, patch: UpdateBookInput): Promise<Book> {
     const updated = await request<ApiBook>(`/books/${id}`, {
       method: "PATCH",
       body: JSON.stringify(normalizeUpdateInput(patch)),
@@ -235,11 +237,9 @@ export const BooksService = {
     return toClientBook(updated);
   },
 
-  async remove(id: BookId): Promise<boolean> {
+  async remove(id: BookId): Promise<void> {
     await request<void>(`/books/${id}`, {
       method: "DELETE",
     });
-
-    return true;
   },
 };
