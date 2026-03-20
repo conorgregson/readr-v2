@@ -179,21 +179,30 @@ Released: Mar 2026
 - Frontend domain types from v2.1 are treated as the canonical contract.
 - A client-only demo is already deployed via Vercel; v2.2 will connect the UI to the API layer.
 
-Planned: Q2 2026
+Released: Mar 2026
 
 ---
 
-## 🔑 Version 2.3 — Authentication & Accounts
+## 🔑 Version 2.3 — Identity & Data Ownership
 
-**Focus:** Introduce user identity and secure multi-user data boundaries without compromising architectural simplicity.
+**Focus:** Introduce user identity and enforce strict per-user data boundaries across the system.
 
 ### Planned Work
 
-- User accounts (JWT or OAuth)
-- Per-user data scoping
-- Secured API routes
-- Token storage strategy documented
-- Account-aware import/export
+- User model and JWT-based authentication
+- Secure password handling with hashed credentials
+- Auth middleware for protected routes
+- Per-user ownership for books and sessions
+- Token-aware frontend auth layer
+- Session persistence and auth restore flow
+- Safe bulk import with ownership enforcement
+- Security hardening for authentication flows
+
+### Notes
+
+- v2.3 is the transition from single-user architecture to user-owned data architecture.
+- Data isolation is treated as a first-class invariant.
+- Authentication remains intentionally minimal and implementation-focused.
 
 Planned: Q2 2026
 

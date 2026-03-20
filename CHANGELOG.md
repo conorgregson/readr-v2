@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3.0-sprint-1] — Auth & Ownership Foundation (2026-03-19)
+
+### Added
+
+- JWT-based authentication system with register, login, and session restore
+- User model with email and passwordHash
+- Auth middleware (`requireAuth`) for protecting API routes
+- Per-user ownership via `userId` on Books and Sessions
+- Auth endpoints: `/api/auth/register`, `/api/auth/login`, `/api/auth/me`
+- Auth store with login, restoreAuth, and logout flows
+- Login/register UI with app-level auth gating
+
+### Changed
+
+- All Books and Sessions endpoints now require authentication
+- All queries scoped by authenticated `userId`
+- Sessions creation validates ownership of associated Book
+- API client attaches bearer token to all requests
+
+### Removed
+
+- Anonymous/global data access across Books and Sessions
+
+### Notes
+
+- Establishes identity and strict data isolation as core system invariants
+- Consolidates Sprint 0–3 architecture into first v2.3 implementation milestone
+- Forms the foundation for multi-user production deployment
+
+---
+
 ## [v2.2.0] — API Persistence Migration (2026-03-19)
 
 ### Added

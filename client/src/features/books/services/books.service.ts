@@ -7,9 +7,7 @@ import type {
   SeriesType,
 } from "../types";
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:4000";
+import { apiFetch } from "../../../shared/api/api";
 
 type ApiEnvelope<T> = {
   ok: boolean;
@@ -93,15 +91,7 @@ function sanitizeNullableString(value: unknown): string | null | undefined {
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE}/api${path}`;
-
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+  const response = await apiFetch(path, options);
 
   if (response.status === 204) {
     if (!response.ok) {

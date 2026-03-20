@@ -10,8 +10,8 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Deployment-000000?style=for-the-badge&logo=vercel" />
 </a>
 
-<a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.1.0">
-  <img src="https://img.shields.io/badge/Version-v2.1.0-4CAF50?style=for-the-badge" />
+<a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.2.0">
+  <img src="https://img.shields.io/badge/Version-v2.2.0-4CAF50?style=for-the-badge" />
 </a>
 
 <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
@@ -25,7 +25,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/ci.yml?style=for-the-badge&label=CI&logo=github" />
 </a>
 
-<img src="https://img.shields.io/badge/Status-v2.2%20Ready%20for%20Release-4CAF50?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v2.3%20In%20Progress-FFA500?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -121,10 +121,10 @@ These patterns mirror practices used in production applications where architectu
 
 Canonical docs:
 
-- Parity Charter: [`docs/parity-charter-v2.1.md`](/docs/parity-charter-v2.1.md)
-- Architecture: [`docs/architecture-v2.1.md`](/docs/architecture-v2.1.md)
-- Test Matrix: [`docs/test-matrix-parity.md`](/docs/test-matrix-parity.md)
-- Dependency Map: [`docs/dependency-map-v2.1.md`](/docs/dependency-map-v2.1.md)
+- Parity Charter: [`docs/sprints/v2.1/parity-charter-v2.1.md`](/docs/sprints/v2.1/parity-charter-v2.1.md)
+- Architecture: [`docs/sprints/v2.1/architecture-v2.1.md`](/docs/sprints/v2.1/architecture-v2.1.md)
+- Test Matrix: [`docs/sprints/v2.1/test-matrix-parity.md`](/docs/sprints/v2.1/test-matrix-parity.md)
+- Dependency Map: [`docs/sprints/v2.1/dependency-map-v2.1.md`](/docs/sprints/v2.1/dependency-map-v2.1.md)
 
 ---
 
@@ -220,8 +220,8 @@ Only SemVer releases represent official “ship-ready” states.
 
 - **v2.0.0** — Backend & CI foundation (Express + Prisma + PostgreSQL) ✅
 - **v2.1.0** — React frontend rebuild with full v1.9 behavioral parity ✅
-- **v2.2.0** — API integration & persistence migration (local-first → API) 🚧
-- **v2.3.0** — Authentication, accounts, and multi-user data boundaries
+- **v2.2.0** — API integration & persistence migration (local-first → API) ✅
+- **v2.3.0** — Authentication, accounts, and multi-user data boundaries 🚧
 - **v2.4.0** — Server-driven badges, statistics, and engagement systems
 - **v3.0.0** — Production infrastructure & hosted deployment architecture
 

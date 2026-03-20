@@ -4,7 +4,11 @@ export type AppErrorCode =
   | "BAD_REQUEST"
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
-  | "INTERNAL_ERROR";
+  | "INTERNAL_ERROR"
+  | "CONFLICT"
+  | "AUTH_EMAIL_ALREADY_IN_USE"
+  | "AUTH_INVALID_CREDENTIALS"
+  | "AUTH_UNAUTHORIZED";
 
 export class AppError extends Error {
   public status: number;

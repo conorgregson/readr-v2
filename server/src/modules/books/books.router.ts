@@ -13,7 +13,11 @@ import {
   UpdateBookSchema,
 } from "./books.schema";
 
+import { requireAuth } from "../../middleware/require-auth";
+
 const router = Router();
+
+router.use(requireAuth);
 
 router.get("/", validateQuery(ListBooksQuerySchema), getBooksHandler);
 router.post("/", validateBody(CreateBookSchema), createBookHandler);

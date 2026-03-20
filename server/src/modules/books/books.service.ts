@@ -55,7 +55,7 @@ function assertFormatConsistency(input: {
   }
 }
 
-function resolveTimestapsForCreate(status: BookStatus) {
+function resolveTimestampsForCreate(status: BookStatus) {
   const now = new Date();
 
   if (status === BookStatus.planned) {
@@ -71,13 +71,14 @@ function resolveTimestapsForCreate(status: BookStatus) {
       finishedAt: null,
     };
   }
+
   return {
     startedAt: now,
     finishedAt: now,
   };
 }
 
-function resolveTimestapsForUpdate(
+function resolveTimestampsForUpdate(
   existing: {
     status: BookStatus;
     startedAt: Date | null;
@@ -107,10 +108,12 @@ function resolveTimestapsForUpdate(
   };
 }
 
-export async function listBooks(options: ListBooksOptions) {
+export async function listBooks(userId: string, options: ListBooksOptions) {
   const { search, status, limit, offset } = options;
 
-  const where: Prisma.BookWhereInput = {};
+  const where: Prisma.BookWhereInput = {
+    userId,
+  };
 
   if (status) {
     where.status = status;
@@ -134,16 +137,17 @@ export async function listBooks(options: ListBooksOptions) {
   });
 }
 
-export async function createBook(input: CreateBookInput) {
+export async function createBook(userId: string, input: CreateBookInput) {
   assertFormatConsistency({
     format: input.format,
     formatSubtype: input.formatSubtype,
   });
 
-  const timestamps = resolveTimestapsForCreate(input.status);
+  const timestamps = resolveTimestampsForCreate(input.status);
 
   return prisma.book.create({
     data: {
+      userId,
       title: input.title,
       author: input.author,
       status: input.status,
@@ -160,9 +164,13 @@ export async function createBook(input: CreateBookInput) {
   });
 }
 
-export async function updateBook(id: string, input: UpdateBookInput) {
-  const existing = await prisma.book.findUnique({
-    where: { id },
+export async function updateBook(
+  userId: string,
+  id: string,
+  input: UpdateBookInput,
+) {
+  const existing = await prisma.book.findFirst({
+    where: { id, userId },
   });
 
   if (!existing) {
@@ -189,7 +197,7 @@ export async function updateBook(id: string, input: UpdateBookInput) {
     input.status !== undefined && input.status !== existing.status;
 
   const timestampPatch = statusChanged
-    ? resolveTimestapsForUpdate(existing, nextStatus)
+    ? resolveTimestampsForUpdate(existing, nextStatus)
     : {};
 
   return prisma.book.update({
@@ -201,9 +209,10 @@ export async function updateBook(id: string, input: UpdateBookInput) {
   });
 }
 
-export async function deleteBook(id: string) {
-  const existing = await prisma.book.findUnique({
-    where: { id },
+export async function deleteBook(userId: string, id: string) {
+  const existing = await prisma.book.findFirst({
+    where: { id, userId },
+    select: { id: true },
   });
 
   if (!existing) {
@@ -214,6 +223,6 @@ export async function deleteBook(id: string) {
   }
 
   await prisma.book.delete({
-    where: { id },
+    where: { id: existing.id },
   });
 }
