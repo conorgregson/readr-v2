@@ -31,12 +31,29 @@ enum FormatSubtype {
   PDF
 }
 
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+
+  books        Book[]
+  sessions     Session[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+}
+
 model Book {
-  id            String      @id @default(cuid())
+  id            String        @id @default(cuid())
+
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   title         String
   author        String
-
-  status        BookStatus  @default(planned)
+  status        BookStatus    @default(planned)
 
   startedAt     DateTime?
   finishedAt    DateTime?
@@ -51,30 +68,37 @@ model Book {
 
   sessions      Session[]
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  @@index([status])
-  @@index([title])
-  @@index([author])
-  @@index([genre])
-  @@index([series])
-  @@index([plannedMonth])
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, title])
+  @@index([userId, author])
+  @@index([userId, genre])
+  @@index([userId, series])
+  @@index([userId, plannedMonth])
 }
 
 model Session {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
+
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   bookId    String
-  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book      Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
   date      DateTime
   pages     Int?
   minutes   Int?
   notes     String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
+  @@index([userId])
   @@index([bookId])
-  @@index([date])
+  @@index([userId, date])
+  @@index([userId, bookId])
 }

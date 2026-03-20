@@ -5,10 +5,7 @@ import {
   normalizeUpdateSessionPatch,
   type SessionApiResponse,
 } from "./sessions.normalize";
-
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:4000";
+import { apiFetch } from "../../../shared/api/api";
 
 type ApiEnvelope<T> = {
   ok: boolean;
@@ -50,9 +47,8 @@ async function readJson<T>(res: Response): Promise<T> {
 
 export const SessionsService = {
   async list(): Promise<Session[]> {
-    const res = await fetch(`${API_BASE}/api/sessions`, {
+    const res = await apiFetch("/sessions", {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
     });
 
     const json = await readJson<ApiEnvelope<SessionApiResponse[]>>(res);
@@ -62,9 +58,8 @@ export const SessionsService = {
   async create(input: CreateSessionInput): Promise<Session> {
     const safeInput = normalizeCreateSessionInput(input);
 
-    const res = await fetch(`${API_BASE}/api/sessions`, {
+    const res = await apiFetch("/sessions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(safeInput),
     });
 
@@ -78,9 +73,8 @@ export const SessionsService = {
   ): Promise<Session> {
     const safePatch = normalizeUpdateSessionPatch(patch);
 
-    const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
+    const res = await apiFetch(`/sessions/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(safePatch),
     });
 
@@ -89,18 +83,16 @@ export const SessionsService = {
   },
 
   async remove(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
+    const res = await apiFetch(`/sessions/${id}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
     });
 
     await readJson<ApiEnvelope<DeleteSessionResponse>>(res);
   },
 
   async restore(session: Session): Promise<Session> {
-    const res = await fetch(`${API_BASE}/api/sessions/restore`, {
+    const res = await apiFetch("/sessions/restore", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(session),
     });
 

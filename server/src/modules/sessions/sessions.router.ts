@@ -17,12 +17,36 @@ import {
   sendOk,
 } from "../../utils/http";
 import { AppError } from "../../utils/errors";
+import { requireAuth } from "../../middleware/require-auth";
 
 function normalizeNotes(notes: string | null | undefined) {
   return notes && notes.length > 0 ? notes : null;
 }
 
+async function requireOwnedBook(userId: string, bookId: string) {
+  const book = await prisma.book.findFirst({
+    where: {
+      id: bookId,
+      userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!book) {
+    throw new AppError("Book not found for this session", {
+      status: 404,
+      code: "NOT_FOUND",
+    });
+  }
+
+  return book;
+}
+
 const router = Router();
+
+router.use(requireAuth);
 
 // GET /api/sessions
 router.get(
@@ -30,10 +54,17 @@ router.get(
   validateQuery(ListSessionsQuerySchema),
   async (req, res, next) => {
     try {
+      const userId = req.auth!.userId;
       const { bookId, search, from, to, limit, offset } =
         (req as any).validatedQuery ?? {};
 
-      const where: any = {};
+      if (bookId) {
+        await requireOwnedBook(userId, bookId);
+      }
+
+      const where: any = {
+        userId,
+      };
 
       if (bookId) where.bookId = bookId;
 
@@ -44,7 +75,23 @@ router.get(
       }
 
       if (search) {
-        where.OR = [{ notes: { contains: search, mode: "insensitive" } }];
+        where.OR = [
+          { notes: { contains: search, mode: "insensitive" } },
+          {
+            book: {
+              is: {
+                title: { contains: search, mode: "insensitive" },
+              },
+            },
+          },
+          {
+            book: {
+              is: {
+                author: { contains: search, mode: "insensitive" },
+              },
+            },
+          },
+        ];
       }
 
       const sessions = await prisma.session.findMany({
@@ -65,7 +112,6 @@ router.get(
       }));
 
       const response = SessionListResponseSchema.parse(mapped);
-
       sendOk(res, response);
     } catch (error) {
       next(error);
@@ -79,18 +125,16 @@ router.post(
   validateBody(RestoreSessionSchema),
   async (req, res, next) => {
     try {
+      const userId = req.auth!.userId;
       const body = (req as any).validatedBody;
 
-      const book = await prisma.book.findUnique({ where: { id: body.bookId } });
-      if (!book) {
-        throw new AppError("Book not found for this session", {
-          status: 404,
-          code: "NOT_FOUND",
-        });
-      }
+      await requireOwnedBook(userId, body.bookId);
 
-      const existing = await prisma.session.findUnique({
-        where: { id: body.id },
+      const existing = await prisma.session.findFirst({
+        where: {
+          id: body.id,
+          userId,
+        },
       });
 
       if (existing) {
@@ -111,6 +155,7 @@ router.post(
       const restored = await prisma.session.create({
         data: {
           id: body.id,
+          userId,
           bookId: body.bookId,
           pages: body.pages ?? null,
           minutes: body.minutes ?? null,
@@ -144,9 +189,12 @@ router.get(
   validateParams(SessionIdParamSchema),
   async (req, res, next) => {
     try {
+      const userId = req.auth!.userId;
       const { id } = (req as any).validatedParams as { id: string };
 
-      const session = await prisma.session.findUnique({ where: { id } });
+      const session = await prisma.session.findFirst({
+        where: { id, userId },
+      });
 
       if (!session) {
         throw new AppError("Session not found", {
@@ -175,22 +223,18 @@ router.get(
 // POST /api/sessions
 router.post("/", validateBody(CreateSessionSchema), async (req, res, next) => {
   try {
+    const userId = req.auth!.userId;
     const body = (req as any).validatedBody;
 
-    const book = await prisma.book.findUnique({ where: { id: body.bookId } });
-    if (!book) {
-      throw new AppError("Book not found for this session", {
-        status: 404,
-        code: "NOT_FOUND",
-      });
-    }
+    const book = await requireOwnedBook(userId, body.bookId);
 
     const created = await prisma.session.create({
       data: {
-        bookId: body.bookId,
-        pages: body.pages,
-        minutes: body.minutes,
-        notes: body.notes,
+        userId,
+        bookId: book.id,
+        pages: body.pages ?? null,
+        minutes: body.minutes ?? null,
+        notes: body.notes ?? null,
         date: body.date,
       },
     });
@@ -218,10 +262,14 @@ router.patch(
   validateBody(UpdateSessionSchema),
   async (req, res, next) => {
     try {
+      const userId = req.auth!.userId;
       const { id } = (req as any).validatedParams as { id: string };
       const body = (req as any).validatedBody;
 
-      const existing = await prisma.session.findUnique({ where: { id } });
+      const existing = await prisma.session.findFirst({
+        where: { id, userId },
+      });
+
       if (!existing) {
         throw new AppError("Session not found", {
           status: 404,
@@ -229,20 +277,11 @@ router.patch(
         });
       }
 
-      if (body.bookId) {
-        const book = await prisma.book.findUnique({
-          where: { id: body.bookId },
-        });
-        if (!book) {
-          throw new AppError("Book not found for this session", {
-            status: 404,
-            code: "NOT_FOUND",
-          });
-        }
-      }
+      const nextBookId = body.bookId ?? existing.bookId;
+
+      await requireOwnedBook(userId, nextBookId);
 
       const nextPages = body.pages !== undefined ? body.pages : existing.pages;
-
       const nextMinutes =
         body.minutes !== undefined ? body.minutes : existing.minutes;
 
@@ -262,7 +301,8 @@ router.patch(
       const updated = await prisma.session.update({
         where: { id },
         data: {
-          bookId: body.bookId ?? existing.bookId,
+          userId,
+          bookId: nextBookId,
           pages: nextPages,
           minutes: nextMinutes,
           notes: body.notes !== undefined ? body.notes : existing.notes,
@@ -293,9 +333,14 @@ router.delete(
   validateParams(SessionIdParamSchema),
   async (req, res, next) => {
     try {
+      const userId = req.auth!.userId;
       const { id } = (req as any).validatedParams as { id: string };
 
-      const existing = await prisma.session.findUnique({ where: { id } });
+      const existing = await prisma.session.findFirst({
+        where: { id, userId },
+        select: { id: true },
+      });
+
       if (!existing) {
         throw new AppError("Session not found", {
           status: 404,
@@ -303,9 +348,9 @@ router.delete(
         });
       }
 
-      await prisma.session.delete({ where: { id } });
+      await prisma.session.delete({ where: { id: existing.id } });
 
-      sendOk(res, { id });
+      sendOk(res, { id: existing.id });
     } catch (error) {
       next(error);
     }
