@@ -14,6 +14,21 @@ function navClass({ isActive }: { isActive: boolean }) {
   ].join(" ");
 }
 
+function AuthBootstrapScreen() {
+  return (
+    <div className="min-h-dvh bg-slate-950 text-slate-100 flex items-center justify-center px-4">
+      <div
+        className="rounded-2xl border border-slate-800 bg-slate-900 px-6 py-5 shadow-xl"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <p className="text-sm text-slate-300">Restoring your session...</p>
+      </div>
+    </div>
+  );
+}
+
 export function AppShell() {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -35,11 +50,7 @@ export function AppShell() {
   }
 
   if (isBootstrapping) {
-    return (
-      <div className="min-h-dvh bg-slate-950 text-slate-100 flex items-center justify-center">
-        <div className="text-sm text-slate-400">Loading...</div>
-      </div>
-    );
+    return <AuthBootstrapScreen />;
   }
 
   if (!isAuthenticated) {
@@ -61,7 +72,7 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-3">
-            <nav className="flex items-center gap-1">
+            <nav className="flex items-center gap-1" aria-label="Primary">
               <NavLink to="/" end className={navClass}>
                 Books
               </NavLink>

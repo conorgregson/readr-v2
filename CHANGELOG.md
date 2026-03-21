@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3.0-sprint-2] — Auth UX & Session Persistence (2026-03-20)
+
+### Added
+
+- Added auth bootstrap loading state in AppShell.
+- Added client-side validation feedback for login and registration forms.
+- Added separate loading states for login and registration actions.
+- Added centralized unauthorized-response handling in the API client.
+
+### Changed
+
+- Improved auth error messaging for invalid credentials and duplicate email cases.
+- Improved session restore flow using `/auth/me` on app load.
+- Hardened token storage reads and writes against browser storage failures.
+- Updated auth page behavior to disable inputs and prevent duplicate submissions during pending requests.
+
+### Removed
+
+- Removed implicit token clearing from the auth service layer in favor of store-controlled session handling.
+
+### Notes
+
+- Sprint 2 completes auth UX polish and session persistence hardening for v2.3.
+- App bootstrap now resolves authentication state before rendering protected UI.
+- Invalid token detection occurs during auth restore and authenticated API requests.
+- Immediate logout after manual same-tab token mutation (e.g., DevTools) is not guaranteed and is out of scope for this sprint.
+- Behavior aligns with standard client-side session validation patterns.
+
+---
+
 ## [v2.3.0-sprint-1] — Auth & Ownership Foundation (2026-03-19)
 
 ### Added

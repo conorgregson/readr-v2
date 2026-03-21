@@ -1,4 +1,4 @@
-import { apiFetch, clearToken } from "../../../shared/api/api";
+import { apiFetch } from "../../../shared/api/api";
 
 type ApiEnvelope<T> = {
   ok: boolean;
@@ -13,6 +13,23 @@ type ApiErrorEnvelope = {
     details?: unknown;
   };
 };
+
+export class ApiRequestError extends Error {
+  status: number;
+  code?: string;
+  details?: unknown;
+
+  constructor(
+    message: string,
+    options: { status: number; code?: string; details?: unknown },
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = options.status;
+    this.code = options.code;
+    this.details = options.details;
+  }
+}
 
 export type AuthUser = {
   id: string;
@@ -45,7 +62,14 @@ async function readJson<T>(res: Response): Promise<T> {
         ? (json.error?.message ?? `Request failed (${res.status})`)
         : `Request failed (${res.status})`;
 
-    throw new Error(message);
+    const code = json && "error" in json ? json.error?.code : undefined;
+    const details = json && "error" in json ? json.error?.details : undefined;
+
+    throw new ApiRequestError(message, {
+      status: res.status,
+      code,
+      details,
+    });
   }
 
   if (!json || !("data" in json)) {
@@ -85,12 +109,7 @@ export const AuthService = {
       method: "GET",
     });
 
-    try {
-      const data = await readJson<MeResponse>(res);
-      return data.user;
-    } catch (error) {
-      clearToken();
-      throw error;
-    }
+    const data = await readJson<MeResponse>(res);
+    return data.user;
   },
 };

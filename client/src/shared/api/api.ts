@@ -4,6 +4,12 @@ const API_BASE =
 
 const TOKEN_KEY = "readr.auth.token";
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
 export function getToken() {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -30,13 +36,24 @@ export function clearToken() {
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken();
+  const headers = new Headers(options.headers);
 
-  return fetch(`${API_BASE}/api${path}`, {
+  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const res = await fetch(`${API_BASE}/api${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
+    headers,
   });
+
+  if (res.status === 401) {
+    unauthorizedHandler?.();
+  }
+
+  return res;
 }
