@@ -3,6 +3,7 @@ import cors from "cors";
 
 import { booksRouter } from "./modules/books/books.router";
 import { sessionsRouter } from "./modules/sessions/sessions.router";
+import { backupRouter } from "./modules/backup/backup.router";
 import { errorHandler } from "./utils/http";
 
 import { authRouter } from "./modules/auth/auth.router";
@@ -20,6 +21,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/books", booksRouter);
 app.use("/api/sessions", sessionsRouter);
+app.use("/api/backup", backupRouter);
 
 app.use(errorHandler);
 

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3.0-sprint-3] — Import/Export & Ownership Safety (2026-03-22)
+
+### Added
+
+- Backup export endpoint scoped to authenticated user
+- Bulk import endpoint with validation and rollback support
+- Backend integration tests for auth and backup flows
+- Postman test collections for Auth, Backup, Books, and Sessions
+
+### Changed
+
+- Import logic now enforces strict ownership (userId override)
+- Data ingestion pipeline validates relationships and structure
+
+### Fixed
+
+- Prevented cross-user data leakage during export
+- Blocked invalid import payloads from persisting
+- Ensured failed imports do not partially write to database
+
+### Notes
+
+- Establishes secure data boundaries for multi-user architecture
+- Foundation for future account-based features in v2.3
+
+--
+
 ## [v2.3.0-sprint-2] — Auth UX & Session Persistence (2026-03-20)
 
 ### Added
