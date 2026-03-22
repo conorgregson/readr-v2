@@ -1,18 +1,95 @@
 import { useRef, useState } from "react";
 import { Card } from "../../shared/ui/Card";
 import { Button } from "../../shared/ui/Button";
+import { BackupService } from "./services/backup.service";
+import { useBooksStore } from "../books/store/books.store";
+import { useSessionsStore } from "../sessions/store/sessions.store";
 
-import {
-  exportBackup,
-  importBackup,
-  downloadJson,
-} from "../../shared/data/backup";
+function downloadJson(filename: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function getBackupFilename(exportedAt: string) {
+  const stamp = exportedAt.slice(0, 10);
+  return `readr-backup-v2.3-${stamp}.json`;
+}
 
 export function SettingsPage() {
   const [status, setStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [busy, setBusy] = useState<"export" | "import" | "">("");
 
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const loadBooks = useBooksStore((s) => s.loadBooks);
+  const loadSessions = useSessionsStore((s) => s.loadSessions);
+
+  async function handleExport() {
+    setError("");
+    setStatus("");
+    setBusy("export");
+
+    try {
+      const data = await BackupService.export();
+      downloadJson(getBackupFilename(data.exportedAt), data);
+
+      setStatus(
+        `Exported ${data.books.length} books and ${data.sessions.length} sessions.`,
+      );
+    } catch (err) {
+      setError((err as Error)?.message ?? "Export failed.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  function handleImportClick() {
+    if (busy) return;
+    fileRef.current?.click();
+  }
+
+  async function handleImportFile(file: File) {
+    setError("");
+    setStatus("");
+    setBusy("import");
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as unknown;
+
+      const confirmed = window.confirm(
+        "Import this backup into your current account?",
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const result = await BackupService.import(parsed);
+
+      await Promise.all([loadBooks(), loadSessions()]);
+
+      setStatus(
+        `Imported ${result.importedBooks} books and ${result.importedSessions} sessions.`,
+      );
+    } catch (err) {
+      setError((err as Error)?.message ?? "Import failed.");
+    } finally {
+      setBusy("");
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -22,8 +99,8 @@ export function SettingsPage() {
         <div className="space-y-2">
           <h2 className="text-sm font-semibold">Data</h2>
           <p className="text-sm text-slate-500">
-            Export your current data as JSON. Backup import is temporarily
-            unavailable during the API persistence migration.
+            Export your books and sessions as JSON, or import a backup into your
+            current account.
           </p>
 
           {status ? (
@@ -39,52 +116,27 @@ export function SettingsPage() {
           ) : null}
 
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button
-              onClick={async () => {
-                setError("");
-                setStatus("");
-
-                const data = await exportBackup();
-                const stamp = data.exportedAt.slice(0, 10);
-                downloadJson(`readr-backup-v2.2-${stamp}.json`, data);
-
-                setStatus(
-                  `Exported ${data.books.length} books and ${data.sessions.length} sessions.`,
-                );
-              }}
-            >
-              Export JSON
+            <Button onClick={handleExport} disabled={busy !== ""}>
+              {busy === "export" ? "Exporting..." : "Export JSON"}
             </Button>
 
             <Button
               variant="secondary"
-              disabled
-              title="Import is temporarily unavailable in v2.2"
+              onClick={handleImportClick}
+              disabled={busy !== ""}
             >
-              Import JSON
+              {busy === "import" ? "Importing..." : "Import JSON"}
             </Button>
 
             <input
               ref={fileRef}
               type="file"
-              accept="application/json"
+              accept="application/json,.json"
               className="hidden"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const file = e.target.files?.[0] ?? null;
-                e.target.value = "";
                 if (!file) return;
-
-                setError("");
-                setStatus("");
-
-                try {
-                  const text = await file.text();
-                  JSON.parse(text); // validate JSON file shape at a basic level
-
-                  await importBackup();
-                } catch (err) {
-                  setError((err as Error)?.message ?? "Import failed.");
-                }
+                void handleImportFile(file);
               }}
             />
           </div>

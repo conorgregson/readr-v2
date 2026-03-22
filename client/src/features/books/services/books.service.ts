@@ -7,21 +7,7 @@ import type {
   SeriesType,
 } from "../types";
 
-import { apiFetch } from "../../../shared/api/api";
-
-type ApiEnvelope<T> = {
-  ok: boolean;
-  data: T;
-};
-
-type ApiErrorEnvelope = {
-  ok?: false;
-  error?: {
-    message?: string;
-    code?: string;
-    details?: unknown;
-  };
-};
+import { apiRequest } from "../../../shared/api/request";
 
 type ApiBook = {
   id: string;
@@ -90,38 +76,6 @@ function sanitizeNullableString(value: unknown): string | null | undefined {
   return trimmed ? trimmed : null;
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await apiFetch(path, options);
-
-  if (response.status === 204) {
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-    return undefined as T;
-  }
-
-  const payload = (await response.json().catch(() => null)) as
-    | ApiEnvelope<T>
-    | ApiErrorEnvelope
-    | null;
-
-  if (!response.ok) {
-    const message =
-      payload && "error" in payload
-        ? payload.error?.message ||
-          `Request failed with status ${response.status}`
-        : `Request failed with status ${response.status}`;
-
-    throw new Error(message);
-  }
-
-  if (!payload || !("data" in payload)) {
-    throw new Error("Invalid API response");
-  }
-
-  return payload.data;
-}
-
 function toClientBook(apiBook: ApiBook): Book {
   return {
     id: apiBook.id,
@@ -145,28 +99,25 @@ function toClientBook(apiBook: ApiBook): Book {
 }
 
 function normalizeCreateInput(input: CreateBookInput): CreateBookInput {
+  const genre = sanitizeOptionalString(input.genre);
+  const series = sanitizeOptionalString(input.series);
+  const isbn = sanitizeOptionalString(input.isbn);
+  const plannedMonth = sanitizeOptionalString(input.plannedMonth);
+
   return {
     title: nonEmpty("Title", input.title),
     author: nonEmpty("Author", input.author),
     status: input.status,
 
-    ...(sanitizeOptionalString(input.genre) !== undefined
-      ? { genre: sanitizeOptionalString(input.genre) }
-      : {}),
-    ...(sanitizeOptionalString(input.series) !== undefined
-      ? { series: sanitizeOptionalString(input.series) }
-      : {}),
+    ...(genre !== undefined ? { genre } : {}),
+    ...(series !== undefined ? { series } : {}),
     ...(input.seriesType !== undefined ? { seriesType: input.seriesType } : {}),
     ...(input.format !== undefined ? { format: input.format } : {}),
     ...(input.formatSubtype !== undefined
       ? { formatSubtype: input.formatSubtype }
       : {}),
-    ...(sanitizeOptionalString(input.isbn) !== undefined
-      ? { isbn: sanitizeOptionalString(input.isbn) }
-      : {}),
-    ...(sanitizeOptionalString(input.plannedMonth) !== undefined
-      ? { plannedMonth: sanitizeOptionalString(input.plannedMonth) }
-      : {}),
+    ...(isbn !== undefined ? { isbn } : {}),
+    ...(plannedMonth !== undefined ? { plannedMonth } : {}),
   };
 }
 
@@ -202,7 +153,7 @@ function normalizeUpdateInput(patch: UpdateBookInput): UpdateBookInput {
 
 export const BooksService = {
   async list(): Promise<Book[]> {
-    const books = await request<ApiBook[]>("/books?limit=100", {
+    const books = await apiRequest<ApiBook[]>("/books?limit=100", {
       method: "GET",
     });
 
@@ -210,7 +161,7 @@ export const BooksService = {
   },
 
   async create(input: CreateBookInput): Promise<Book> {
-    const created = await request<ApiBook>("/books", {
+    const created = await apiRequest<ApiBook>("/books", {
       method: "POST",
       body: JSON.stringify(normalizeCreateInput(input)),
     });
@@ -219,7 +170,7 @@ export const BooksService = {
   },
 
   async update(id: BookId, patch: UpdateBookInput): Promise<Book> {
-    const updated = await request<ApiBook>(`/books/${id}`, {
+    const updated = await apiRequest<ApiBook>(`/books/${id}`, {
       method: "PATCH",
       body: JSON.stringify(normalizeUpdateInput(patch)),
     });
@@ -228,7 +179,7 @@ export const BooksService = {
   },
 
   async remove(id: BookId): Promise<void> {
-    await request<void>(`/books/${id}`, {
+    await apiRequest<void>(`/books/${id}`, {
       method: "DELETE",
     });
   },

@@ -25,7 +25,9 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/github/actions/workflow/status/conorgregson/readr-v2/ci.yml?style=for-the-badge&label=CI&logo=github" />
 </a>
 
-<img src="https://img.shields.io/badge/Status-v2.3%20In%20Progress-FFA500?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
+
+<img src="https://img.shields.io/badge/Status-v2.3%20Sprint%203%20Complete-FF9800?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -42,32 +44,34 @@ The demo is now connected to the **Express + PostgreSQL backend**, with all read
 
 ### Notes
 
-- Data is now **server-backed (v2.2)** instead of localStorage
-- Changes (add/edit/delete) persist across sessions and devices
-- **Backup export is supported**
-- **Backup import is temporarily disabled** during the persistence migration (planned for v2.3 via a safe bulk-import endpoint)
+- Data is **fully server-backed (v2.2+)**
+- Changes persist across sessions and devices
+- **Authentication + user-scoped data (v2.3 in progress)**
+- **Backup export/import now implemented with ownership enforcement**
 
-> v2.2 marks the transition from local-first storage to a fully API-backed architecture.
+> v2.3 introduces secure multi-user data boundaries and safe bulk import.
 
 ---
 
 ## Overview
 
-**Readr v2** is a deliberate full-stack rewrite of my original offline-first reading tracker (**v1.0–v1.9**), redesigned to demonstrate modern frontend architecture, typed service layers, and CI-backed regression protection.
+**Readr v2** is a full-stack reading tracker designed to demonstrate modern frontend architecture, API-driven persistence, and disciplined system evolution.
 
-The goal of v2 is not just a UI upgrade, but a structural evolution:
+It is a structured rewrite of the original offline-first app (**v1.0–v1.9**), transitioning to a scalable, multi-user system.
 
-- A scalable Express + PostgreSQL backend
-- A modern, strongly-typed React frontend
-- Clear architectural boundaries between UI, state, and persistence
-- Automated testing and CI from the foundation up
+Key goals:
 
-Each version isolates a specific risk area (architecture, UX, persistence, or scale) before layering new complexity.
+- Build a **React + TypeScript frontend** with strict behavioral parity guarantees
+- Introduce a **typed Express + PostgreSQL backend**
+- Enforce **clear separation between UI, state, and persistence**
+- Validate correctness through **CI and full-stack testing**
+
+Each version isolates a specific risk area (parity, persistence, ownership) before introducing new complexity.
 
 The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
-> Current focus: **v2.2 — API-backed persistence (release-ready).**
+> Current focus: **v2.3 — Authentication & data ownership**
 
 ---
 
@@ -96,6 +100,24 @@ Readr v2 was designed to demonstrate several real-world frontend engineering pat
   GitHub Actions enforces typecheck, lint, and test validation on every push and pull request.
 
 These patterns mirror practices used in production applications where architectural changes must not introduce behavioral regressions.
+
+---
+
+## Security & Data Ownership (v2.3)
+
+Readr v2.3 introduces strict per-user data boundaries across the system.
+
+Key guarantees:
+
+- All data is scoped to the authenticated user
+- Backup export returns only user-owned records
+- Backup import enforces ownership (incoming `userId` is ignored)
+- Invalid relationships (e.g., orphan sessions) are rejected
+- Failed imports rollback completely (no partial writes)
+
+These constraints are enforced at both the API layer and database level, and validated through integration testing.
+
+This ensures the system is safe for multi-user environments.
 
 ---
 
@@ -154,13 +176,13 @@ Readr is both a product and a systems-design exercise.
 
 It demonstrates:
 
-- Incremental versioning discipline
-- Frontend and backend separation of concerns
+- Incremental, versioned system evolution
+- Safe migration from local-first → API-backed architecture
+- Strict separation of concerns across frontend and backend
 - Schema-driven validation (Zod + Prisma)
-- CI-backed API testing
-- Migration from offline-first architecture to API-backed persistence
+- Full-stack testing (UI parity + API integration)
 
-The goal is not just to build features, but to evolve architecture intentionally.
+The goal is not just to build features, but to evolve architecture intentionally while maintaining correctness at every step.
 
 ---
 
@@ -255,36 +277,104 @@ For detailed version history and architectural milestones, see [`roadmap.md`](./
 
 ## Testing & CI
 
-Readr includes automated validation to prevent behavioral regressions during development.
+Readr includes both **frontend parity tests** and **backend integration tests** to ensure system-wide correctness.
 
-### Test Coverage
+---
 
-The project currently includes:
+### Frontend Testing (v2.1 — Parity Lock)
 
-- **Search engine logic tests** (tokenization, fuzzy matching, AND semantics)
-- **Books undo system tests** (delete/restore integrity)
-- **Sessions sorting tests** (deterministic ordering guarantees)
-- **Keyboard interaction tests** (navigation parity)
+The React rebuild enforces strict behavioral parity with v1.9.
 
-Tests are implemented using:
+Covered areas:
+
+- Search engine logic (tokenization, fuzzy matching, AND semantics)
+- Books undo system (delete/restore integrity)
+- Sessions sorting (deterministic ordering guarantees)
+- Keyboard navigation and accessibility behavior
+
+Tools:
 
 - **Vitest**
 - **React Testing Library**
 - **jsdom**
 
+These tests ensure that architectural changes do not introduce UI regressions.
+
+---
+
+### Backend Integration Testing (v2.3)
+
+The backend includes **API-level integration tests** to validate correctness, security, and data integrity.
+
+Covered areas:
+
+- **Authentication**
+  - Register / login flows
+  - Protected route enforcement (`401` on unauthorized access)
+
+- **Backup Export**
+  - Returns only authenticated user data
+  - Prevents cross-user data leakage
+
+- **Backup Import**
+  - Valid payload ingestion
+  - Duplicate ID rejection
+  - Orphan relationship validation (sessions → books)
+  - Transaction rollback on failure
+  - Forced ownership assignment (never trusts incoming `userId`)
+
+Tools:
+
+- **Vitest**
+- **Supertest**
+- **PostgreSQL test database (`readr_v2_test`)**
+
+These tests validate that the system enforces **strict per-user data boundaries**, a core requirement of v2.3.
+
+---
+
+### Postman Test Suites
+
+In addition to automated tests, the API is validated using structured Postman collections:
+
+- `Health/`
+- `Auth/`
+- `Backup/`
+- `Books/`
+- `Sessions/`
+
+These collections support:
+
+- Manual verification of endpoints
+- Regression testing during development
+- Real-world API interaction simulation
+
+---
+
 ### Continuous Integration
 
 GitHub Actions runs automated validation on **every push and pull request**.
 
-The CI pipeline performs:
+Pipeline steps:
 
 1. Type checking
 2. ESLint validation
-3. Test suite execution
+3. Test suite execution (frontend + backend)
 
-A regression-proof validation was executed during development by intentionally introducing a search regression to confirm the test suite and CI pipeline detect behavioral breakages.
+A regression-proof validation was performed by intentionally introducing failures to confirm CI blocks broken builds.
 
-This ensures the React rebuild maintains **v1.9 behavioral parity guarantees**.
+---
+
+### Why This Matters
+
+This layered testing strategy ensures:
+
+- UI behavior remains stable (parity protection)
+- API contracts remain correct
+- Data integrity is enforced across users
+- Security boundaries cannot be bypassed
+
+This mirrors production-grade systems where **frontend, backend, and data ownership must all be validated independently.**
 
 ---
 
@@ -384,10 +474,10 @@ readr-v2/
 ```mermaid
 flowchart TD
 
-A[React Frontend<br/>Vite + TypeScript + Tailwind]
-  --> B[Client Services Layer<br/>API-backed (v2.2)]
+A[React Frontend (Vite + TypeScript + Tailwind)]
+  --> B[Client Services Layer (API-backed)]
 
-B -->|v2.2+| C[Express Server<br/>Node + TypeScript]
+B --> C[Express Server (Node + TypeScript)]
 
 C --> D[Controller Layer]
 D --> E[Service Layer]
@@ -452,13 +542,55 @@ Engineering choices are documented to emphasize maintainability and long-term sc
 
 ## Screenshots
 
-The UI below reflects the **v2.2 full-stack release** with API-backed persistence.
+The UI below reflects the current full-stack system with API-backed persistence, authentication, and user-scoped data.
 
-- Dashboard _(coming soon)_
-- Library / Book List _(coming soon)_
-- Add Book Modal _(coming soon)_
-- Session History _(coming soon)_
-- Settings Panel _(coming soon)_
+> All screenshots reflect the live application connected to the production API.
+
+---
+
+**User authentication (login / account access)**
+
+![Auth](./docs/screenshots/auth.png)
+
+**Library view with search, filtering, and status tracking**
+
+![Library](./docs/screenshots/library.png)
+
+---
+
+**Search with fuzzy matching and highlight rendering**
+
+![Search](./docs/screenshots/search.png)
+
+---
+
+**Undo system (~6s window) preserving state, filters, and ordering**
+
+![Undo](./docs/screenshots/undo.png)
+
+---
+
+**Session history with deterministic sorting and reading progress tracking**
+
+![Sessions](./docs/screenshots/sessions.png)
+
+---
+
+**Add Book flow with structured input and validation-ready form**
+
+![Add Book](./docs/screenshots/add-book.png)
+
+---
+
+**Backup export/import system with ownership-safe data handling**
+
+![Backup](./docs/screenshots/backup.png)
+
+---
+
+**Responsive mobile layout**
+
+![Mobile](./docs/screenshots/mobile-view.png)
 
 ---
 

@@ -1,7 +1,13 @@
 /// <reference types="node" />
 
 import "dotenv/config";
-import { PrismaClient, BookStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  BookStatus,
+  SeriesType,
+  FormatParent,
+  FormatSubtype,
+} from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
@@ -11,25 +17,41 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const count = await prisma.book.count();
+  const seedEmail = "seed@example.com";
+
+  const user = await prisma.user.upsert({
+    where: { email: seedEmail },
+    update: {},
+    create: {
+      email: seedEmail,
+      passwordHash: "seed-password-hash-placeholder",
+    },
+  });
+
+  const count = await prisma.book.count({
+    where: { userId: user.id },
+  });
+
   if (count > 0) {
-    console.log("Seed: books already exist, skipping.");
+    console.log("Seed: books already exist for seed user, skipping.");
     return;
   }
 
   const book = await prisma.book.create({
     data: {
+      userId: user.id,
       title: "Readr v2 Test Book",
       author: "Conor",
       status: BookStatus.reading,
       genre: "Productivity",
-      seriesType: "standalone",
-      format: "digital",
-      formatSubtype: "PDF",
+      seriesType: SeriesType.standalone,
+      format: FormatParent.digital,
+      formatSubtype: FormatSubtype.PDF,
       startedAt: new Date(),
       sessions: {
         create: [
           {
+            userId: user.id,
             pages: 12,
             minutes: 25,
             notes: "First session logged via Prisma seed",
@@ -41,6 +63,7 @@ async function main() {
     include: { sessions: true },
   });
 
+  console.log("Seeded user:", user.email);
   console.log("Seeded book:", book);
 }
 
