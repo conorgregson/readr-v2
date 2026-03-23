@@ -61,6 +61,3 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
   return res;
 }
-
-console.log("VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL);
-console.log("API_BASE =", API_BASE);

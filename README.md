@@ -27,7 +27,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 
 <img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
 
-<img src="https://img.shields.io/badge/Status-v2.3%20Sprint%203%20Complete-FF9800?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v2.3%20In%20Progress-FF9800?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -469,21 +469,83 @@ readr-v2/
 
 ---
 
+---
+
+## Deployment & Environment
+
+Readr v2 is deployed as a **split frontend/backend architecture**:
+
+- **Frontend:** Vercel (React + Vite)
+- **Backend:** Render (Express API)
+- **Database:** PostgreSQL (Neon / Docker for local)
+
+---
+
+### Environment Configuration
+
+The system relies on strict environment configuration for production:
+
+#### Frontend (Vercel)
+
+- `VITE_API_BASE_URL`
+  - Points to the deployed backend API
+  - Example:
+    ```
+    https://readr-impd.onrender.com
+    ```
+
+#### Backend (Render)
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+
+These variables are required at runtime and must be configured in the deployment platform (not just `.env` locally).
+
+---
+
+### Key Lessons from Deployment
+
+During production rollout, several issues were identified and resolved:
+
+- **Environment variable mismatch**
+  - `VITE_API_BASE_URL` was misnamed, causing the frontend to fail API calls
+
+- **Missing backend secret**
+  - `JWT_SECRET` was not configured in Render, causing authentication failures (`500` errors)
+
+- **Local vs production parity**
+  - Local `.env` values do not carry over to Vercel/Render automatically
+  - Each platform requires explicit configuration
+
+---
+
+### Why This Matters
+
+These fixes reinforced critical full-stack principles:
+
+- Production systems depend on **correct environment configuration**
+- Authentication systems require **secure and consistent secrets**
+- Deployment platforms are **isolated environments**, not extensions of local dev
+
+This mirrors real-world debugging scenarios where infrastructure—not code—is often the source of failure.
+
+---
+
 ### Mermaid Diagram
 
 ```mermaid
 flowchart TD
 
-A[React Frontend (Vite + TypeScript + Tailwind)]
-  --> B[Client Services Layer (API-backed)]
+A["React Frontend (Vite + TypeScript + Tailwind)"]
+  --> B["Client Services Layer (API-backed)"]
 
-B --> C[Express Server (Node + TypeScript)]
+B --> C["Express Server (Node + TypeScript)"]
 
-C --> D[Controller Layer]
-D --> E[Service Layer]
+C --> D["Controller Layer"]
+D --> E["Service Layer"]
 
-E --> F[Prisma ORM]
-F --> G[(PostgreSQL Database)]
+E --> F["Prisma ORM"]
+F --> G[("PostgreSQL Database")]
 
 classDef teal fill:#008080,stroke:#004d4d,color:white;
 classDef navy fill:#003366,stroke:#001933,color:white;

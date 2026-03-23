@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3.0] — Identity & Data Ownership (In Progress)
+
+### Changed
+
+- Added “Deployment & Environment” section to README documenting Vercel + Render setup, required environment variables, and production debugging insights
+
+### Fixed
+
+- Resolved production environment variable mismatch (`VITE_API_BASE_URL`) causing frontend to fail API requests
+- Fixed missing `JWT_SECRET` in backend deployment, restoring authentication flow in production
+
+### Notes
+
+- Full-stack demo now fully operational on Vercel (frontend) and Render (backend)
+- Highlights importance of environment parity between local and production
+
+---
+
 ## [v2.3.0-sprint-3] — Import/Export & Ownership Safety (2026-03-22)
 
 ### Added
