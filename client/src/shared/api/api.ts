@@ -1,6 +1,10 @@
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:4000";
+const envBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
+
+if (!envBase && !import.meta.env.DEV) {
+  throw new Error("Missing VITE_API_BASE_URL in production");
+}
+
+const API_BASE = envBase || "http://localhost:4000";
 
 const TOKEN_KEY = "readr.auth.token";
 
@@ -57,3 +61,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
 
   return res;
 }
+
+console.log("VITE_API_BASE_URL =", import.meta.env.VITE_API_BASE_URL);
+console.log("API_BASE =", API_BASE);
