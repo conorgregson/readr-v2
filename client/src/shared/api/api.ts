@@ -38,11 +38,30 @@ export function clearToken() {
   }
 }
 
+function isJsonBody(body: unknown): body is Record<string, unknown> {
+  if (body == null) return false;
+  if (typeof body !== "object") return false;
+
+  return !(
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof Blob ||
+    body instanceof ArrayBuffer
+  );
+}
+
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken();
   const headers = new Headers(options.headers);
 
-  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+  let body = options.body;
+
+  if (isJsonBody(body)) {
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+    body = JSON.stringify(body);
+  } else if (!headers.has("Content-Type") && !(body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -53,6 +72,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API_BASE}/api${path}`, {
     ...options,
     headers,
+    body,
   });
 
   if (res.status === 401) {

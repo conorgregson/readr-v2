@@ -15,6 +15,14 @@ type ListBooksOptions = {
   offset?: number;
 };
 
+function validationError(details: unknown) {
+  return new AppError("Validation failed", {
+    status: 400,
+    code: "VALIDATION_ERROR",
+    details,
+  });
+}
+
 function assertFormatConsistency(input: {
   format?: FormatParent | null;
   formatSubtype?: FormatSubtype | null;
@@ -35,22 +43,14 @@ function assertFormatConsistency(input: {
   ]);
 
   if (format === FormatParent.digital && physicalSubtypes.has(formatSubtype)) {
-    throw new AppError("Validation failed", {
-      status: 400,
-      code: "VALIDATION_ERROR",
-      details: {
-        formatSubtype: ["formatSubtype does not match format=digital"],
-      },
+    throw validationError({
+      formatSubtype: ["formatSubtype does not match format=digital"],
     });
   }
 
   if (format === FormatParent.physical && digitalSubtypes.has(formatSubtype)) {
-    throw new AppError("Validation failed", {
-      status: 400,
-      code: "VALIDATION_ERROR",
-      details: {
-        formatSubtype: ["formatSubtype does not match format=physical"],
-      },
+    throw validationError({
+      formatSubtype: ["formatSubtype does not match format=physical"],
     });
   }
 }

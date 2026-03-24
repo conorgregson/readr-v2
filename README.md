@@ -469,8 +469,6 @@ readr-v2/
 
 ---
 
----
-
 ## Deployment & Environment
 
 Readr v2 is deployed as a **split frontend/backend architecture**:
@@ -527,7 +525,7 @@ These fixes reinforced critical full-stack principles:
 - Authentication systems require **secure and consistent secrets**
 - Deployment platforms are **isolated environments**, not extensions of local dev
 
-This mirrors real-world debugging scenarios where infrastructure—not code—is often the source of failure.
+This mirrors real-world debugging scenarios where infrastructure — not code — is often the source of failure.
 
 ---
 

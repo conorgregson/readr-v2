@@ -3,7 +3,7 @@ import { prisma } from "../../db/client";
 import { AppError } from "../../utils/errors";
 import type {
   CreateSessionInput,
-  ResoreSessionInput,
+  RestoreSessionInput,
   UpdateSessionInput,
 } from "./sessions.schema";
 
@@ -16,6 +16,14 @@ type ListSessionsOptions = {
   offset?: number;
 };
 
+function validationError(details: unknown) {
+  return new AppError("Validation failed", {
+    status: 400,
+    code: "VALIDATION_ERROR",
+    details,
+  });
+}
+
 function assertSessionHasWork(input: {
   pages?: number | null;
   minutes?: number | null;
@@ -24,12 +32,8 @@ function assertSessionHasWork(input: {
   const hasMinutes = typeof input.minutes === "number";
 
   if (!hasPages && !hasMinutes) {
-    throw new AppError("Validation failed", {
-      status: 400,
-      code: "VALIDATION_ERROR",
-      details: {
-        pages: ["At least one of pages or minutes must be provided"],
-      },
+    throw validationError({
+      pages: ["At least one of pages or minutes must be provided"],
     });
   }
 }
@@ -192,7 +196,7 @@ export async function deleteSession(userId: string, id: string) {
 
 export async function restoreSession(
   userId: string,
-  input: ResoreSessionInput,
+  input: RestoreSessionInput,
 ) {
   assertSessionHasWork({
     pages: input.pages,

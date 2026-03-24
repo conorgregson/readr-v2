@@ -131,6 +131,45 @@ describe("Backup integration", () => {
       expect(res.body.error.code).toBe("VALIDATION_ERROR");
     });
 
+    it("rejects duplicate imported session ids", async () => {
+      const user = await registerAndLogin();
+
+      const payload = {
+        version: "2.3",
+        books: [
+          {
+            id: "book-1",
+            title: "Imported Book",
+            author: "Imported Author",
+            status: "planned",
+          },
+        ],
+        sessions: [
+          {
+            id: "session-1",
+            bookId: "book-1",
+            date: "2026-03-15",
+            pages: 10,
+          },
+          {
+            id: "session-1",
+            bookId: "book-1",
+            date: "2026-03-16",
+            pages: 20,
+          },
+        ],
+      };
+
+      const res = await request(app)
+        .post("/api/backup/import")
+        .set("Authorization", `Bearer ${user.token}`)
+        .send(payload);
+
+      expect(res.status).toBe(400);
+      expect(res.body.ok).toBe(false);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    });
+
     it("rejects orphan session references and rolls back", async () => {
       const user = await registerAndLogin();
 
@@ -172,7 +211,7 @@ describe("Backup integration", () => {
       expect(sessions).toHaveLength(0);
     });
 
-    it("assigns imported records to the authenticated user only", async () => {
+    it("rejects extra keys on imported book objects", async () => {
       const user = await registerAndLogin();
 
       const payload = {
@@ -180,7 +219,33 @@ describe("Backup integration", () => {
         books: [
           {
             id: "book-1",
+            title: "Imported Book",
+            author: "Author",
+            status: "planned",
             userId: "foreign-user",
+          },
+        ],
+        sessions: [],
+      };
+
+      const res = await request(app)
+        .post("/api/backup/import")
+        .set("Authorization", `Bearer ${user.token}`)
+        .send(payload);
+
+      expect(res.status).toBe(400);
+      expect(res.body.ok).toBe(false);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects extra keys on imported session objects", async () => {
+      const user = await registerAndLogin();
+
+      const payload = {
+        version: "2.3",
+        books: [
+          {
+            id: "book-1",
             title: "Imported Book",
             author: "Author",
             status: "planned",
@@ -189,9 +254,9 @@ describe("Backup integration", () => {
         sessions: [
           {
             bookId: "book-1",
-            userId: "foreign-user",
             date: "2026-03-15",
             pages: 10,
+            userId: "foreign-user",
           },
         ],
       };
@@ -201,19 +266,9 @@ describe("Backup integration", () => {
         .set("Authorization", `Bearer ${user.token}`)
         .send(payload);
 
-      expect(res.status).toBe(200);
-
-      const books = await prisma.book.findMany({
-        where: { userId: user.user.id },
-      });
-      const sessions = await prisma.session.findMany({
-        where: { userId: user.user.id },
-      });
-
-      expect(books).toHaveLength(1);
-      expect(sessions).toHaveLength(1);
-      expect(books[0].userId).toBe(user.user.id);
-      expect(sessions[0].userId).toBe(user.user.id);
+      expect(res.status).toBe(400);
+      expect(res.body.ok).toBe(false);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
     });
   });
 });

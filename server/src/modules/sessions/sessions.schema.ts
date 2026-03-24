@@ -43,6 +43,30 @@ const DateInputSchema = z
   })
   .transform((value: string) => parseDateInput(value));
 
+const normalizeOptionalNotesToUndefined = z
+  .union([z.string(), z.undefined()])
+  .transform((value) => {
+    if (value === undefined) return undefined;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? undefined : trimmed;
+  })
+  .refine(
+    (value) => value === undefined || value.length <= 2_000,
+    "Notes must be at most 2000 characters",
+  );
+
+const normalizeOptionalNotesToNull = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform((value) => {
+    if (value == null) return value;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  })
+  .refine(
+    (value) => value == null || value.length <= 2_000,
+    "Notes must be at most 2000 characters",
+  );
+
 const FromDateQuerySchema = z
   .string()
   .min(1)
@@ -114,14 +138,10 @@ const SessionBaseSchema = z
       .max(1_440, "Minutes in a single session cannot exceed 1440 (24h)")
       .optional(),
 
-    notes: z
-      .string()
-      .max(2_000, "Notes must be at most 2000 characters")
-      .optional()
-      .or(z.literal("").transform(() => undefined)),
-
+    notes: normalizeOptionalNotesToUndefined,
     date: DateInputSchema,
   })
+  .strict()
   .superRefine((data, ctx) => {
     const hasPages = typeof data.pages === "number";
     const hasMinutes = typeof data.minutes === "number";
@@ -137,7 +157,7 @@ const SessionBaseSchema = z
 
 export const CreateSessionSchema = SessionBaseSchema.safeExtend({
   bookId: z.cuid("Invalid book id"),
-});
+}).strict();
 
 export const UpdateSessionSchema = z
   .object({
@@ -156,14 +176,10 @@ export const UpdateSessionSchema = z
       .max(1_440, "Minutes in a single session cannot exceed 1440 (24h)")
       .nullable()
       .optional(),
-    notes: z
-      .string()
-      .max(2_000, "Notes must be at most 2000 characters")
-      .nullable()
-      .optional()
-      .or(z.literal("").transform(() => null)),
+    notes: normalizeOptionalNotesToNull,
     date: DateInputSchema.optional(),
   })
+  .strict()
   .refine(
     (data) => Object.keys(data).length > 0,
     "At least one field must be provided to update a session",
@@ -187,15 +203,12 @@ export const RestoreSessionSchema = z
       .max(1_440, "Minutes in a single session cannot exceed 1440 (24h)")
       .nullable()
       .optional(),
-    notes: z
-      .string()
-      .max(2_000, "Notes must be at most 2000 characters")
-      .nullable()
-      .optional(),
+    notes: normalizeOptionalNotesToNull,
     date: DateInputSchema,
     createdAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
   })
+  .strict()
   .superRefine((data, ctx) => {
     const hasPages = typeof data.pages === "number";
     const hasMinutes = typeof data.minutes === "number";
@@ -209,11 +222,13 @@ export const RestoreSessionSchema = z
     }
   });
 
-export type ResoreSessionInput = z.infer<typeof RestoreSessionSchema>;
+export type RestoreSessionInput = z.infer<typeof RestoreSessionSchema>;
 
-export const SessionIdParamSchema = z.object({
-  id: z.cuid("Invalid session id"),
-});
+export const SessionIdParamSchema = z
+  .object({
+    id: z.cuid("Invalid session id"),
+  })
+  .strict();
 
 export const ListSessionsQuerySchema = z
   .object({
@@ -241,7 +256,7 @@ export const ListSessionsQuerySchema = z
         message: "offset must be >= 0",
       }),
   })
-  .partial()
+  .strict()
   .superRefine((data, ctx) => {
     if (data.from && data.to && data.from > data.to) {
       ctx.addIssue({
@@ -255,12 +270,9 @@ export const ListSessionsQuerySchema = z
 export const SessionResponseSchema = z.object({
   id: z.string(),
   bookId: z.string(),
-
   pages: z.number().int().nullable(),
   minutes: z.number().int().nullable(),
-
   notes: z.string().nullable(),
-
   date: z.iso.datetime(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
