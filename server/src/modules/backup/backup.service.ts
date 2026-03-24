@@ -3,6 +3,14 @@ import { prisma } from "../../db/client";
 import { AppError } from "../../utils/errors";
 import type { ImportBackupInput } from "./backup.schema";
 
+function validationError(details: unknown) {
+  return new AppError("Validation failed", {
+    status: 400,
+    code: "VALIDATION_ERROR",
+    details,
+  });
+}
+
 function assertFormatConsistency(input: {
   format?: FormatParent | null;
   formatSubtype?: FormatSubtype | null;
@@ -23,22 +31,14 @@ function assertFormatConsistency(input: {
   ]);
 
   if (format === FormatParent.digital && physicalSubtypes.has(formatSubtype)) {
-    throw new AppError("Validation failed", {
-      status: 400,
-      code: "VALIDATION_ERROR",
-      details: {
-        formatSubtype: ["formatSubtype does not match format=digital"],
-      },
+    throw validationError({
+      formatSubtype: ["formatSubtype does not match format=digital"],
     });
   }
 
   if (format === FormatParent.physical && digitalSubtypes.has(formatSubtype)) {
-    throw new AppError("Validation failed", {
-      status: 400,
-      code: "VALIDATION_ERROR",
-      details: {
-        formatSubtype: ["formatSubtype does not match format=physical"],
-      },
+    throw validationError({
+      formatSubtype: ["formatSubtype does not match format=physical"],
     });
   }
 }
@@ -93,12 +93,8 @@ export async function exportBackup(userId: string) {
 
 export async function importBackup(userId: string, input: ImportBackupInput) {
   if (input.sessions.length > 0 && input.books.length === 0) {
-    throw new AppError("Validation failed", {
-      status: 400,
-      code: "VALIDATION_ERROR",
-      details: {
-        sessions: ["Sessions cannot be imported without books"],
-      },
+    throw validationError({
+      sessions: ["Sessions cannot be imported without books"],
     });
   }
 
@@ -143,14 +139,10 @@ export async function importBackup(userId: string, input: ImportBackupInput) {
       const mappedBookId = importedBookIdToCreatedBookId.get(session.bookId);
 
       if (!mappedBookId) {
-        throw new AppError("Validation failed", {
-          status: 400,
-          code: "VALIDATION_ERROR",
-          details: {
-            bookId: [
-              `Session references unknown imported book id: ${session.bookId}`,
-            ],
-          },
+        throw validationError({
+          bookId: [
+            `Session references unknown imported book id: ${session.bookId}`,
+          ],
         });
       }
 

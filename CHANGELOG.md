@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3.0-sprint-4] — Security & Hardening (2026-03-23)
+
+### Added
+
+- Centralized environment validation for backend runtime configuration
+- JSON 404 handler and malformed JSON request handling
+- Request body size limit for API hardening
+- Integration tests for auth hardening, HTTP boundary behavior, strict schema enforcement, and backup import validation
+
+### Changed
+
+- Hardened CORS to use environment-based allowed origins
+- Refactored auth middleware to use the shared error pipeline
+- JWT signing now uses configured expiry from environment variables
+- Request schemas now reject unknown fields across auth, books, sessions, and backup import endpoints
+- Backup import validation now rejects duplicate session ids and supports round-trip export/import compatibility
+
+### Fixed
+
+- Prevented backup import requests from being sent with non-JSON object bodies in the client API layer
+- Fixed backup import schema mismatch so exported backups containing nullable enum fields can be re-imported successfully
+- Limited public error detail exposure to safe validation failures only
+- Fixed session schema extension issue by using `safeExtend()` with refined Zod objects
+- Corrected session notes normalization behavior for empty-string inputs
+
+### Notes
+
+- Sprint 4 completes the main boundary-hardening pass for v2.3
+- Authentication, validation, CORS, and backup import/export flows now fail more safely and consistently
+- Rate limiting was intentionally left out of core scope to keep the sprint focused on must-have security and API hardening
+
+---
+
 ## [v2.3.0] — Identity & Data Ownership (In Progress)
 
 ### Changed

@@ -55,20 +55,20 @@ const plannedMonthSchema = z
     "plannedMonth must be in YYYY-MM format",
   );
 
-const BookCreateBaseSchema = z.object({
-  title: trimmedRequiredString("Title", 200),
-  author: trimmedRequiredString("Author", 120),
-
-  status: BookStatusSchema.optional().default(BookStatus.planned),
-
-  genre: optionalTrimmedNullableString("Genre", 80),
-  series: optionalTrimmedNullableString("Series", 120),
-  seriesType: SeriesTypeSchema.optional(),
-  format: FormatParentSchema.optional(),
-  formatSubtype: FormatSubtypeSchema.optional(),
-  isbn: isbnSchema,
-  plannedMonth: plannedMonthSchema,
-});
+const BookCreateBaseSchema = z
+  .object({
+    title: trimmedRequiredString("Title", 200),
+    author: trimmedRequiredString("Author", 120),
+    status: BookStatusSchema.optional().default(BookStatus.planned),
+    genre: optionalTrimmedNullableString("Genre", 80),
+    series: optionalTrimmedNullableString("Series", 120),
+    seriesType: SeriesTypeSchema.optional(),
+    format: FormatParentSchema.optional(),
+    formatSubtype: FormatSubtypeSchema.optional(),
+    isbn: isbnSchema,
+    plannedMonth: plannedMonthSchema,
+  })
+  .strict();
 
 export const CreateBookSchema = BookCreateBaseSchema.superRefine(
   (data, ctx) => {
@@ -106,7 +106,6 @@ export const UpdateBookSchema = z
     title: z.string().trim().min(1).max(200).optional(),
     author: z.string().trim().min(1).max(120).optional(),
     status: BookStatusSchema.optional(),
-
     genre: optionalTrimmedNullableString("Genre", 80),
     series: optionalTrimmedNullableString("Series", 120),
     seriesType: SeriesTypeSchema.nullable().optional(),
@@ -115,6 +114,7 @@ export const UpdateBookSchema = z
     isbn: isbnSchema,
     plannedMonth: plannedMonthSchema,
   })
+  .strict()
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided to update a book",
   })
@@ -147,42 +147,45 @@ export const UpdateBookSchema = z
     }
   });
 
-export const BookIdParamSchema = z.object({
-  id: z.cuid("Invalid book id"),
-});
+export const BookIdParamSchema = z
+  .object({
+    id: z.cuid("Invalid book id"),
+  })
+  .strict();
 
-export const ListBooksQuerySchema = z.object({
-  search: z.string().trim().min(1).max(200).optional(),
-  status: BookStatusSchema.optional(),
-
-  limit: z
-    .string()
-    .optional()
-    .transform((value) =>
-      value === undefined || value === ""
-        ? undefined
-        : Number.parseInt(value, 10),
-    )
-    .refine(
-      (value) =>
-        value === undefined ||
-        (Number.isInteger(value) && value >= 1 && value <= 100),
-      { message: "limit must be between 1 and 100" },
-    ),
-
-  offset: z
-    .string()
-    .optional()
-    .transform((value) =>
-      value === undefined || value === ""
-        ? undefined
-        : Number.parseInt(value, 10),
-    )
-    .refine(
-      (value) => value === undefined || (Number.isInteger(value) && value >= 0),
-      { message: "offset must be >= 0" },
-    ),
-});
+export const ListBooksQuerySchema = z
+  .object({
+    search: z.string().trim().min(1).max(200).optional(),
+    status: BookStatusSchema.optional(),
+    limit: z
+      .string()
+      .optional()
+      .transform((value) =>
+        value === undefined || value === ""
+          ? undefined
+          : Number.parseInt(value, 10),
+      )
+      .refine(
+        (value) =>
+          value === undefined ||
+          (Number.isInteger(value) && value >= 1 && value <= 100),
+        { message: "limit must be between 1 and 100" },
+      ),
+    offset: z
+      .string()
+      .optional()
+      .transform((value) =>
+        value === undefined || value === ""
+          ? undefined
+          : Number.parseInt(value, 10),
+      )
+      .refine(
+        (value) =>
+          value === undefined || (Number.isInteger(value) && value >= 0),
+        { message: "offset must be >= 0" },
+      ),
+  })
+  .strict();
 
 export const BookResponseSchema = z.object({
   id: z.cuid(),
@@ -195,7 +198,7 @@ export const BookResponseSchema = z.object({
   format: FormatParentSchema.nullable(),
   formatSubtype: FormatSubtypeSchema.nullable(),
   isbn: z.string().nullable(),
-  plannedMonth: plannedMonthSchema.nullable(),
+  plannedMonth: z.string().nullable(),
   startedAt: z.iso.datetime().nullable(),
   finishedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),

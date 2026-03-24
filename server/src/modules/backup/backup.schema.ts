@@ -85,32 +85,37 @@ const plannedMonthSchema = z
     "plannedMonth must be in YYYY-MM format",
   );
 
-export const ImportBackupBookSchema = z.object({
-  id: z.string().min(1, "Book id is required"),
-  title: z.string().trim().min(1, "Title is required").max(200),
-  author: z.string().trim().min(1, "Author is required").max(120),
-  status: z.enum(BookStatus).optional().default(BookStatus.planned),
-
-  genre: optionalTrimmedNullableString("Genre", 80),
-  series: optionalTrimmedNullableString("Series", 120),
-  seriesType: z.enum(SeriesType).optional(),
-  format: z.enum(FormatParent).optional(),
-  formatSubtype: z.enum(FormatSubtype).optional(),
-  isbn: isbnSchema,
-  plannedMonth: plannedMonthSchema,
-
-  startedAt: z.iso.datetime().nullable().optional(),
-  finishedAt: z.iso.datetime().nullable().optional(),
-
-  createdAt: z.iso.datetime().optional(),
-  updatedAt: z.iso.datetime().optional(),
-});
+export const ImportBackupBookSchema = z
+  .object({
+    id: z
+      .string()
+      .min(1, "Book id is required")
+      .max(128, "Book id is too long"),
+    title: z.string().trim().min(1, "Title is required").max(200),
+    author: z.string().trim().min(1, "Author is required").max(120),
+    status: z.enum(BookStatus).optional().default(BookStatus.planned),
+    genre: optionalTrimmedNullableString("Genre", 80),
+    series: optionalTrimmedNullableString("Series", 120),
+    seriesType: z.enum(SeriesType).nullable().optional(),
+    format: z.enum(FormatParent).nullable().optional(),
+    formatSubtype: z.enum(FormatSubtype).nullable().optional(),
+    isbn: isbnSchema,
+    plannedMonth: plannedMonthSchema,
+    startedAt: z.iso.datetime().nullable().optional(),
+    finishedAt: z.iso.datetime().nullable().optional(),
+    createdAt: z.iso.datetime().optional(),
+    updatedAt: z.iso.datetime().optional(),
+  })
+  .strict();
 
 export const ImportBackupSessionSchema = z
   .object({
-    id: z.string().min(1, "Session id is required").optional(),
-    bookId: z.string().min(1, "Session bookId is required"),
-
+    id: z
+      .string()
+      .min(1, "Session id is required")
+      .max(128, "Session id is too long")
+      .optional(),
+    bookId: z.string().min(1, "Session bookId is required").max(128),
     pages: z
       .number()
       .int("Pages must be an integer")
@@ -118,7 +123,6 @@ export const ImportBackupSessionSchema = z
       .max(10_000, "Pages is too large")
       .nullable()
       .optional(),
-
     minutes: z
       .number()
       .int("Minutes must be an integer")
@@ -126,23 +130,22 @@ export const ImportBackupSessionSchema = z
       .max(1_440, "Minutes in a single session cannot exceed 1440 (24h)")
       .nullable()
       .optional(),
-
     notes: z
       .union([z.string(), z.null(), z.undefined()])
       .transform((value) => {
         if (value == null) return undefined;
-        return value.length === 0 ? undefined : value;
+        const trimmed = value.trim();
+        return trimmed.length === 0 ? undefined : trimmed;
       })
       .refine(
         (value) => value === undefined || value.length <= 2_000,
         "Notes must be at most 2000 characters",
       ),
-
     date: ImportDateSchema,
-
     createdAt: z.iso.datetime().optional(),
     updatedAt: z.iso.datetime().optional(),
   })
+  .strict()
   .superRefine((data, ctx) => {
     const hasPages = typeof data.pages === "number";
     const hasMinutes = typeof data.minutes === "number";
@@ -158,13 +161,19 @@ export const ImportBackupSessionSchema = z
 
 export const ImportBackupSchema = z
   .object({
-    version: z.string().trim().min(1, "version is required"),
+    version: z.string().trim().min(1, "version is required").max(32),
     exportedAt: z.iso.datetime().optional(),
-    books: z.array(ImportBackupBookSchema),
-    sessions: z.array(ImportBackupSessionSchema),
+    books: z
+      .array(ImportBackupBookSchema)
+      .max(5_000, "Too many books in import"),
+    sessions: z
+      .array(ImportBackupSessionSchema)
+      .max(20_000, "Too many sessions in import"),
   })
+  .strict()
   .superRefine((data, ctx) => {
     const seenBookIds = new Set<string>();
+    const seenSessionIds = new Set<string>();
 
     for (const [index, book] of data.books.entries()) {
       if (seenBookIds.has(book.id)) {
@@ -175,6 +184,27 @@ export const ImportBackupSchema = z
         });
       }
       seenBookIds.add(book.id);
+    }
+
+    for (const [index, session] of data.sessions.entries()) {
+      if (session.id) {
+        if (seenSessionIds.has(session.id)) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["sessions", index, "id"],
+            message: `Duplicate imported session id: ${session.id}`,
+          });
+        }
+        seenSessionIds.add(session.id);
+      }
+
+      if (!seenBookIds.has(session.bookId)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["sessions", index, "bookId"],
+          message: `Session references unknown imported book id: ${session.bookId}`,
+        });
+      }
     }
   });
 

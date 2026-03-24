@@ -3,9 +3,6 @@ import type { ZodTypeAny } from "zod";
 import { ZodError } from "zod";
 import { AppError, zodToAppError } from "./errors";
 
-/**
- * Validate request body using a Zod schema.
- */
 export function validateBody(schema: ZodTypeAny) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -22,9 +19,6 @@ export function validateBody(schema: ZodTypeAny) {
   };
 }
 
-/**
- * Validate request query using a Zod schema.
- */
 export function validateQuery(schema: ZodTypeAny) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -41,9 +35,6 @@ export function validateQuery(schema: ZodTypeAny) {
   };
 }
 
-/**
- * Validate route params using a Zod schema.
- */
 export function validateParams(schema: ZodTypeAny) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -72,22 +63,57 @@ export function sendNoContent(res: Response) {
   return res.status(204).send();
 }
 
-/**
- * Central error handler (must be last middleware).
- */
+export function notFoundHandler(
+  _req: Request,
+  _res: Response,
+  next: NextFunction,
+) {
+  next(
+    new AppError("Route not found", {
+      status: 404,
+      code: "NOT_FOUND",
+    }),
+  );
+}
+
 export function errorHandler(
   err: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction,
 ) {
+  if (err instanceof SyntaxError && "body" in err) {
+    return res.status(400).json({
+      ok: false,
+      error: {
+        message: "Malformed JSON body",
+        code: "BAD_REQUEST",
+      },
+    });
+  }
+
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "type" in err &&
+    err.type === "entity.too.large"
+  ) {
+    return res.status(413).json({
+      ok: false,
+      error: {
+        message: "Request body too large",
+        code: "REQUEST_TOO_LARGE",
+      },
+    });
+  }
+
   if (err instanceof AppError) {
     return res.status(err.status).json({
       ok: false,
       error: {
         message: err.message,
         code: err.code,
-        details: err.details,
+        ...(err.code === "VALIDATION_ERROR" ? { details: err.details } : {}),
       },
     });
   }

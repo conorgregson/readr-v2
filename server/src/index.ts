@@ -1,9 +1,10 @@
 import type { Server } from "node:http";
 
 import app from "./app";
+import { env } from "./config/env";
 import { prisma } from "./db/client";
 
-const port = Number(process.env.PORT) || 4000;
+const port = env.PORT;
 
 let server: Server | undefined;
 let shuttingDown = false;
