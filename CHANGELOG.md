@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3.0] — Identity & Data Ownership (2026-03-25)
+
+### Added
+
+- Added JWT-based authentication with register, login, and `me` endpoints
+- Added secure password hashing and credential validation
+- Added auth middleware for protected routes
+- Added token-aware frontend auth store and auth page
+- Added auth restore flow and logout handling
+- Added strict per-user ownership enforcement for books and sessions
+- Added ownership-safe backup export/import behavior
+- Added duplicate ID rejection and orphan relationship validation for backup import
+- Added backend integration coverage for auth, ownership, backup, strict validation, and HTTP hardening
+- Added frontend auth store and auth page tests
+- Added basic rate limiting for auth write endpoints
+
+### Changed
+
+- Updated protected API flows to operate within an authenticated user context
+- Updated README to document authentication flow, auth API summary, testing coverage, project structure, and local setup
+- Updated roadmap language to reflect v2.3 completion
+
+### Removed
+
+- Removed stale or unused placeholder files from the server structure
+
+### Fixed
+
+- Fixed cross-user data access risks across books, sessions, and backup flows
+- Fixed unsafe import behavior by enforcing ownership and rollback guarantees
+- Fixed inconsistent auth failure handling for malformed or invalid token cases
+- Fixed release documentation inconsistencies around v2.3 status and local setup
+
+### Notes
+
+- v2.3 completes the transition from single-user architecture to user-owned data architecture
+- Auth rate limiting is intentionally lightweight and scoped to register/login only
+
+---
+
 ## [v2.3-sprint-5] — Tests, Docs & Release Lock (2026-03-25)
 
 ### Added
