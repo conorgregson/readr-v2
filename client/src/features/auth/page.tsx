@@ -39,8 +39,6 @@ export function AuthPage() {
     return null;
   }, [password, touched.password]);
 
-  const formError = emailError || passwordError;
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -51,7 +49,11 @@ export function AuthPage() {
 
     clearError();
 
-    if (formError) return;
+    const trimmedEmail = email.trim();
+    const hasEmailError = !trimmedEmail || !isValidEmail(trimmedEmail);
+    const hasPasswordError = !password || password.length < 8;
+
+    if (hasEmailError || hasPasswordError) return;
 
     if (mode === "login") {
       await login({ email, password });

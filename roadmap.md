@@ -156,7 +156,7 @@ Released: Mar 2026
 
 ---
 
-## 🌐 Version 2.2 — API Integration & Persistence
+## ✅ Version 2.2 — API Integration & Persistence
 
 **Focus:** Replace local-first persistence with API-backed storage while preserving the v2.1 React UI and behavioral parity guarantees.
 
@@ -183,28 +183,30 @@ Released: Mar 2026
 
 ---
 
-## 🔑 Version 2.3 — Identity & Data Ownership
+## ✅ Version 2.3 — Identity & Data Ownership
 
-**Focus:** Introduce user identity and enforce strict per-user data boundaries across the system.
+**Focus:** Introduced user identity and enforced strict per-user data boundaries across the system.
 
-### Planned Work
+### Completed Work
 
-- User model and JWT-based authentication
-- Secure password handling with hashed credentials
-- Auth middleware for protected routes
-- Per-user ownership for books and sessions
-- Token-aware frontend auth layer
-- Session persistence and auth restore flow
-- Safe bulk import with ownership enforcement
-- Security hardening for authentication flows
+- Added user model and JWT-based authentication
+- Implemented secure password handling with hashed credentials
+- Added auth middleware for protected routes
+- Enforced per-user ownership for books and sessions
+- Added token-aware frontend auth layer
+- Implemented session persistence and auth restore flow
+- Added safe bulk import/export with ownership enforcement
+- Added security hardening for authentication flows
+- Added basic rate limiting for auth write endpoints
 
 ### Notes
 
-- v2.3 is the transition from single-user architecture to user-owned data architecture.
-- Data isolation is treated as a first-class invariant.
+- v2.3 completed the transition from single-user architecture to user-owned data architecture.
+- Data isolation is now treated as a first-class invariant across the API and persistence layers.
 - Authentication remains intentionally minimal and implementation-focused.
+- Register/login endpoints now return structured rate-limit responses when abuse thresholds are exceeded.
 
-Planned: Q2 2026
+Release: Mar 2026
 
 ---
 
@@ -226,16 +228,23 @@ Planned: TBD
 
 ## 🌍 Version 3.0 — Deployment & Growth
 
-**Focus:** Harden Readr for production infrastructure and public hosting at scale.
+**Focus:** Harden Readr for production infrastructure, operational reliability, and public hosting maturity.
 
 ### Planned Work
 
-- Production hosting architecture
-- CI/CD deployment pipelines
-- Environment-based configuration
-- Production database infrastructure
+- Production hosting architecture refinement
+- CI/CD deployment pipeline hardening
+- Environment-based configuration validation
+- Production database infrastructure and reliability planning
 - Public demo environment stabilization
 - Monitoring and logging baseline
+- Operational error visibility and alerting foundation
+
+### Notes
+
+- v3.0 is focused on infrastructure maturity rather than end-user feature expansion.
+- The goal is to make deployment, observability, and environment handling more production-ready.
+- Local Docker support may be considered later if it meaningfully improves setup consistency, but it is not required for the core milestone.
 
 Planned: TBD
 

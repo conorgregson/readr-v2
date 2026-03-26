@@ -5,7 +5,6 @@ import app from "../../app";
 import { registerAndLogin } from "../helpers/auth";
 import { resetDb } from "../helpers/db";
 import { createBookForUser, createSessionForUser } from "../helpers/factories";
-import { createBook } from "../../modules/books/books.service";
 
 describe("Sessions strict validation integration", () => {
   beforeEach(async () => {

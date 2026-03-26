@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.3-sprint-5] — Tests, Docs & Release Lock (2026-03-25)
+
+### Added
+
+- Added backend integration coverage for auth success/failure paths
+- Added backend ownership enforcement tests for books and sessions
+- Added frontend auth store tests for login, register, restore, and logout behavior
+- Added frontend auth page tests for mode switching, validation, loading states, and error rendering
+- Added basic rate limiting for auth write endpoints with structured `429` responses
+
+### Changed
+
+- Updated README to document authentication flow, auth API summary, testing coverage, project structure, and local development setup
+- Updated roadmap language to reflect v2.3 completion
+- Updated installation guidance to remove inaccurate Docker-based local setup references
+
+### Removed
+
+- Removed stale and empty placeholder files from the server structure
+
+### Fixed
+
+- Fixed missing release-lock coverage for authenticated ownership flows
+- Fixed documentation inconsistencies around v2.3 status and local database setup
+- Fixed auth page submit validation so invalid credentials are blocked client-side before submit
+
+### Notes
+
+- Sprint 5 closes the release-lock phase for v2.3
+- This sprint focused on reliability validation, documentation alignment, and final hardening rather than new product surface area
+
+---
+
 ## [v2.3.0-sprint-4] — Security & Hardening (2026-03-23)
 
 ### Added
