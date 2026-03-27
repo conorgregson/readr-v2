@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4-sprint-0] — Contracts & Derived-State Design (2026-03-26)
+
+### Added
+
+- Added Sprint 0 docs for v2.4 contracts, architecture, and dependency planning
+- Added shared client type definitions for bulk edit, saved views, stats, and engagement features
+- Added backend type/schema scaffolding for bulk book mutation contracts
+- Added backend type/schema scaffolding for saved library view contracts
+- Added backend type/schema scaffolding for dashboard/statistics read models
+- Added backend type/schema scaffolding for goals, streaks, and badge read models
+
+### Changed
+
+- Updated v2.4 roadmap framing to reflect the broader engagement and insights expansion phase
+- Formalized server-owned derived-state boundaries for engagement and analytics features
+
+### Removed
+
+- None
+
+### Fixed
+
+- Reduced future contract drift by defining initial request/response shapes before implementation
+- Prevented early feature coupling by keeping Sprint 0 limited to docs, schemas, and type-safe contracts
+
+### Notes
+
+- Sprint 0 is a planning and contract checkpoint, not a user-facing feature release
+- Runtime implementation for bulk edit and related v2.4 surfaces begins in Sprint 1
+
+---
+
 ## [v2.3.0] — Identity & Data Ownership (2026-03-25)
 
 ### Added

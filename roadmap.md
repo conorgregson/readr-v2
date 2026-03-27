@@ -210,19 +210,30 @@ Release: Mar 2026
 
 ---
 
-## 🎖️ Version 2.4 — Badge System Overhaul
+## 🎖️ Version 2.4 — Engagement & Insights Expansion
 
-**Focus:** Move gamification logic server-side and make badges scalable
+**Focus:** Reintroduce advanced UX and motivation systems on top of the stable API-backed, user-owned architecture.
 
 ### Planned Work
 
-- Badge definitions and progress tracking in DB
-- Server-side evaluation engine
-- Tiered badge system
-- Accessible UI with progress indicators
-- Snapshot and stats integration
+- Add bulk edit workflows for multi-book mutation
+- Add grouped Undo support for batch operations
+- Add saved views with server-backed filter persistence
+- Introduce server-derived reading statistics and summaries
+- Add streak tracking and badge progression
+- Add reading goals and progress surfaces
+- Add dashboard insights and chart-based visualizations
+- Preserve CRUD correctness, accessibility, and performance at scale
 
-Planned: TBD
+### Notes
+
+- v2.4 is a controlled feature-layering release, not an architectural migration.
+- Derived engagement data should be computed server-side where correctness matters.
+- Bulk operations must preserve integrity, atomicity, and Undo guarantees.
+- Performance should remain acceptable with large user libraries.
+- Social, public, and multi-user collaborative features remain out of scope for this phase.
+
+Planned: Q2 2026
 
 ---
 

@@ -2,7 +2,7 @@
 
 ### _Turn pages into progress._
 
-A versioned full-stack reading tracker built to demonstrate modern frontend architecture, behavioral parity testing, and CI-gated development.
+A versioned full-stack reading tracker built to demonstrate modern frontend architecture, API-backed system evolution, behavioral parity testing, and CI-gated development.
 
 <p align="center">
 
@@ -11,7 +11,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 </a>
 
 <a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.3.0">
-  <img src="https://img.shields.io/badge/Version-v2.3.0-4CAF50?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Latest%20Release-v2.3.0-4CAF50?style=for-the-badge" />
 </a>
 
 <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
@@ -27,7 +27,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 
 <img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
 
-<img src="https://img.shields.io/badge/Status-v2.3%20Released-4CAF50?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v2.4%20In%20Progress-F9A825?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -49,8 +49,10 @@ The demo is now connected to the **Express + PostgreSQL backend**, with all read
 - **Authentication + user-scoped data now live in v2.3**
 - **Backup export/import now live with ownership enforcement**
 - **Basic auth endpoint rate limiting now protects repeated register/login attempts**
+- **v2.4 is currently in progress**, focused on engagement systems, analytics surfaces, and advanced library workflows
 
-> v2.3 delivers secure multi-user data boundaries, ownership-safe bulk import/export, and authenticated access control across the system.
+> Current stable release: **v2.3.0**
+> Current development milestone: **v2.4 — Engagement & Insights Expansion**
 
 ---
 
@@ -72,7 +74,26 @@ Each version isolates a specific risk area (parity, persistence, ownership) befo
 The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
-> Latest release: **v2.3.0 — Authentication & data ownership**
+> Latest official release: **v2.3.0 — Authentication & data ownership**
+> Current development milestone: **v2.4.0 — Engagement & insights expansion**
+
+---
+
+## Current Development Focus (v2.4)
+
+Readr v2.4 is currently in progress.
+
+This phase expands the stable authenticated, API-backed architecture with a new layer of advanced UX and derived read models, including:
+
+- bulk edit workflows for multi-book mutation
+- saved library views with persistent filters/sorts
+- dashboard statistics and chart-ready summaries
+- reading goals, streaks, and badge progression
+- accessibility, performance, and release hardening for larger libraries
+
+v2.4 is a **feature-layering release**, not an architectural migration.
+
+That means the primary goal is to extend the system safely on top of the stable boundaries established in v2.0–v2.3 rather than rewrite persistence, routing, or ownership architecture again.
 
 ---
 
@@ -325,7 +346,7 @@ During active development, sprint tags are used to mark internal milestones:
 - `v2.1-sprint-0`
 - `v2.1-sprint-1`
 - …
-- `v2.1-sprint-9`
+- sprint tags continue throughout active milestone development
 
 Sprint tags serve as:
 
@@ -343,7 +364,7 @@ Only SemVer releases represent official “ship-ready” states.
 - **v2.1.0** — React frontend rebuild with full v1.9 behavioral parity ✅
 - **v2.2.0** — API integration & persistence migration (local-first → API) ✅
 - **v2.3.0** — Authentication, accounts, and multi-user data boundaries ✅
-- **v2.4.0** — Server-driven badges, statistics, and engagement systems
+- **v2.4.0** — Engagement & insights expansion _(in progress)_ 🚧
 - **v3.0.0** — Production infrastructure & hosted deployment architecture
 
 For detailed version history and architectural milestones, see [`roadmap.md`](./roadmap.md).
@@ -585,7 +606,7 @@ readr-v2/
 │   ├── prisma.config.ts
 │   └── tsconfig.json
 │
-├── docs/                             # Architecture notes, sprint docs, screenshots
+├── docs/                             # Architecture notes, sprint docs, dependency maps, screenshots
 ├── CHANGELOG.md
 ├── roadmap.md
 ├── LICENSE.md
@@ -782,6 +803,19 @@ Backend endpoints are validated via automated API tests.
 v2.1 expands regression protection with parity tests and CI gating.
 
 Engineering choices are documented to emphasize maintainability and long-term scalability.
+
+### 6. Contract-First Feature Expansion (v2.4)
+
+v2.4 begins with a contract-first sprint that defines request/response shapes, derived-state ownership rules, and feature dependencies before implementation expands into UI and mutation behavior.
+
+This approach is used to reduce the risk of:
+
+- inconsistent DTOs
+- duplicated business logic
+- premature UI coupling
+- boundary erosion across frontend and backend layers
+
+By locking these assumptions early, later sprint work can build on stable contracts instead of inventing them during implementation.
 
 ---
 
