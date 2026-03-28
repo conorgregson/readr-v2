@@ -3,6 +3,7 @@ import type React from "react";
 import { Button } from "../../../shared/ui/Button";
 import { SearchStatus } from "../../../shared/ui/SearchStatus";
 import type { BooksFilters, Book } from "../types";
+import { useBooksStore } from "../store/books.store";
 
 function uniqueValues(arr: string[]) {
   return Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
@@ -28,8 +29,8 @@ export function BooksToolbar({
   booksTotal: number;
   visibleCount: number;
   filters: BooksFilters;
-  searchQuery: string; // executed/filtering query
-  committedQuery: string; // explicit Search/Enter query for highlight/button state
+  searchQuery: string;
+  committedQuery: string;
   onPreviewQuery: (q: string) => void;
   onCommitQuery: (q: string) => void;
   onFocusResults: () => void;
@@ -39,7 +40,15 @@ export function BooksToolbar({
 }) {
   const resultsId = "books-results";
 
-  // local "draft" query (v1.9-style)
+  const selectedCount = useBooksStore((s) => s.selectedCount());
+  const clearSelection = useBooksStore((s) => s.clearSelection);
+  const bulkUpdateSelectedBooks = useBooksStore(
+    (s) => s.bulkUpdateSelectedBooks,
+  );
+  const bulkDeleteSelectedBooks = useBooksStore(
+    (s) => s.bulkDeleteSelectedBooks,
+  );
+
   const [draftQuery, setDraftQuery] = useState(searchQuery);
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -47,7 +56,9 @@ export function BooksToolbar({
   const [showSuggest, setShowSuggest] = useState(false);
   const commitTimerRef = useRef<number | null>(null);
 
-  // keep draft in sync if store query changes externally (e.g., clear filters)
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
   useEffect(() => {
     setDraftQuery(searchQuery);
   }, [searchQuery]);
@@ -164,7 +175,6 @@ export function BooksToolbar({
     setActiveSuggestion(-1);
     setShowSuggest(false);
     onCommitQuery("");
-    // Sprint 8: focus should be restored predictably after clear.
     window.setTimeout(() => {
       const el = searchInputRef.current;
       el?.focus();
@@ -187,6 +197,35 @@ export function BooksToolbar({
       searchInputRef.current?.focus();
     }, 0);
   };
+
+  async function runBulkStatusUpdate(
+    status: "planned" | "reading" | "finished",
+  ) {
+    try {
+      setIsBulkUpdating(true);
+      await bulkUpdateSelectedBooks({ status });
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  }
+
+  async function runBulkDelete() {
+    const ok = window.confirm(
+      selectedCount === 1
+        ? "Delete the selected book?"
+        : `Delete ${selectedCount} selected books?`,
+    );
+    if (!ok) return;
+
+    try {
+      setIsBulkDeleting(true);
+      await bulkDeleteSelectedBooks();
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  }
+
+  const bulkBusy = isBulkUpdating || isBulkDeleting;
 
   return (
     <div className="space-y-2">
@@ -257,8 +296,6 @@ export function BooksToolbar({
                   e.preventDefault();
                   commitNow();
                 } else if (e.key === "Escape") {
-                  // Sprint 8: Escape should never trap keyboard users.
-                  // If there is text, clear it; otherwise do nothing.
                   if (draftQuery.trim()) {
                     e.preventDefault();
                     clearQuery();
@@ -327,7 +364,63 @@ export function BooksToolbar({
         </div>
       </div>
 
-      {/* status row */}
+      {selectedCount > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="text-sm font-medium text-slate-700">
+            {selectedCount === 1
+              ? "1 book selected"
+              : `${selectedCount} books selected`}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              disabled={bulkBusy}
+              onClick={() => runBulkStatusUpdate("planned")}
+              aria-label="Mark selected books as planned"
+            >
+              Mark Planned
+            </Button>
+
+            <Button
+              variant="secondary"
+              disabled={bulkBusy}
+              onClick={() => runBulkStatusUpdate("reading")}
+              aria-label="Mark selected books as reading"
+            >
+              Mark Reading
+            </Button>
+
+            <Button
+              variant="secondary"
+              disabled={bulkBusy}
+              onClick={() => runBulkStatusUpdate("finished")}
+              aria-label="Mark selected books as finished"
+            >
+              Mark Finished
+            </Button>
+
+            <Button
+              variant="danger"
+              disabled={bulkBusy}
+              onClick={runBulkDelete}
+              aria-label="Delete selected books"
+            >
+              {isBulkDeleting ? "Deleting…" : "Delete Selected"}
+            </Button>
+
+            <Button
+              variant="secondary"
+              disabled={bulkBusy}
+              onClick={clearSelection}
+              aria-label="Clear selected books"
+            >
+              Clear Selection
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between">
         <SearchStatus text={statusText} />
         <div />

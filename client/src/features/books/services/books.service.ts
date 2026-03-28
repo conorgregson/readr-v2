@@ -6,6 +6,11 @@ import type {
   FormatSubtype,
   SeriesType,
 } from "../types";
+import type {
+  BulkDeleteBooksRequest,
+  BulkMutationResult,
+  BulkUpdateBooksRequest,
+} from "../../../../../shared/types/v2.4";
 
 import { apiRequest } from "../../../shared/api/request";
 
@@ -74,6 +79,10 @@ function sanitizeNullableString(value: unknown): string | null | undefined {
 
   const trimmed = typeof value === "string" ? value.trim() : "";
   return trimmed ? trimmed : null;
+}
+
+function normalizeIds(ids: string[]): string[] {
+  return [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
 }
 
 function toClientBook(apiBook: ApiBook): Book {
@@ -151,6 +160,27 @@ function normalizeUpdateInput(patch: UpdateBookInput): UpdateBookInput {
   };
 }
 
+function normalizeBulkUpdateInput(
+  input: BulkUpdateBooksRequest,
+): BulkUpdateBooksRequest {
+  return {
+    ids: normalizeIds(input.ids),
+    patch: {
+      ...(input.patch.status !== undefined
+        ? { status: input.patch.status }
+        : {}),
+    },
+  };
+}
+
+function normalizeBulkDeleteInput(
+  input: BulkDeleteBooksRequest,
+): BulkDeleteBooksRequest {
+  return {
+    ids: normalizeIds(input.ids),
+  };
+}
+
 export const BooksService = {
   async list(): Promise<Book[]> {
     const books = await apiRequest<ApiBook[]>("/books?limit=100", {
@@ -163,7 +193,7 @@ export const BooksService = {
   async create(input: CreateBookInput): Promise<Book> {
     const created = await apiRequest<ApiBook>("/books", {
       method: "POST",
-      body: JSON.stringify(normalizeCreateInput(input)),
+      body: normalizeCreateInput(input),
     });
 
     return toClientBook(created);
@@ -172,7 +202,7 @@ export const BooksService = {
   async update(id: BookId, patch: UpdateBookInput): Promise<Book> {
     const updated = await apiRequest<ApiBook>(`/books/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(normalizeUpdateInput(patch)),
+      body: normalizeUpdateInput(patch),
     });
 
     return toClientBook(updated);
@@ -181,6 +211,20 @@ export const BooksService = {
   async remove(id: BookId): Promise<void> {
     await apiRequest<void>(`/books/${id}`, {
       method: "DELETE",
+    });
+  },
+
+  async bulkUpdate(input: BulkUpdateBooksRequest): Promise<BulkMutationResult> {
+    return apiRequest<BulkMutationResult>("/books/bulk", {
+      method: "PATCH",
+      body: normalizeBulkUpdateInput(input),
+    });
+  },
+
+  async bulkRemove(input: BulkDeleteBooksRequest): Promise<BulkMutationResult> {
+    return apiRequest<BulkMutationResult>("/books/bulk", {
+      method: "DELETE",
+      body: normalizeBulkDeleteInput(input),
     });
   },
 };

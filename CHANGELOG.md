@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4.0-sprint-1] — Bulk Edit Foundation (2026-03-28)
+
+### Added
+
+- Added shared bulk mutation DTOs for v2.4 contracts.
+- Added backend bulk books validation schemas.
+- Added atomic bulk books endpoints for batch status updates and batch delete.
+- Added client bulk update and bulk delete service methods.
+- Added multi-select state and batch actions to the books store.
+- Added batch action toolbar controls for selected books.
+- Added selected row styling and checkbox feedback in the books list.
+- Added real grouped undo for bulk delete using delayed commit.
+
+### Changed
+
+- Changed grouped bulk delete flow to commit after the undo window instead of immediately.
+- Changed cross-app bulk types to use the shared repo-level contract location.
+- Changed bulk mutation handling to normalize duplicate ids consistently.
+- Changed Sprint 1 undo scope to support grouped delete undo only.
+
+### Removed
+
+- Removed unsafe local-only bulk status undo behavior.
+
+### Notes
+
+- Bulk status undo was intentionally deferred to Sprint 5 hardening because a local-only restore model caused client/server state drift.
+- Sprint 1 ships safe bulk edit foundations with real grouped delete undo and no partial mutation states.
+
+---
+
 ## [v2.4-sprint-0] — Contracts & Derived-State Design (2026-03-26)
 
 ### Added

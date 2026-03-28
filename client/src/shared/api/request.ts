@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, type ApiFetchOptions } from "./api";
 
 export type ApiEnvelope<T> = {
   ok: boolean;
@@ -45,7 +45,7 @@ export async function readJson<T>(res: Response): Promise<T> {
 
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiFetchOptions = {},
 ): Promise<T> {
   const res = await apiFetch(path, options);
   return readJson<T>(res);
