@@ -38,7 +38,13 @@ export function clearToken() {
   }
 }
 
-function isJsonBody(body: unknown): body is Record<string, unknown> {
+export type ApiFetchOptions = Omit<RequestInit, "body"> & {
+  body?: unknown;
+};
+
+function isJsonBody(
+  body: unknown,
+): body is Record<string, unknown> | unknown[] {
   if (body == null) return false;
   if (typeof body !== "object") return false;
 
@@ -50,19 +56,24 @@ function isJsonBody(body: unknown): body is Record<string, unknown> {
   );
 }
 
-export async function apiFetch(path: string, options: RequestInit = {}) {
+export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   const token = getToken();
   const headers = new Headers(options.headers);
 
-  let body = options.body;
+  let body: BodyInit | null | undefined;
 
-  if (isJsonBody(body)) {
+  if (isJsonBody(options.body)) {
     if (!headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
-    body = JSON.stringify(body);
-  } else if (!headers.has("Content-Type") && !(body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
+    body = JSON.stringify(options.body);
+  } else if (options.body == null) {
+    body = undefined;
+  } else {
+    body = options.body as BodyInit;
+    if (!headers.has("Content-Type") && !(body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
   }
 
   if (token) {

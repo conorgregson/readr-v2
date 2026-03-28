@@ -312,9 +312,8 @@ export function BooksPage() {
                 const ok = await undoLast();
                 if (ok) {
                   // Sprint 8: restore focus + selection to the restored row when possible.
-                  const restoredId = undo?.meta?.bookId;
-                  if (restoredId) {
-                    const did = focusResultsAndSelectBook(restoredId);
+                  if (undo?.meta.kind === "delete") {
+                    const did = focusResultsAndSelectBook(undo.meta.bookId);
                     if (!did) focusResultsAndSelectFirst();
                   } else {
                     focusResultsAndSelectFirst();

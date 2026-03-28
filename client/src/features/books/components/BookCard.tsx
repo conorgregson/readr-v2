@@ -36,9 +36,13 @@ function formatDate(iso?: string) {
 export function BookCard({
   book,
   searchQuery,
+  isSelected,
+  onToggleSelected,
 }: {
   book: Book;
   searchQuery: string;
+  isSelected: boolean;
+  onToggleSelected: () => void;
 }) {
   const updateBook = useBooksStore((s) => s.updateBook);
   const finishBook = useBooksStore((s) => s.finishBook);
@@ -47,7 +51,6 @@ export function BookCard({
 
   const [isEditing, setIsEditing] = useState(false);
 
-  // local draft state (no leakage)
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author);
   const [status, setStatus] = useState<BookStatus>(book.status);
@@ -65,7 +68,6 @@ export function BookCard({
   const [showSaved, setShowSaved] = useState(false);
   const savedTimerRef = useRef<number | null>(null);
 
-  // When book changes externally, keep draft in sync (only if not editing)
   useEffect(() => {
     if (isEditing) return;
     setTitle(book.title);
@@ -109,35 +111,29 @@ export function BookCard({
   }, [title, author]);
 
   function beginEdit() {
-    // Remeber where focus came from so it can be restored on Cancel/Save.
     lastFocusRef.current = captureFocusToken();
     setLocalError(null);
     setError(undefined);
 
-    // Clear any prior "Saved" toast when entering edit
     setShowSaved(false);
     if (savedTimerRef.current) window.clearTimeout(savedTimerRef.current);
 
-    // Ensure drafts match latest persisted values at edit start
     setTitle(book.title);
     setAuthor(book.author);
     setStatus(book.status);
 
     setIsEditing(true);
 
-    // focus the title field next tick (setTimeout is safest across environments)
     window.setTimeout(() => titleRef.current?.focus(), 0);
   }
 
   function cancelEdit() {
     setLocalError(null);
     setIsEditing(false);
-    // revert draft to current persisted book
     setTitle(book.title);
     setAuthor(book.author);
     setStatus(book.status);
 
-    // Sprint 8: restore focus to the button that launched edit (fallback: Edit button).
     restoreFocus(lastFocusRef.current, {
       fallbackSelectors: [`[data-focus-id="book:${book.id}:edit"]`],
       deferMs: 0,
@@ -172,7 +168,6 @@ export function BookCard({
 
       setIsEditing(false);
 
-      // Subtle saved micro-feedback
       setShowSaved(true);
       if (savedTimerRef.current) window.clearTimeout(savedTimerRef.current);
       savedTimerRef.current = window.setTimeout(() => {
@@ -181,8 +176,6 @@ export function BookCard({
 
       setError(undefined);
 
-      // Sprint 8: after a successful save, restore focus to Edit for this row.
-      // (Keeps keyboard flow stable; no "lost focus" on re-render.)
       restoreFocus(
         {
           kind: "selector",
@@ -203,13 +196,10 @@ export function BookCard({
   }
 
   async function onDelete() {
-    // Capture focus before confirm so Cancel restores to a sensible place.
     lastFocusRef.current = captureFocusToken();
 
-    // keep it simple for parity phase (no modal)
     const ok = window.confirm(`Delete "${book.title}"?`);
     if (!ok) {
-      // Sprint 8: user canceled confirm → restore focus to Delete (or prior focus).
       restoreFocus(lastFocusRef.current, {
         fallbackSelectors: [`[data-focus-id="book:${book.id}:delete"]`],
         deferMs: 0,
@@ -282,182 +272,206 @@ export function BookCard({
     );
   }
 
+  const selectionDisabled = isEditing || isSaving || isDeleting || isFinishing;
+
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        {isEditing ? (
-          <div className="grid gap-2">
-            <label className="grid gap-1">
-              <span className="text-xs font-medium text-slate-400">
-                Title *
-              </span>
-              <input
-                ref={titleRef}
-                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                value={title}
-                aria-invalid={isTitleInvalid}
-                onChange={(e) => setTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    saveEdit();
-                  } else if (e.key === "Escape") {
-                    e.preventDefault();
-                    cancelEdit();
-                  }
-                }}
-              />
-            </label>
-
-            <label className="grid gap-1">
-              <span className="text-xs font-medium text-slate-400">
-                Author *
-              </span>
-              <input
-                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                value={author}
-                aria-invalid={isAuthorInvalid}
-                onChange={(e) => setAuthor(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    saveEdit();
-                  } else if (e.key === "Escape") {
-                    e.preventDefault();
-                    cancelEdit();
-                  }
-                }}
-              />
-            </label>
-
-            <label className="grid gap-1">
-              <span className="text-xs font-medium text-slate-400">Status</span>
-              <select
-                className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as BookStatus)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    e.preventDefault();
-                    cancelEdit();
-                  }
-                }}
-              >
-                <option value="planned">Planned</option>
-                <option value="reading">Reading</option>
-                <option value="finished">Finished</option>
-              </select>
-            </label>
-
-            {localError ? (
-              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                {localError}
-              </div>
-            ) : null}
-
-            {bits.length ? (
-              <div className="text-xs text-slate-400">{bits.join(" • ")}</div>
-            ) : null}
-          </div>
-        ) : (
-          <>
-            <div className="truncate font-medium">
-              {renderHighlighted(book.title)}
-            </div>
-            <div className="truncate text-sm text-slate-400">
-              {renderHighlighted(book.author)}
-            </div>
-
-            {bits.length ? (
-              <div className="mt-1 text-xs text-slate-400">
-                {bits.join(" • ")}
-              </div>
-            ) : null}
-
-            {(startedLabel || finishedLabel) && (
-              <div className="mt-1 text-xs text-slate-400">
-                {startedLabel ? `Started: ${startedLabel}` : null}
-                {startedLabel && finishedLabel ? " • " : null}
-                {finishedLabel ? `Finished: ${finishedLabel}` : null}
-              </div>
-            )}
-          </>
-        )}
+    <div className="flex items-start gap-3">
+      <div className="pt-1">
+        <label className="inline-flex items-center">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelected}
+            disabled={selectionDisabled}
+            aria-label={`Select ${book.title}`}
+            className="h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-2 focus:ring-slate-300"
+          />
+        </label>
       </div>
 
-      <div className="shrink-0 text-right">
-        <div className="text-xs text-slate-400">
-          Status: {STATUS_LABEL[isEditing ? status : book.status]}
-        </div>
-
-        {/* aria-live: only announce when saving succeeds */}
-        <div
-          className={`mb-1 text-xs text-slate-500 ${
-            showSaved ? "readr-saved" : "opacity-0"
-          }`}
-          aria-live="polite"
-          role="status"
-        >
-          {showSaved ? "✓ Saved" : null}
-        </div>
-
-        <div className="mt-2 flex items-center justify-end gap-2">
+      <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+        <div className="min-w-0">
           {isEditing ? (
-            <>
-              <Button
-                variant="secondary"
-                onClick={cancelEdit}
-                disabled={isSaving}
-                aria-label={`Cancel edit for ${book.title}`}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={saveEdit}
-                disabled={!canSave || isSaving || !hasChanges}
-                aria-busy={isSaving}
-                aria-label={`Save changes for ${book.title}`}
-              >
-                {isSaving ? "Saving…" : "Save"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                ref={editBtnRef}
-                variant="secondary"
-                onClick={beginEdit}
-                disabled={isDeleting || isFinishing}
-                data-focus-id={`book:${book.id}:edit`}
-                aria-label={`Edit ${book.title}`}
-              >
-                Edit
-              </Button>
+            <div className="grid gap-2">
+              <label className="grid gap-1">
+                <span className="text-xs font-medium text-slate-400">
+                  Title *
+                </span>
+                <input
+                  ref={titleRef}
+                  className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                  value={title}
+                  aria-invalid={isTitleInvalid}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveEdit();
+                    } else if (e.key === "Escape") {
+                      e.preventDefault();
+                      cancelEdit();
+                    }
+                  }}
+                />
+              </label>
 
-              {book.status !== "finished" ? (
-                <Button
-                  onClick={onFinish}
-                  disabled={isDeleting || isFinishing}
-                  aria-busy={isFinishing}
-                  aria-label={`Mark ${book.title} as finished`}
+              <label className="grid gap-1">
+                <span className="text-xs font-medium text-slate-400">
+                  Author *
+                </span>
+                <input
+                  className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                  value={author}
+                  aria-invalid={isAuthorInvalid}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveEdit();
+                    } else if (e.key === "Escape") {
+                      e.preventDefault();
+                      cancelEdit();
+                    }
+                  }}
+                />
+              </label>
+
+              <label className="grid gap-1">
+                <span className="text-xs font-medium text-slate-400">
+                  Status
+                </span>
+                <select
+                  className="h-9 w-full rounded-md border border-slate-300 text-slate-600 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as BookStatus)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      cancelEdit();
+                    }
+                  }}
                 >
-                  {isFinishing ? "Finishing…" : "Mark Finished"}
-                </Button>
+                  <option value="planned">Planned</option>
+                  <option value="reading">Reading</option>
+                  <option value="finished">Finished</option>
+                </select>
+              </label>
+
+              {localError ? (
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {localError}
+                </div>
               ) : null}
 
-              <Button
-                ref={deleteBtnRef}
-                variant="danger"
-                onClick={onDelete}
-                disabled={isDeleting || isFinishing}
-                aria-busy={isDeleting}
-                data-focus-id={`book:${book.id}:delete`}
-                aria-label={`Delete ${book.title}`}
-              >
-                {isDeleting ? "Deleting…" : "Delete"}
-              </Button>
+              {bits.length ? (
+                <div className="text-xs text-slate-400">{bits.join(" • ")}</div>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <div className="truncate font-medium">
+                {renderHighlighted(book.title)}
+              </div>
+              <div className="truncate text-sm text-slate-400">
+                {renderHighlighted(book.author)}
+              </div>
+
+              {bits.length ? (
+                <div className="mt-1 text-xs text-slate-400">
+                  {bits.join(" • ")}
+                </div>
+              ) : null}
+
+              {(startedLabel || finishedLabel) && (
+                <div className="mt-1 text-xs text-slate-400">
+                  {startedLabel ? `Started: ${startedLabel}` : null}
+                  {startedLabel && finishedLabel ? " • " : null}
+                  {finishedLabel ? `Finished: ${finishedLabel}` : null}
+                </div>
+              )}
             </>
           )}
+        </div>
+
+        <div className="shrink-0 text-right">
+          <div className="text-xs text-slate-400">
+            Status: {STATUS_LABEL[isEditing ? status : book.status]}
+          </div>
+
+          <div
+            className={`mb-1 text-xs text-slate-500 ${
+              showSaved ? "readr-saved" : "opacity-0"
+            }`}
+            aria-live="polite"
+            role="status"
+          >
+            {showSaved ? "✓ Saved" : null}
+          </div>
+
+          <div className="mt-2 flex items-center justify-end gap-2">
+            {isEditing ? (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={cancelEdit}
+                  disabled={isSaving}
+                  aria-label={`Cancel edit for ${book.title}`}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={saveEdit}
+                  disabled={!canSave || isSaving || !hasChanges}
+                  aria-busy={isSaving}
+                  aria-label={`Save changes for ${book.title}`}
+                >
+                  {isSaving ? "Saving…" : "Save"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  ref={editBtnRef}
+                  variant="secondary"
+                  onClick={beginEdit}
+                  disabled={isDeleting || isFinishing}
+                  data-focus-id={`book:${book.id}:edit`}
+                  aria-label={`Edit ${book.title}`}
+                >
+                  Edit
+                </Button>
+
+                {book.status !== "finished" ? (
+                  <Button
+                    onClick={onFinish}
+                    disabled={isDeleting || isFinishing}
+                    aria-busy={isFinishing}
+                    aria-label={`Mark ${book.title} as finished`}
+                  >
+                    {isFinishing ? "Finishing…" : "Mark Finished"}
+                  </Button>
+                ) : null}
+
+                <Button
+                  ref={deleteBtnRef}
+                  variant="danger"
+                  onClick={onDelete}
+                  disabled={isDeleting || isFinishing}
+                  aria-busy={isDeleting}
+                  data-focus-id={`book:${book.id}:delete`}
+                  aria-label={`Delete ${book.title}`}
+                >
+                  {isDeleting ? "Deleting…" : "Delete"}
+                </Button>
+              </>
+            )}
+          </div>
+
+          {isSelected && !isEditing ? (
+            <div className="mt-2 text-xs font-medium text-slate-500">
+              Selected
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

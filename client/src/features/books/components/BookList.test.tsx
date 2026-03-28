@@ -1,11 +1,27 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BookList } from "./BookList";
 import type { Book } from "../types";
+import { useBooksStore } from "../store/books.store";
 
 vi.mock("./BookCard", () => ({
-  BookCard: ({ book }: { book: Book }) => <div>{book.title}</div>,
+  BookCard: ({
+    book,
+    isSelected,
+    onToggleSelected,
+  }: {
+    book: Book;
+    isSelected: boolean;
+    onToggleSelected: () => void;
+  }) => (
+    <div>
+      <span>{book.title}</span>
+      <button onClick={onToggleSelected}>
+        {isSelected ? `Deselect ${book.title}` : `Select ${book.title}`}
+      </button>
+    </div>
+  ),
 }));
 
 function makeBook(overrides: Partial<Book> = {}): Book {
@@ -27,6 +43,10 @@ function makeBook(overrides: Partial<Book> = {}): Book {
     finishedAt: overrides.finishedAt,
   };
 }
+
+beforeEach(() => {
+  useBooksStore.getState().reset();
+});
 
 describe("BookList keyboard navigation", () => {
   it("moves active index with ArrowDown, ArrowUp, Home, and End", async () => {
@@ -129,5 +149,58 @@ describe("BookList keyboard navigation", () => {
 
     await user.keyboard("{PageUp}");
     expect(onActiveIndex).toHaveBeenLastCalledWith(0);
+  });
+
+  it("passes selection state into BookCard and toggles selected ids", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <BookList
+        id="books-results"
+        books={[
+          makeBook({ id: "a", title: "Dune" }),
+          makeBook({ id: "b", title: "Hyperion" }),
+        ]}
+        searchQuery=""
+        activeIndex={-1}
+        onActiveIndex={vi.fn()}
+        onEscapeToSearch={vi.fn()}
+      />,
+    );
+
+    expect(useBooksStore.getState().selectedIds).toEqual([]);
+
+    const toggleButton = screen.getByRole("button", { name: /select dune/i });
+
+    await user.click(toggleButton);
+    expect(useBooksStore.getState().selectedIds).toEqual(["a"]);
+
+    await user.click(toggleButton);
+    expect(useBooksStore.getState().selectedIds).toEqual([]);
+  });
+
+  it("applies selected styling to selected rows", () => {
+    useBooksStore.setState({ selectedIds: ["b"] });
+
+    render(
+      <BookList
+        id="books-results"
+        books={[
+          makeBook({ id: "a", title: "Dune" }),
+          makeBook({ id: "b", title: "Hyperion" }),
+        ]}
+        searchQuery=""
+        activeIndex={-1}
+        onActiveIndex={vi.fn()}
+        onEscapeToSearch={vi.fn()}
+      />,
+    );
+
+    const selectedRow = screen
+      .getByText("Hyperion")
+      .closest("li")
+      ?.querySelector(".bg-blue-50\\/40");
+
+    expect(selectedRow).toBeTruthy();
   });
 });

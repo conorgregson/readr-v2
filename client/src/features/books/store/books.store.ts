@@ -10,13 +10,24 @@ import { smartSearch } from "../search/search.engine";
 
 const UNDO_MS = 6000;
 
-type UndoRecord = {
-  createdAtMs: number;
-  expiresAtMs: number;
-  label: string;
-  before: Book[]; // full snapshot for perfect restore
-  meta?: { bookId: BookId; kind: "delete" };
-};
+type UndoRecord =
+  | {
+      createdAtMs: number;
+      expiresAtMs: number;
+      label: string;
+      before: Book[];
+      meta: { kind: "delete"; bookId: BookId };
+    }
+  | {
+      createdAtMs: number;
+      expiresAtMs: number;
+      label: string;
+      before: Book[];
+      meta: {
+        kind: "bulk-delete";
+        affectedIds: BookId[];
+      };
+    };
 
 function reqTrim(label: string, value: unknown): string {
   const s = typeof value === "string" ? value.trim() : "";
@@ -40,6 +51,10 @@ function normalizeCreateInput(
   };
 }
 
+function normalizeSelectedIds(ids: BookId[]): BookId[] {
+  return [...new Set(ids)];
+}
+
 type BooksState = {
   isBootstrapped: boolean;
   isLoading: boolean;
@@ -54,28 +69,36 @@ type BooksState = {
   deleteBook: (id: BookId) => Promise<boolean>;
   finishBook: (id: BookId) => Promise<Book | null>;
 
+  bulkUpdateSelectedBooks: (patch: {
+    status?: Book["status"];
+  }) => Promise<boolean>;
+  bulkDeleteSelectedBooks: () => Promise<boolean>;
+
   loadBooks: () => Promise<void>;
 
   page: PageState;
   setError: (error: PageError | undefined) => void;
 
-  // domain
   books: Book[];
 
-  // undo
   undo: UndoRecord | null;
   undoLast: () => Promise<boolean>;
   clearUndo: () => void;
 
-  // controls
   filters: BooksFilters;
   searchQuery: string;
   highlightQuery: string;
-
-  // v1.9-style fuzzy override (null = default; 2 = loosen once)
   searchFuzzyOverride: number | null;
 
-  // actions
+  selectedIds: BookId[];
+  isSelected: (id: BookId) => boolean;
+  toggleSelected: (id: BookId) => void;
+  selectBook: (id: BookId) => void;
+  deselectBook: (id: BookId) => void;
+  clearSelection: () => void;
+  selectAllVisible: () => void;
+  selectedCount: () => number;
+
   setSearchQuery: (q: string) => void;
   setHighlightQuery: (q: string) => void;
   enableLooserSearch: () => void;
@@ -83,7 +106,6 @@ type BooksState = {
   setFilters: (next: Partial<BooksFilters>) => void;
   clearFilters: () => void;
 
-  // derived
   visibleBooks: () => Book[];
 
   reset: () => void;
@@ -93,6 +115,7 @@ type VisibleSearchResult = { ref: Book; score: number };
 
 let undoTimer: number | null = null;
 let pendingDeleteBookId: BookId | null = null;
+let pendingBulkDeleteIds: BookId[] | null = null;
 
 function clearUndoTimer() {
   if (undoTimer !== null) {
@@ -100,6 +123,7 @@ function clearUndoTimer() {
     undoTimer = null;
   }
   pendingDeleteBookId = null;
+  pendingBulkDeleteIds = null;
 }
 
 const initialState: Pick<
@@ -113,19 +137,18 @@ const initialState: Pick<
   | "highlightQuery"
   | "searchFuzzyOverride"
   | "undo"
+  | "selectedIds"
 > = {
   page: { mode: "results" },
   isBootstrapped: false,
   isLoading: false,
-
-  // server-backed books list
   books: [],
-
   filters: defaultBooksFilters(),
   searchQuery: "",
   highlightQuery: "",
   searchFuzzyOverride: null,
   undo: null,
+  selectedIds: [],
 };
 
 export const useBooksStore = create<BooksState>((set, get) => ({
@@ -136,7 +159,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       const clean = normalizeCreateInput(input);
       const created = await BooksService.create(clean);
 
-      // Keep UI stable: insert new book at top
       set((s) => ({ books: [created, ...s.books], page: { mode: "results" } }));
       return created;
     } catch (e) {
@@ -155,7 +177,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const idx = before.findIndex((b) => b.id === id);
     if (idx === -1) return null;
 
-    // Create optimistic merged draft and validate required fields
     const merged = {
       ...before[idx],
       ...patch,
@@ -183,7 +204,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
 
       const persistPatch = {
         ...patch,
-        // only include these when needed
         ...(startedAt && prev.startedAt !== startedAt ? { startedAt } : {}),
         ...(finishedAt && prev.finishedAt !== finishedAt ? { finishedAt } : {}),
       };
@@ -207,14 +227,12 @@ export const useBooksStore = create<BooksState>((set, get) => ({
 
       const saved = await BooksService.update(id, persistPatch);
 
-      // Sync store to persisted record
       set((s) => ({
         books: s.books.map((b) => (b.id === id ? saved : b)),
       }));
 
       return saved;
     } catch (e) {
-      // rollback
       set({
         books: before,
         page: {
@@ -231,7 +249,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const next = before.filter((b) => b.id !== id);
     if (next.length === before.length) return false;
 
-    // overwrite any previous undo
     clearUndoTimer();
 
     const nowMS = Date.now();
@@ -243,8 +260,12 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       meta: { bookId: id, kind: "delete" },
     };
 
-    // optimistic UI removal only
-    set({ books: next, undo: rec, page: { mode: "results" } });
+    set((s) => ({
+      books: next,
+      undo: rec,
+      page: { mode: "results" },
+      selectedIds: s.selectedIds.filter((selectedId) => selectedId !== id),
+    }));
 
     pendingDeleteBookId = id;
 
@@ -252,11 +273,10 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       const cur = get().undo;
       const deleteId = pendingDeleteBookId;
 
-      // Only finalize if this is still the active delete undo record
       if (
         cur &&
         deleteId &&
-        cur.meta?.kind === "delete" &&
+        cur.meta.kind === "delete" &&
         cur.meta.bookId === deleteId &&
         Date.now() > cur.expiresAtMs
       ) {
@@ -264,7 +284,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
           await BooksService.remove(deleteId);
           set({ undo: null });
         } catch (e) {
-          // server delete failed; restore UI snapshot
           set({
             books: cur.before,
             undo: null,
@@ -336,6 +355,146 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     }
   },
 
+  bulkUpdateSelectedBooks: async (patch) => {
+    const ids = normalizeSelectedIds(get().selectedIds);
+    if (ids.length === 0) return false;
+
+    const before = get().books;
+    const nowIso = new Date().toISOString();
+
+    const optimisticBooks = before.map((book) => {
+      if (!ids.includes(book.id)) return book;
+
+      const nextStatus = patch.status ?? book.status;
+      const statusChanged = nextStatus !== book.status;
+
+      const startedAt =
+        statusChanged && nextStatus === "reading" && !book.startedAt
+          ? nowIso
+          : nextStatus === "planned"
+            ? undefined
+            : book.startedAt;
+
+      const finishedAt =
+        nextStatus === "planned"
+          ? undefined
+          : statusChanged && nextStatus === "finished" && !book.finishedAt
+            ? nowIso
+            : nextStatus === "reading"
+              ? undefined
+              : book.finishedAt;
+
+      return {
+        ...book,
+        ...patch,
+        updatedAt: nowIso,
+        startedAt,
+        finishedAt,
+      };
+    });
+
+    set({
+      books: optimisticBooks,
+      page: { mode: "results" },
+    });
+
+    try {
+      await BooksService.bulkUpdate({
+        ids,
+        patch,
+      });
+
+      const refreshedBooks = await BooksService.list();
+
+      set({
+        books: refreshedBooks,
+        selectedIds: [],
+        undo: null,
+        page: { mode: "results" },
+      });
+
+      return true;
+    } catch (e) {
+      set({
+        books: before,
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to bulk update books",
+          },
+        },
+      });
+      return false;
+    }
+  },
+
+  bulkDeleteSelectedBooks: async () => {
+    const ids = normalizeSelectedIds(get().selectedIds);
+    if (ids.length === 0) return false;
+
+    const before = get().books;
+    const remaining = before.filter((book) => !ids.includes(book.id));
+
+    clearUndoTimer();
+
+    const nowMS = Date.now();
+    const rec: UndoRecord = {
+      createdAtMs: nowMS,
+      expiresAtMs: nowMS + UNDO_MS,
+      label:
+        ids.length === 1 ? "1 book deleted" : `${ids.length} books deleted`,
+      before,
+      meta: {
+        kind: "bulk-delete",
+        affectedIds: ids,
+      },
+    };
+
+    set({
+      books: remaining,
+      undo: rec,
+      selectedIds: [],
+      page: { mode: "results" },
+    });
+
+    pendingBulkDeleteIds = ids;
+
+    undoTimer = window.setTimeout(async () => {
+      const cur = get().undo;
+      const deleteIds = pendingBulkDeleteIds;
+
+      if (
+        cur &&
+        deleteIds &&
+        cur.meta.kind === "bulk-delete" &&
+        cur.meta.affectedIds.length === deleteIds.length &&
+        cur.meta.affectedIds.every((id, index) => id === deleteIds[index]) &&
+        Date.now() > cur.expiresAtMs
+      ) {
+        try {
+          await BooksService.bulkRemove({ ids: deleteIds });
+          set({ undo: null });
+        } catch (e) {
+          set({
+            books: cur.before,
+            undo: null,
+            page: {
+              mode: "error",
+              error: {
+                message: (e as Error)?.message ?? "Failed to bulk delete books",
+              },
+            },
+          });
+        }
+      }
+
+      undoTimer = null;
+      pendingBulkDeleteIds = null;
+    }, UNDO_MS + 50);
+
+    return true;
+  },
+
   clearUndo: () => {
     clearUndoTimer();
     set({ undo: null });
@@ -345,7 +504,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const rec = get().undo;
     if (!rec) return false;
 
-    // expired guard
     if (Date.now() > rec.expiresAtMs) {
       clearUndoTimer();
       set({ undo: null });
@@ -354,12 +512,11 @@ export const useBooksStore = create<BooksState>((set, get) => ({
 
     clearUndoTimer();
 
-    // Restore local snapshot only.
-    // For delete undo, server delete has not happened yet.
     set({
       undo: null,
       page: { mode: "results" },
       books: rec.before,
+      selectedIds: [],
     });
 
     return true;
@@ -397,10 +554,41 @@ export const useBooksStore = create<BooksState>((set, get) => ({
       page: { mode: error ? "error" : "results", error },
     })),
 
+  isSelected: (id) => get().selectedIds.includes(id),
+
+  toggleSelected: (id) =>
+    set((s) => ({
+      selectedIds: s.selectedIds.includes(id)
+        ? s.selectedIds.filter((selectedId) => selectedId !== id)
+        : [...s.selectedIds, id],
+    })),
+
+  selectBook: (id) =>
+    set((s) => ({
+      selectedIds: s.selectedIds.includes(id)
+        ? s.selectedIds
+        : [...s.selectedIds, id],
+    })),
+
+  deselectBook: (id) =>
+    set((s) => ({
+      selectedIds: s.selectedIds.filter((selectedId) => selectedId !== id),
+    })),
+
+  clearSelection: () => set({ selectedIds: [] }),
+
+  selectAllVisible: () =>
+    set(() => ({
+      selectedIds: get()
+        .visibleBooks()
+        .map((book) => book.id),
+    })),
+
+  selectedCount: () => get().selectedIds.length,
+
   setSearchQuery: (q) =>
     set(() => ({
       searchQuery: q,
-      // v1.9 parity: typing resets loosened override
       searchFuzzyOverride: null,
     })),
 
@@ -426,10 +614,8 @@ export const useBooksStore = create<BooksState>((set, get) => ({
   visibleBooks: () => {
     const { books, filters, searchQuery, searchFuzzyOverride } = get();
 
-    // 1) facets first
     const base = applyFilters(books, filters);
 
-    // 2) then search
     const q = searchQuery.trim();
     if (!q) return base;
 

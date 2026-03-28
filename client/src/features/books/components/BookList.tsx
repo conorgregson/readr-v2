@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Card } from "../../../shared/ui/Card";
 import type { Book } from "../types";
 import { BookCard } from "./BookCard";
+import { useBooksStore } from "../store/books.store";
 
 export function BookList({
   id,
@@ -20,8 +21,9 @@ export function BookList({
 }) {
   const clamp = (i: number) => Math.max(0, Math.min(i, books.length - 1));
 
-  // Sprint 8 hardening: if the list changes (filters/search/delete/undo),
-  // ensure activeIndex can't point to a non-existent row.
+  const selectedIds = useBooksStore((s) => s.selectedIds);
+  const toggleSelected = useBooksStore((s) => s.toggleSelected);
+
   useEffect(() => {
     if (books.length === 0) {
       if (activeIndex !== -1) onActiveIndex(-1);
@@ -84,6 +86,8 @@ export function BookList({
     >
       {books.map((b, i) => {
         const active = i === activeIndex;
+        const selected = selectedIds.includes(b.id);
+
         return (
           <li
             key={b.id}
@@ -92,8 +96,20 @@ export function BookList({
             data-result-index={i}
             data-book-result-id={b.id}
           >
-            <Card className={active ? "ring-2 ring-slate-300" : ""}>
-              <BookCard book={b} searchQuery={searchQuery} />
+            <Card
+              className={[
+                active ? "ring-2 ring-slate-300" : "",
+                selected ? "ring-2 ring-blue-200 bg-blue-50/40" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <BookCard
+                book={b}
+                searchQuery={searchQuery}
+                isSelected={selected}
+                onToggleSelected={() => toggleSelected(b.id)}
+              />
             </Card>
           </li>
         );

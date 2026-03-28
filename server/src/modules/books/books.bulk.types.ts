@@ -1,22 +1,23 @@
-export type BookStatus = "planned" | "reading" | "finished";
+import type { BookStatus } from "../../../../shared/types/v2.4";
 
-export type BulkMutationOperation = "update" | "delete";
+export type NormalizedBulkIds = string[];
 
-export type BulkUpdateBooksRequest = {
-  ids: string[];
-  patch: {
-    status?: BookStatus;
-  };
+export type BulkTargetBooksSnapshot = {
+  id: string;
+  status: BookStatus;
 };
 
-export type BulkDeleteBooksRequest = {
-  ids: string[];
+export type BulkDeleteRestoreSnapshot = {
+  id: string;
+  title: string;
+  author: string;
+  status: BookStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  finishedAt: Date | null;
 };
 
-export type BulkMutationResult = {
-  ok: true;
+export type BulkUndoSnapshot = {
   operationId: string;
-  operation: BulkMutationOperation;
-  affectedCount: number;
   affectedIds: string[];
 };
