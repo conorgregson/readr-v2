@@ -261,6 +261,650 @@ describe("BooksToolbar committed search", () => {
   });
 });
 
+describe("BooksToolbar saved views and sort", () => {
+  it("shows saved view and sort controls", () => {
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("combobox", { name: /saved view/i }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("combobox", { name: /sort books/i }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /save current view/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("applies a saved view from the selector", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {
+            genres: ["Sci-Fi"],
+            status: ["planned"],
+            search: "dune",
+          },
+          sort: { key: "title", direction: "asc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+    });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: /saved view/i }),
+      "view-1",
+    );
+
+    const state = useBooksStore.getState();
+
+    expect(state.activeViewId).toBe("view-1");
+    expect(state.filters.status).toEqual(["planned"]);
+    expect(state.filters.genres).toEqual(["Sci-Fi"]);
+    expect(state.searchQuery).toBe("dune");
+    expect(state.sort).toEqual({ key: "title", direction: "asc" });
+  });
+
+  it("shows active saved view management actions when a saved view is selected", () => {
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {
+            genres: ["Sci-Fi"],
+            status: ["planned"],
+          },
+          sort: { key: "title", direction: "asc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters({ genres: ["Sci-Fi"], status: ["planned"] })}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    expect(screen.getByText(/active view:/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Sci-Fi TBR")).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: /rename active saved view/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /pin active saved view/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /set default saved view/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /delete active saved view/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("toggles default on the active saved view", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    const updateSavedViewSpy = vi
+      .spyOn(useBooksStore.getState(), "updateSavedView")
+      .mockResolvedValue({
+        id: "view-1",
+        name: "Sci-Fi TBR",
+        filters: {},
+        sort: { key: "createdAt", direction: "desc" },
+        isPinned: false,
+        isDefault: true,
+        createdAt: "2026-03-10T00:00:00.000Z",
+        updatedAt: "2026-03-10T00:00:00.000Z",
+      });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /set default saved view/i }),
+    );
+
+    expect(updateSavedViewSpy).toHaveBeenCalledWith("view-1", {
+      isDefault: true,
+    });
+  });
+
+  it("unsets default on the active saved view", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: true,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    const updateSavedViewSpy = vi
+      .spyOn(useBooksStore.getState(), "updateSavedView")
+      .mockResolvedValue({
+        id: "view-1",
+        name: "Sci-Fi TBR",
+        filters: {},
+        sort: { key: "createdAt", direction: "desc" },
+        isPinned: false,
+        isDefault: false,
+        createdAt: "2026-03-10T00:00:00.000Z",
+        updatedAt: "2026-03-10T00:00:00.000Z",
+      });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /unset default saved view/i }),
+    );
+
+    expect(updateSavedViewSpy).toHaveBeenCalledWith("view-1", {
+      isDefault: false,
+    });
+  });
+
+  it("deletes the active saved view after confirm", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const deleteSavedViewSpy = vi
+      .spyOn(useBooksStore.getState(), "deleteSavedView")
+      .mockResolvedValue(true);
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /delete active saved view/i }),
+    );
+
+    expect(confirmSpy).toHaveBeenCalledWith('Delete saved view "Sci-Fi TBR"?');
+    expect(deleteSavedViewSpy).toHaveBeenCalledWith("view-1");
+
+    confirmSpy.mockRestore();
+  });
+
+  it("updates sort from the selector", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: /sort books/i }),
+      "title:asc",
+    );
+
+    expect(useBooksStore.getState().sort).toEqual({
+      key: "title",
+      direction: "asc",
+    });
+  });
+
+  it("opens inline save view composer from the toolbar", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /save current view/i }),
+    );
+
+    expect(screen.getByLabelText(/view name/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /confirm save current view/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /cancel save current view/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens inline rename composer for the active saved view", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /rename active saved view/i }),
+    );
+
+    expect(screen.getByLabelText(/rename view/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /confirm rename saved view/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("renames the active saved view inline", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    const updateSavedViewSpy = vi
+      .spyOn(useBooksStore.getState(), "updateSavedView")
+      .mockResolvedValue({
+        id: "view-1",
+        name: "Fantasy TBR",
+        filters: {},
+        sort: { key: "createdAt", direction: "desc" },
+        isPinned: false,
+        isDefault: false,
+        createdAt: "2026-03-10T00:00:00.000Z",
+        updatedAt: "2026-03-10T00:00:00.000Z",
+      });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /rename active saved view/i }),
+    );
+
+    const input = screen.getByLabelText(/rename view/i);
+    await user.clear(input);
+    await user.type(input, "Fantasy TBR");
+
+    await user.click(
+      screen.getByRole("button", { name: /confirm rename saved view/i }),
+    );
+
+    expect(updateSavedViewSpy).toHaveBeenCalledWith("view-1", {
+      name: "Fantasy TBR",
+    });
+
+    expect(await screen.findByText(/view renamed/i)).toBeInTheDocument();
+  });
+
+  it("shows feedback after saving a view from the inline composer", async () => {
+    const user = userEvent.setup();
+
+    vi.spyOn(useBooksStore.getState(), "saveCurrentView").mockResolvedValue({
+      id: "view-1",
+      name: "My View",
+      filters: {},
+      sort: { key: "createdAt", direction: "desc" },
+      isPinned: false,
+      isDefault: false,
+      createdAt: "2026-03-10T00:00:00.000Z",
+      updatedAt: "2026-03-10T00:00:00.000Z",
+    });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /save current view/i }),
+    );
+
+    await user.type(screen.getByLabelText(/view name/i), "My View");
+
+    await user.click(
+      screen.getByRole("button", { name: /confirm save current view/i }),
+    );
+
+    expect(await screen.findByText(/view saved/i)).toBeInTheDocument();
+  });
+
+  it("toggles pinned on the active saved view", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    const updateSavedViewSpy = vi
+      .spyOn(useBooksStore.getState(), "updateSavedView")
+      .mockResolvedValue({
+        id: "view-1",
+        name: "Sci-Fi TBR",
+        filters: {},
+        sort: { key: "createdAt", direction: "desc" },
+        isPinned: true,
+        isDefault: false,
+        createdAt: "2026-03-10T00:00:00.000Z",
+        updatedAt: "2026-03-10T00:00:00.000Z",
+      });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /pin active saved view/i }),
+    );
+
+    expect(updateSavedViewSpy).toHaveBeenCalledWith("view-1", {
+      isPinned: true,
+    });
+
+    expect(await screen.findByText(/view pinned/i)).toBeInTheDocument();
+  });
+
+  it("shows feedback after setting the default saved view", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+    });
+
+    vi.spyOn(useBooksStore.getState(), "updateSavedView").mockResolvedValue({
+      id: "view-1",
+      name: "Sci-Fi TBR",
+      filters: {},
+      sort: { key: "createdAt", direction: "desc" },
+      isPinned: false,
+      isDefault: true,
+      createdAt: "2026-03-10T00:00:00.000Z",
+      updatedAt: "2026-03-10T00:00:00.000Z",
+    });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /set default saved view/i }),
+    );
+
+    expect(
+      await screen.findByText(/default view updated/i),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("BooksToolbar bulk actions", () => {
   it("does not show bulk action row when nothing is selected", () => {
     render(

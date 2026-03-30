@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4.0-sprint-2] — Saved Views & Library Controls (2026-03-29)
+
+### Added
+
+- Added persistent user-scoped saved library views.
+- Added library sort state and sort controls to the Books toolbar.
+- Added inline save-view composer with optional default and pinned flags.
+- Added active saved view management actions for rename, pin/unpin, set/unset default, and delete.
+- Added lightweight animated feedback cues for saved view actions.
+- Added bootstrap loading for saved views after books load.
+- Added backend saved-view schema, service, mapper, controller, routes, and Prisma model.
+
+### Changed
+
+- Changed Books toolbar layout so the Books title stays above saved-view controls on all screen sizes.
+- Changed current-view behavior so manual filter/search/sort changes clear the active saved view when state no longer matches.
+- Changed saved-view UX to prefer explicit metadata management over misleading in-place overwrite behavior.
+
+### Removed
+
+- Removed the `Update View` action from active saved view controls.
+
+### Fixed
+
+- Fixed visible-book selection test assumptions after sort was introduced.
+- Fixed saved-view toolbar tests to match the new inline save and active-view management flows.
+
+### Notes
+
+- Overwrite/update-view content behavior is deferred to a future hardening sprint so `Current view` semantics remain accurate.
+
+---
+
 ## [v2.4.0-sprint-1] — Bulk Edit Foundation (2026-03-28)
 
 ### Added
