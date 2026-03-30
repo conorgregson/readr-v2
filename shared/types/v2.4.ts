@@ -32,7 +32,11 @@ export type BulkMutationResult = {
 
 export type SavedLibraryViewFilters = {
   status?: BookStatus[];
-  favorite?: boolean;
+  authors?: string[];
+  genres?: string[];
+  series?: string[];
+  tbrOnly?: boolean;
+  tbrMonth?: string;
   search?: string;
 };
 

@@ -31,10 +31,36 @@ enum FormatSubtype {
   PDF
 }
 
+model SavedView {
+  id           String    @id @default(cuid())
+
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+
+  filters      Json
+  sortKey      String
+  sortDir      String
+
+  isPinned     Boolean   @default(false)
+  isDefault    Boolean   @default(false)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([userId, isPinned])
+  @@index([userId, isDefault])
+  @@index([userId, updatedAt])
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
   passwordHash String
+
+  savedView    SavedView[]
 
   books        Book[]
   sessions     Session[]

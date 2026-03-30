@@ -25,6 +25,7 @@ function uniqueSorted(values: Array<string | undefined>): string[] {
 
 export function BooksPage() {
   const loadBooks = useBooksStore((s) => s.loadBooks);
+  const loadSavedViews = useBooksStore((s) => s.loadSavedViews);
   const isBootstrapped = useBooksStore((s) => s.isBootstrapped);
 
   const error = useBooksStore((s) => s.page.error);
@@ -81,14 +82,15 @@ export function BooksPage() {
 
   useEffect(() => {
     if (isBootstrapped) return;
-    void loadBooks();
-  }, [isBootstrapped, loadBooks]);
 
-  // When an Undo banner appears, move focus to the Undo action for keyboard parity.
-  // This prevents "focus loss" after a delete (especially if the deleted row contained the focused button).
+    void (async () => {
+      await loadBooks();
+      await loadSavedViews();
+    })();
+  }, [isBootstrapped, loadBooks, loadSavedViews]);
+
   useEffect(() => {
     if (!undo) return;
-    // Defer so the button exists in the DOM.
     window.setTimeout(() => {
       undoBtnRef.current?.focus();
     }, 0);
@@ -112,8 +114,6 @@ export function BooksPage() {
     }
     return false;
   };
-
-  // --- derived UI states ----------------------------------
 
   if (!isBootstrapped) {
     return <LoadingState label="Loading books…" />;
@@ -227,7 +227,6 @@ export function BooksPage() {
         <AddBookPanel
           onClose={() => {
             setIsAddOpen(false);
-            // Sprint 8: defer focus restore until after panel unmount.
             window.setTimeout(() => {
               restoreFocus(lastFocusRef.current, {
                 fallbackSelectors: [`[data-focus-id="book:add"]`],
@@ -239,7 +238,6 @@ export function BooksPage() {
             const created = await addBook(data);
             if (created) {
               setIsAddOpen(false);
-              // Sprint 8: defer focus restore until after list rerender.
               window.setTimeout(() => {
                 restoreFocus(lastFocusRef.current, {
                   fallbackSelectors: [`[data-focus-id="book:add"]`],
@@ -260,7 +258,6 @@ export function BooksPage() {
                 onClick={() => {
                   enableLooserSearch();
                   setActiveIndex(-1);
-                  // Keep keyboard users in the search flow.
                   const el = searchRef.current;
                   el?.focus();
                   if (el) {
@@ -277,7 +274,6 @@ export function BooksPage() {
                   setSearchQuery("");
                   setHighlightQuery("");
                   setActiveIndex(-1);
-                  // Sprint 8: search clear must restore focus to search input.
                   const el = searchRef.current;
                   el?.focus();
                   if (el) {
@@ -307,11 +303,9 @@ export function BooksPage() {
             <Button
               ref={undoBtnRef}
               onClick={async () => {
-                // Capture current focus before undo.
                 lastFocusRef.current = captureFocusToken();
                 const ok = await undoLast();
                 if (ok) {
-                  // Sprint 8: restore focus + selection to the restored row when possible.
                   if (undo?.meta.kind === "delete") {
                     const did = focusResultsAndSelectBook(undo.meta.bookId);
                     if (!did) focusResultsAndSelectFirst();
@@ -319,7 +313,6 @@ export function BooksPage() {
                     focusResultsAndSelectFirst();
                   }
                 } else {
-                  // If undo fails, keep focus in a safe place.
                   focusFirstMatch([
                     `#${resultsId}`,
                     'input[type="search"]',
@@ -335,7 +328,6 @@ export function BooksPage() {
               variant="secondary"
               onClick={() => {
                 clearUndo();
-                // After dismissing undo, keep focus in the results flow.
                 focusFirstMatch([
                   `#${resultsId}`,
                   'input[type="search"]',

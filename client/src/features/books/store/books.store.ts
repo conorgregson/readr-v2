@@ -7,6 +7,14 @@ import { applyFilters } from "../filters";
 
 import { BooksService } from "../services/books.service";
 import { smartSearch } from "../search/search.engine";
+import { SavedViewsService } from "../services/saved-views.service";
+import type {
+  CreateSavedViewRequest,
+  SavedLibraryView,
+  SavedLibraryViewFilters,
+  SavedLibraryViewSort,
+  UpdateSavedViewRequest,
+} from "../../../../../shared/types/v2.4";
 
 const UNDO_MS = 6000;
 
@@ -55,6 +63,141 @@ function normalizeSelectedIds(ids: BookId[]): BookId[] {
   return [...new Set(ids)];
 }
 
+function uniqueTrimmed(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function compareText(a: string | undefined, b: string | undefined): number {
+  return (a ?? "").localeCompare(b ?? "", undefined, { sensitivity: "base" });
+}
+
+function compareDate(a: string | undefined, b: string | undefined): number {
+  const at = a ? new Date(a).getTime() : 0;
+  const bt = b ? new Date(b).getTime() : 0;
+  return at - bt;
+}
+
+function sortBooks(books: Book[], sort: SavedLibraryViewSort): Book[] {
+  const sorted = [...books];
+
+  sorted.sort((a, b) => {
+    let result = 0;
+
+    switch (sort.key) {
+      case "title":
+        result = compareText(a.title, b.title);
+        break;
+      case "author":
+        result = compareText(a.author, b.author);
+        break;
+      case "createdAt":
+        result = compareDate(a.createdAt, b.createdAt);
+        break;
+      case "updatedAt":
+        result = compareDate(a.updatedAt, b.updatedAt);
+        break;
+      case "finishedAt":
+        result = compareDate(a.finishedAt, b.finishedAt);
+        break;
+      default:
+        result = 0;
+    }
+
+    if (result === 0) {
+      result = compareDate(a.createdAt, b.createdAt);
+    }
+
+    return sort.direction === "asc" ? result : -result;
+  });
+
+  return sorted;
+}
+
+function toSavedViewFilters(
+  filters: BooksFilters,
+  searchQuery: string,
+): SavedLibraryViewFilters {
+  const out: SavedLibraryViewFilters = {};
+
+  if (filters.status.length > 0) out.status = [...filters.status];
+  if (filters.authors.length > 0) out.authors = uniqueTrimmed(filters.authors);
+  if (filters.genres.length > 0) out.genres = uniqueTrimmed(filters.genres);
+  if (filters.series.length > 0) out.series = uniqueTrimmed(filters.series);
+  if (filters.tbrOnly) out.tbrOnly = true;
+  if (filters.tbrMonth.trim()) out.tbrMonth = filters.tbrMonth.trim();
+
+  const q = searchQuery.trim();
+  if (q) out.search = q;
+
+  return out;
+}
+
+function toBooksFilters(filters?: SavedLibraryViewFilters): BooksFilters {
+  return {
+    status: filters?.status ? [...filters.status] : [],
+    authors: filters?.authors ? [...filters.authors] : [],
+    genres: filters?.genres ? [...filters.genres] : [],
+    series: filters?.series ? [...filters.series] : [],
+    tbrOnly: filters?.tbrOnly ?? false,
+    tbrMonth: filters?.tbrMonth ?? "",
+  };
+}
+
+function savedviewMatchesCurrentState(
+  view: SavedLibraryView,
+  state: {
+    filters: BooksFilters;
+    searchQuery: string;
+    highlightQuery: string;
+    sort: SavedLibraryViewSort;
+  },
+): boolean {
+  const committedQuery =
+    state.highlightQuery.trim() || state.searchQuery.trim();
+
+  const currentFilters = toSavedViewFilters(state.filters, committedQuery);
+
+  const sameArray = (a?: string[], b?: string[]) => {
+    const aa = a ?? [];
+    const bb = b ?? [];
+    return (
+      aa.length === bb.length && aa.every((value, index) => value === bb[index])
+    );
+  };
+
+  return (
+    sameArray(currentFilters.status, view.filters.status) &&
+    sameArray(currentFilters.authors, view.filters.authors) &&
+    sameArray(currentFilters.genres, view.filters.genres) &&
+    sameArray(currentFilters.series, view.filters.series) &&
+    (currentFilters.tbrOnly ?? false) === (view.filters.tbrOnly ?? false) &&
+    (currentFilters.tbrMonth ?? "") === (view.filters.tbrMonth ?? "") &&
+    (currentFilters.search ?? "") === (view.filters.search ?? "") &&
+    state.sort.key === view.sort.key &&
+    state.sort.direction === view.sort.direction
+  );
+}
+
+function clearActiveViewIfDirty(state: {
+  savedViews: SavedLibraryView[];
+  activeViewId: string | null;
+  filters: BooksFilters;
+  searchQuery: string;
+  highlightQuery: string;
+  sort: SavedLibraryViewSort;
+}): string | null {
+  if (!state.activeViewId) return null;
+
+  const activeView = state.savedViews.find(
+    (view) => view.id === state.activeViewId,
+  );
+  if (!activeView) return null;
+
+  return savedviewMatchesCurrentState(activeView, state)
+    ? state.activeViewId
+    : null;
+}
+
 type BooksState = {
   isBootstrapped: boolean;
   isLoading: boolean;
@@ -89,6 +232,35 @@ type BooksState = {
   searchQuery: string;
   highlightQuery: string;
   searchFuzzyOverride: number | null;
+
+  sort: SavedLibraryViewSort;
+  setSort: (sort: SavedLibraryViewSort) => void;
+
+  savedViews: SavedLibraryView[];
+  savedViewsLoaded: boolean;
+  activeViewId: string | null;
+
+  loadSavedViews: () => Promise<void>;
+  createSavedView: (
+    input: CreateSavedViewRequest,
+  ) => Promise<SavedLibraryView | null>;
+  saveCurrentView: (input: {
+    name: string;
+    isPinned?: boolean;
+    isDefault?: boolean;
+  }) => Promise<SavedLibraryView | null>;
+  updateSavedView: (
+    id: string,
+    patch: UpdateSavedViewRequest,
+  ) => Promise<SavedLibraryView | null>;
+  deleteSavedView: (id: string) => Promise<boolean>;
+  applySavedView: (id: string) => boolean;
+  clearActiveView: () => void;
+  captureCurrentViewPayload: (input: {
+    name: string;
+    isPinned?: boolean;
+    isDefault?: boolean;
+  }) => CreateSavedViewRequest;
 
   selectedIds: BookId[];
   isSelected: (id: BookId) => boolean;
@@ -126,6 +298,11 @@ function clearUndoTimer() {
   pendingBulkDeleteIds = null;
 }
 
+const defaultSort = (): SavedLibraryViewSort => ({
+  key: "createdAt",
+  direction: "desc",
+});
+
 const initialState: Pick<
   BooksState,
   | "page"
@@ -138,6 +315,10 @@ const initialState: Pick<
   | "searchFuzzyOverride"
   | "undo"
   | "selectedIds"
+  | "sort"
+  | "savedViews"
+  | "savedViewsLoaded"
+  | "activeViewId"
 > = {
   page: { mode: "results" },
   isBootstrapped: false,
@@ -149,6 +330,10 @@ const initialState: Pick<
   searchFuzzyOverride: null,
   undo: null,
   selectedIds: [],
+  sort: defaultSort(),
+  savedViews: [],
+  savedViewsLoaded: false,
+  activeViewId: null,
 };
 
 export const useBooksStore = create<BooksState>((set, get) => ({
@@ -495,33 +680,6 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     return true;
   },
 
-  clearUndo: () => {
-    clearUndoTimer();
-    set({ undo: null });
-  },
-
-  undoLast: async () => {
-    const rec = get().undo;
-    if (!rec) return false;
-
-    if (Date.now() > rec.expiresAtMs) {
-      clearUndoTimer();
-      set({ undo: null });
-      return false;
-    }
-
-    clearUndoTimer();
-
-    set({
-      undo: null,
-      page: { mode: "results" },
-      books: rec.before,
-      selectedIds: [],
-    });
-
-    return true;
-  },
-
   loadBooks: async () => {
     try {
       set({
@@ -549,9 +707,247 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     }
   },
 
+  loadSavedViews: async () => {
+    try {
+      const savedViews = await SavedViewsService.list();
+
+      set((s) => {
+        let nextFilters = s.filters;
+        let nextSearchQuery = s.searchQuery;
+        let nextHighlightQuery = s.highlightQuery;
+        let nextSort = s.sort;
+        let nextActiveViewId = s.activeViewId;
+
+        if (!s.activeViewId) {
+          const defaultView = savedViews.find((view) => view.isDefault);
+          if (defaultView) {
+            nextFilters = toBooksFilters(defaultView.filters);
+            nextSearchQuery = defaultView.filters.search ?? "";
+            nextHighlightQuery = defaultView.filters.search ?? "";
+            nextSort = defaultView.sort;
+            nextActiveViewId = defaultView.id;
+          }
+        } else {
+          const activeExists = savedViews.some(
+            (view) => view.id === s.activeViewId,
+          );
+          if (!activeExists) {
+            nextActiveViewId = null;
+          }
+        }
+
+        return {
+          savedViews,
+          savedViewsLoaded: true,
+          filters: nextFilters,
+          searchQuery: nextSearchQuery,
+          highlightQuery: nextHighlightQuery,
+          sort: nextSort,
+          activeViewId: nextActiveViewId,
+          searchFuzzyOverride: null,
+        };
+      });
+    } catch (e) {
+      set({
+        savedViewsLoaded: true,
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to load saved views",
+          },
+        },
+      });
+    }
+  },
+
+  createSavedView: async (input) => {
+    try {
+      const created = await SavedViewsService.create(input);
+
+      set((s) => ({
+        savedViews: [
+          created,
+          ...s.savedViews.filter((view) => view.id !== created.id),
+        ],
+        activeViewId: created.id,
+        page: { mode: "results" },
+      }));
+
+      if (created.isDefault) {
+        set((s) => ({
+          savedViews: s.savedViews.map((view) =>
+            view.id === created.id ? created : { ...view, isDefault: false },
+          ),
+        }));
+      }
+
+      return created;
+    } catch (e) {
+      set({
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to create saved view",
+          },
+        },
+      });
+      return null;
+    }
+  },
+
+  saveCurrentView: async ({ name, isPinned, isDefault }) => {
+    const payload = get().captureCurrentViewPayload({
+      name,
+      isPinned,
+      isDefault,
+    });
+    return get().createSavedView(payload);
+  },
+
+  updateSavedView: async (id, patch) => {
+    try {
+      const updated = await SavedViewsService.update(id, patch);
+
+      set((s) => ({
+        savedViews: s.savedViews.map((view) =>
+          view.id === updated.id
+            ? updated
+            : updated.isDefault
+              ? { ...view, isDefault: false }
+              : view,
+        ),
+        page: { mode: "results" },
+      }));
+
+      if (get().activeViewId === updated.id) {
+        set({
+          filters: toBooksFilters(updated.filters),
+          searchQuery: updated.filters.search ?? "",
+          highlightQuery: updated.filters.search ?? "",
+          sort: updated.sort,
+          searchFuzzyOverride: null,
+        });
+      }
+
+      return updated;
+    } catch (e) {
+      set({
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to update saved view",
+          },
+        },
+      });
+      return null;
+    }
+  },
+
+  deleteSavedView: async (id) => {
+    try {
+      await SavedViewsService.remove(id);
+
+      set((s) => ({
+        savedViews: s.savedViews.filter((view) => view.id !== id),
+        activeViewId: s.activeViewId === id ? null : s.activeViewId,
+        page: { mode: "results" },
+      }));
+
+      return true;
+    } catch (e) {
+      set({
+        page: {
+          mode: "error",
+          error: {
+            message: (e as Error)?.message ?? "Failed to delete saved view",
+          },
+        },
+      });
+      return false;
+    }
+  },
+
+  applySavedView: (id) => {
+    const view = get().savedViews.find((item) => item.id === id);
+    if (!view) return false;
+
+    set({
+      filters: toBooksFilters(view.filters),
+      searchQuery: view.filters.search ?? "",
+      highlightQuery: view.filters.search ?? "",
+      sort: view.sort,
+      activeViewId: view.id,
+      searchFuzzyOverride: null,
+      selectedIds: [],
+      page: { mode: "results" },
+    });
+
+    return true;
+  },
+
+  clearActiveView: () =>
+    set({
+      activeViewId: null,
+    }),
+
+  captureCurrentViewPayload: ({ name, isPinned, isDefault }) => {
+    const state = get();
+    const committedQuery =
+      state.highlightQuery.trim() || state.searchQuery.trim();
+
+    return {
+      name: reqTrim("Name", name),
+      filters: toSavedViewFilters(state.filters, committedQuery),
+      sort: state.sort,
+      ...(isPinned !== undefined ? { isPinned } : {}),
+      ...(isDefault !== undefined ? { isDefault } : {}),
+    };
+  },
+
+  clearUndo: () => {
+    clearUndoTimer();
+    set({ undo: null });
+  },
+
+  undoLast: async () => {
+    const rec = get().undo;
+    if (!rec) return false;
+
+    if (Date.now() > rec.expiresAtMs) {
+      clearUndoTimer();
+      set({ undo: null });
+      return false;
+    }
+
+    clearUndoTimer();
+
+    set({
+      undo: null,
+      page: { mode: "results" },
+      books: rec.before,
+      selectedIds: [],
+    });
+
+    return true;
+  },
+
   setError: (error) =>
     set(() => ({
       page: { mode: error ? "error" : "results", error },
+    })),
+
+  setSort: (sort) =>
+    set((s) => ({
+      sort,
+      activeViewId: clearActiveViewIfDirty({
+        savedViews: s.savedViews,
+        activeViewId: s.activeViewId,
+        filters: s.filters,
+        searchQuery: s.searchQuery,
+        highlightQuery: s.highlightQuery,
+        sort,
+      }),
+      searchFuzzyOverride: null,
     })),
 
   isSelected: (id) => get().selectedIds.includes(id),
@@ -587,44 +983,86 @@ export const useBooksStore = create<BooksState>((set, get) => ({
   selectedCount: () => get().selectedIds.length,
 
   setSearchQuery: (q) =>
-    set(() => ({
+    set((s) => ({
       searchQuery: q,
+      activeViewId: clearActiveViewIfDirty({
+        savedViews: s.savedViews,
+        activeViewId: s.activeViewId,
+        filters: s.filters,
+        searchQuery: q,
+        highlightQuery: s.highlightQuery,
+        sort: s.sort,
+      }),
       searchFuzzyOverride: null,
     })),
 
   setHighlightQuery: (q) =>
-    set(() => ({
+    set((s) => ({
       highlightQuery: q,
+      activeViewId: clearActiveViewIfDirty({
+        savedViews: s.savedViews,
+        activeViewId: s.activeViewId,
+        filters: s.filters,
+        searchQuery: s.searchQuery,
+        highlightQuery: q,
+        sort: s.sort,
+      }),
     })),
 
   enableLooserSearch: () => set(() => ({ searchFuzzyOverride: 2 })),
 
   setFilters: (next) =>
-    set((s) => ({
-      filters: { ...s.filters, ...next },
-      searchFuzzyOverride: null,
-    })),
+    set((s) => {
+      const filters = { ...s.filters, ...next };
+
+      return {
+        filters,
+        activeViewId: clearActiveViewIfDirty({
+          savedViews: s.savedViews,
+          activeViewId: s.activeViewId,
+          filters,
+          searchQuery: s.searchQuery,
+          highlightQuery: s.highlightQuery,
+          sort: s.sort,
+        }),
+        searchFuzzyOverride: null,
+      };
+    }),
 
   clearFilters: () =>
-    set(() => ({
-      filters: defaultBooksFilters(),
-      searchFuzzyOverride: null,
-    })),
+    set((s) => {
+      const filters = defaultBooksFilters();
+
+      return {
+        filters,
+        activeViewId: clearActiveViewIfDirty({
+          savedViews: s.savedViews,
+          activeViewId: s.activeViewId,
+          filters,
+          searchQuery: s.searchQuery,
+          highlightQuery: s.highlightQuery,
+          sort: s.sort,
+        }),
+        searchFuzzyOverride: null,
+      };
+    }),
 
   visibleBooks: () => {
-    const { books, filters, searchQuery, searchFuzzyOverride } = get();
+    const { books, filters, searchQuery, searchFuzzyOverride, sort } = get();
 
     const base = applyFilters(books, filters);
 
     const q = searchQuery.trim();
-    if (!q) return base;
+    const searched = !q
+      ? base
+      : (
+          smartSearch(base, q, {
+            fuzzyMaxDistance: searchFuzzyOverride ?? undefined,
+            limit: 500,
+          }) as VisibleSearchResult[]
+        ).map((r) => r.ref);
 
-    const results = smartSearch(base, q, {
-      fuzzyMaxDistance: searchFuzzyOverride ?? undefined,
-      limit: 500,
-    }) as VisibleSearchResult[];
-
-    return results.map((r) => r.ref);
+    return sortBooks(searched, sort);
   },
 
   reset: () => {

@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BooksPage } from "./page";
 import { useBooksStore } from "./store/books.store";
 import { BooksService } from "./services/books.service";
+import { SavedViewsService } from "./services/saved-views.service";
 import type { Book } from "./types";
 
 vi.mock("./services/books.service");
+vi.mock("./services/saved-views.service");
 
 vi.mock("./components/BooksFilters", () => ({
   BooksFiltersPanel: () => <div data-testid="books-filters-panel" />,
@@ -58,6 +60,28 @@ function makeBook(overrides: Partial<Book> = {}): Book {
 beforeEach(() => {
   useBooksStore.getState().reset();
   vi.clearAllMocks();
+  vi.mocked(SavedViewsService.list).mockResolvedValue([]);
+});
+
+describe("BooksPage bootstrapping", () => {
+  it("loads books and saved views on first mount", async () => {
+    vi.mocked(BooksService.list).mockResolvedValue([
+      makeBook({ id: "a", title: "Dune" }),
+    ]);
+    vi.mocked(SavedViewsService.list).mockResolvedValue([]);
+
+    render(<BooksPage />);
+
+    await waitFor(() => {
+      expect(BooksService.list).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(SavedViewsService.list).toHaveBeenCalledTimes(1);
+    });
+
+    expect(await screen.findByText("Dune")).toBeInTheDocument();
+  });
 });
 
 describe("BooksPage undo flow", () => {
@@ -82,8 +106,13 @@ describe("BooksPage undo flow", () => {
         tbrMonth: "",
       },
       searchQuery: "",
+      highlightQuery: "",
       searchFuzzyOverride: null,
       undo: null,
+      sort: { key: "createdAt", direction: "desc" },
+      savedViews: [],
+      savedViewsLoaded: true,
+      activeViewId: null,
     });
 
     render(<BooksPage />);

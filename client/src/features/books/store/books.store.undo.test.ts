@@ -143,7 +143,12 @@ describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
 
     useBooksStore.getState().selectAllVisible();
 
-    expect(useBooksStore.getState().selectedIds).toEqual(["1", "2"]);
+    const visibleIds = useBooksStore
+      .getState()
+      .visibleBooks()
+      .map((b) => b.id);
+
+    expect(useBooksStore.getState().selectedIds).toEqual(visibleIds);
     expect(useBooksStore.getState().selectedCount()).toBe(2);
   });
 
@@ -277,5 +282,147 @@ describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
     await useBooksStore.getState().undoLast();
 
     expect(useBooksStore.getState().books).toEqual(books);
+  });
+});
+
+describe("BooksStore saved view dirty-state behavior (Sprint 2)", () => {
+  it("clears activeViewId when filters change away from the applied saved view", () => {
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sci-Fi TBR",
+          filters: {
+            status: ["planned"],
+            genres: ["Sci-Fi"],
+          },
+          sort: { key: "title", direction: "asc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+      filters: {
+        status: ["planned"],
+        authors: [],
+        genres: ["Sci-Fi"],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "",
+      highlightQuery: "",
+      sort: { key: "title", direction: "asc" },
+    });
+
+    useBooksStore.getState().setFilters({ genres: ["Fantasy"] });
+
+    expect(useBooksStore.getState().activeViewId).toBeNull();
+  });
+
+  it("clears activeViewId when committed search changes away from the applied saved view", () => {
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Search View",
+          filters: {
+            search: "dune",
+          },
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+      filters: {
+        status: [],
+        authors: [],
+        genres: [],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "dune",
+      highlightQuery: "dune",
+      sort: { key: "createdAt", direction: "desc" },
+    });
+
+    useBooksStore.getState().setHighlightQuery("hyperion");
+
+    expect(useBooksStore.getState().activeViewId).toBeNull();
+  });
+
+  it("clears activeViewId when sort changes away from the applied saved view", () => {
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Sorted View",
+          filters: {},
+          sort: { key: "createdAt", direction: "desc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+      filters: {
+        status: [],
+        authors: [],
+        genres: [],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "",
+      highlightQuery: "",
+      sort: { key: "createdAt", direction: "desc" },
+    });
+
+    useBooksStore.getState().setSort({ key: "title", direction: "asc" });
+
+    expect(useBooksStore.getState().activeViewId).toBeNull();
+  });
+
+  it("keeps activeViewId when changes still match the applied saved view", () => {
+    useBooksStore.setState({
+      savedViews: [
+        {
+          id: "view-1",
+          name: "Stable View",
+          filters: {
+            status: ["planned"],
+            search: "dune",
+          },
+          sort: { key: "title", direction: "asc" },
+          isPinned: false,
+          isDefault: false,
+          createdAt: "2026-03-10T00:00:00.000Z",
+          updatedAt: "2026-03-10T00:00:00.000Z",
+        },
+      ],
+      activeViewId: "view-1",
+      filters: {
+        status: ["planned"],
+        authors: [],
+        genres: [],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "dune",
+      highlightQuery: "dune",
+      sort: { key: "title", direction: "asc" },
+    });
+
+    useBooksStore.getState().setHighlightQuery("dune");
+
+    expect(useBooksStore.getState().activeViewId).toBe("view-1");
   });
 });
