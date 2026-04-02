@@ -11,6 +11,8 @@ import { AppError } from "./utils/errors";
 import { errorHandler, notFoundHandler } from "./utils/http";
 import { savedViewsRouter } from "./modules/saved-views/saved-views.routes";
 
+import { statsRouter } from "./modules/stats/stats.router";
+
 const app = express();
 
 app.disable("x-powered-by");
@@ -57,6 +59,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/books", booksRouter);
 app.use("/api/sessions", sessionsRouter);
+app.use("/api/stats", statsRouter);
 app.use("/api/backup", backupRouter);
 app.use("/api/saved-views", savedViewsRouter);
 

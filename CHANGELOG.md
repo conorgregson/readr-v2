@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4.0-sprint-3] — Stats & Dashboard (2026-04-02)
+
+### Added
+
+- Added protected stats summary endpoint for server-derived dashboard totals
+- Added protected stats trend endpoint for pages, sessions, and books finished metrics
+- Added dashboard summary cards to the client Stats page
+- Added Stats feature service, store, and route wiring
+- Added primary navigation access to the Stats page
+- Added SVG bar chart visualization for recent trend data
+
+### Changed
+
+- Changed current-period summary logic to reflect this month so far
+- Changed trend aggregation to use explicit metric-specific query paths
+- Changed chart rendering from minimal inline bars to a clearer dashboard-style bar chart
+- Changed chart polish to hide zero bars and improve axis spacing
+
+### Fixed
+
+- Fixed stats trend query handling in the controller validation path
+- Fixed session trend aggregation so daily session counts render correctly
+- Fixed books finished trend anchoring so recent completion activity appears correctly
+- Fixed dashboard trend rendering for sparse datasets
+
+### Notes
+
+- Sprint 3 introduces read-only analytics surfaces without adding mutation complexity
+- Server-owned aggregation boundaries remain preserved for dashboard correctness
+
+---
+
 ## [v2.4.0-sprint-2] — Saved Views & Library Controls (2026-03-29)
 
 ### Added

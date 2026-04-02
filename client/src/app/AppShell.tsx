@@ -4,6 +4,7 @@ import { AuthPage } from "../features/auth/page";
 import { useAuthStore } from "../features/auth/store/auth.store";
 import { useBooksStore } from "../features/books/store/books.store";
 import { useSessionsStore } from "../features/sessions/store/sessions.store";
+import { useStatsStore } from "../features/stats/store/stats.store";
 
 function navClass({ isActive }: { isActive: boolean }) {
   return [
@@ -38,6 +39,7 @@ export function AppShell() {
 
   const resetBooks = useBooksStore((s) => s.reset);
   const resetSessions = useSessionsStore((s) => s.reset);
+  const resetStats = useStatsStore((s) => s.reset);
 
   useEffect(() => {
     void restoreAuth();
@@ -46,6 +48,7 @@ export function AppShell() {
   function handleLogout() {
     resetBooks();
     resetSessions();
+    resetStats();
     logout();
   }
 
@@ -78,6 +81,9 @@ export function AppShell() {
               </NavLink>
               <NavLink to="/sessions" className={navClass}>
                 Sessions
+              </NavLink>
+              <NavLink to="/stats" className={navClass}>
+                Stats
               </NavLink>
               <NavLink to="/settings" className={navClass}>
                 Settings
