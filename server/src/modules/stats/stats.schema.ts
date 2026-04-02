@@ -30,6 +30,10 @@ export const readingTrendResponseSchema = z.object({
   points: z.array(timeSeriesPointSchema),
 });
 
+export const readingTrendQuerySchema = z.object({
+  metric: readingTrendMetricSchema.default("pages"),
+});
+
 export type DashboardSummaryResponseOutput = z.infer<
   typeof dashboardSummaryResponseSchema
 >;
