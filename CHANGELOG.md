@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4.0-sprint-4] — Goals, Streaks & Badges (2026-04-06)
+
+### Added
+
+- Added server-derived reading goals for books and pages progress.
+- Added server-derived streak tracking with current and longest streak summaries.
+- Added badge progression for books, pages, streaks, and session milestones.
+- Added the read-only `/api/engagement` API surface for engagement snapshot data.
+- Added engagement UI to the dashboard for goals, streaks, and badges.
+- Added server and client tests covering engagement logic, integration, and reset behavior.
+
+### Changed
+
+- Built Sprint 4 on top of the existing stats foundation rather than introducing duplicate aggregate logic.
+- Updated streak badge behavior to reflect longest streak progress.
+- Kept engagement evaluation server-owned so the UI remains presentation-focused.
+- Updated the authenticated app shell label to reflect v2.4 feature work.
+
+### Removed
+
+- Removed the need for client-side goal, streak, or badge evaluation as a source of truth.
+
+### Notes
+
+- Sprint 4 adds the motivation layer for v2.4 while preserving the established authenticated API-backed architecture.
+- Goals, streaks, and badges remain read-only in this release phase.
+
+---
+
 ## [v2.4.0-sprint-3] — Stats & Dashboard (2026-04-02)
 
 ### Added

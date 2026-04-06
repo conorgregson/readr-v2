@@ -4,6 +4,8 @@ import { ErrorState } from "../../shared/ui/states/ErrorState";
 import { Button } from "../../shared/ui/Button";
 import { useStatsStore } from "./store/stats.store";
 import type { ReadingTrendMetric } from "../../../../shared/types/v2.4";
+import { useEngagementStore } from "../engagement/store/engagement.store";
+import { EngagementPanel } from "../engagement/components/EngagementPanel";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat().format(value);
@@ -199,6 +201,12 @@ export function StatsPage() {
   const isBootstrapped = useStatsStore((s) => s.isBootstrapped);
   const isLoadingSummary = useStatsStore((s) => s.isLoadingSummary);
   const isLoadingTrend = useStatsStore((s) => s.isLoadingTrend);
+  const engagementPage = useEngagementStore((s) => s.page);
+  const engagementSnapshot = useEngagementStore((s) => s.snapshot);
+  const isEngagementBootstrapped = useEngagementStore((s) => s.isBootstrapped);
+  const isLoadingEngagement = useEngagementStore((s) => s.isLoading);
+  const loadEngagement = useEngagementStore((s) => s.loadEngagement);
+  const setEngagementError = useEngagementStore((s) => s.setError);
   const summary = useStatsStore((s) => s.summary);
   const trend = useStatsStore((s) => s.trend);
   const selectedMetric = useStatsStore((s) => s.selectedMetric);
@@ -211,6 +219,11 @@ export function StatsPage() {
     void loadStats();
   }, [isBootstrapped, loadStats]);
 
+  useEffect(() => {
+    if (isEngagementBootstrapped) return;
+    void loadEngagement();
+  }, [isEngagementBootstrapped, loadEngagement]);
+
   const trendLabels = useMemo(
     () => trend?.points.map((point) => point.date) ?? [],
     [trend],
@@ -222,22 +235,36 @@ export function StatsPage() {
   );
 
   if (
-    !isBootstrapped &&
-    (isLoadingSummary || isLoadingTrend || !summary || !trend)
+    (!isBootstrapped &&
+      (isLoadingSummary || isLoadingTrend || !summary || !trend)) ||
+    (!isEngagementBootstrapped && (isLoadingEngagement || !engagementSnapshot))
   ) {
     return <LoadingState label="Loading dashboard..." />;
   }
 
-  if (page.error) {
+  if (page.error || engagementPage.error) {
     return (
       <ErrorState
-        message={page.error.message ?? "Unknown error"}
-        action={<Button onClick={() => setError(undefined)}>Dismiss</Button>}
+        message={
+          page.error?.message ??
+          engagementPage.error?.message ??
+          "Unknown error"
+        }
+        action={
+          <Button
+            onClick={() => {
+              setError(undefined);
+              setEngagementError(undefined);
+            }}
+          >
+            Dismiss
+          </Button>
+        }
       />
     );
   }
 
-  if (!summary || !trend) {
+  if (!summary || !trend || !engagementSnapshot) {
     return <LoadingState label="Loading dashboard..." />;
   }
 
@@ -316,6 +343,18 @@ export function StatsPage() {
             metric={selectedMetric}
           />
         )}
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-50">Engagement</h2>
+          <p className="text-sm text-slate-400">
+            Goals, streaks, and badge progress derived from your reading
+            activity.
+          </p>
+        </div>
+
+        <EngagementPanel snapshot={engagementSnapshot} />
       </section>
     </div>
   );

@@ -1,35 +1,54 @@
-export type GoalProgress = {
-  target: number;
-  progress: number;
-  complete: boolean;
+import type { BadgeTier } from "../../../../shared/types/v2.4";
+
+export type GoalTargets = {
+  yearlyBooksTarget?: number;
+  yearlyPagesTarget?: number;
+  monthlyBooksTarget?: number;
 };
 
-export type ReadingGoalsResponse = {
-  yearlyBooksGoal?: GoalProgress;
-  yearlyPagesGoal?: GoalProgress;
-  monthlyBooksGoal?: GoalProgress;
-};
-
-export type ReadingStreakResponse = {
-  currentStreakDays: number;
-  longestStreakDays: number;
+export type StreakComputationInput = {
+  readingDates: string[];
   graceWindowEnabled: boolean;
+  today?: string;
 };
 
-export type BadgeTier = "bronze" | "silver" | "gold";
+export type GoalComputationInput = {
+  yearlyBooksTarget?: number;
+  yearlyPagesTarget?: number;
+  monthlyBooksTarget?: number;
+  finishedBooksThisYear: number;
+  pagesReadThisYear: number;
+  finishedBooksThisMonth: number;
+};
 
-export type BadgeProgress = {
+export type BadgeMetric =
+  | "finishedBooks"
+  | "pagesRead"
+  | "currentStreak"
+  | "longestStreak"
+  | "sessionsLogged";
+
+export type BadgeDefinition = {
   key: string;
   title: string;
   description: string;
-  tier?: BadgeTier;
-  unlocked: boolean;
-  progress: number;
+  metric: BadgeMetric;
   target: number;
+  tier?: BadgeTier;
 };
 
-export type EngagementSnapshotResponse = {
-  goals: ReadingGoalsResponse;
-  streaks: ReadingStreakResponse;
-  badges: BadgeProgress[];
+export type EngagementAggregateMetrics = {
+  finishedBooks: number;
+  finishedBooksThisYear: number;
+  finishedBooksThisMonth: number;
+  pagesRead: number;
+  pagesReadThisYear: number;
+  sessionsLogged: number;
+  readingDates: string[];
+};
+
+export type EngagementSnapshotDependencies = {
+  metrics: EngagementAggregateMetrics;
+  goals?: GoalTargets;
+  graceWindowEnabled?: boolean;
 };

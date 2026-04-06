@@ -7,7 +7,7 @@ import type {
 import type { PageError, PageState } from "../../../shared/types/ui-state";
 import { StatsService } from "../services/stats.service";
 
-type StatsState = {
+export type StatsState = {
   page: PageState;
   isBootstrapped: boolean;
   isLoadingSummary: boolean;

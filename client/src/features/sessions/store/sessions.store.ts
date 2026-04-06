@@ -60,7 +60,7 @@ type UndoDeleteSession = {
   expiresAt: number; // ms epoch
 };
 
-type SessionsState = {
+export type SessionsState = {
   // UI state
   page: PageState;
   isBootstrapped: boolean;
