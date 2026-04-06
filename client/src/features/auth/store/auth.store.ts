@@ -11,7 +11,7 @@ import {
   type AuthUser,
 } from "../services/auth.service";
 
-type AuthState = {
+export type AuthState = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isBootstrapping: boolean;

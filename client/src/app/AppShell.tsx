@@ -5,6 +5,7 @@ import { useAuthStore } from "../features/auth/store/auth.store";
 import { useBooksStore } from "../features/books/store/books.store";
 import { useSessionsStore } from "../features/sessions/store/sessions.store";
 import { useStatsStore } from "../features/stats/store/stats.store";
+import { useEngagementStore } from "../features/engagement/store/engagement.store";
 
 function navClass({ isActive }: { isActive: boolean }) {
   return [
@@ -40,6 +41,7 @@ export function AppShell() {
   const resetBooks = useBooksStore((s) => s.reset);
   const resetSessions = useSessionsStore((s) => s.reset);
   const resetStats = useStatsStore((s) => s.reset);
+  const resetEngagement = useEngagementStore((s) => s.reset);
 
   useEffect(() => {
     void restoreAuth();
@@ -49,6 +51,7 @@ export function AppShell() {
     resetBooks();
     resetSessions();
     resetStats();
+    resetEngagement();
     logout();
   }
 
@@ -70,7 +73,7 @@ export function AppShell() {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="font-semibold text-sm tracking-wide">Readr</span>
-              <span className="text-xs text-slate-400">v2.3 · Auth</span>
+              <span className="text-xs text-slate-400">v2.4 · Features</span>
             </div>
           </div>
 

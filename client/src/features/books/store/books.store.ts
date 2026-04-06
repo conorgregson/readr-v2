@@ -198,7 +198,7 @@ function clearActiveViewIfDirty(state: {
     : null;
 }
 
-type BooksState = {
+export type BooksState = {
   isBootstrapped: boolean;
   isLoading: boolean;
 
