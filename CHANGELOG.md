@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4.0] — Engagement & Insights Expansion (2026-04-06)
+
+### Added
+
+- Added multi-book bulk edit workflows with grouped mutation handling.
+- Added persistent saved library views with user-scoped filters, sorts, and active-view controls.
+- Added protected stats summary and trend endpoints for server-derived dashboard insights.
+- Added dashboard summary cards and chart-based reading trend visualization.
+- Added server-derived engagement surfaces for reading goals, streaks, and badge progression.
+- Added grouped Undo support for bulk delete and bulk status update flows.
+- Added regression coverage across bulk actions, saved views, dashboard recovery, and engagement behavior.
+
+### Changed
+
+- Changed v2.4 implementation to preserve server-owned derived-state boundaries for stats, goals, streaks, and badges.
+- Changed Books workflow to support multi-select operations, grouped Undo behavior, and stronger bulk-action hardening.
+- Changed saved-view UX to prefer explicit active-view management over misleading overwrite behavior.
+- Changed BooksPage and StatsPage recovery flows from dismiss-only behavior to Retry + Dismiss actions.
+- Changed the authenticated app shell label to reflect v2.4 feature work.
+
+### Removed
+
+- Removed unsafe local-only bulk status Undo behavior.
+- Removed the need for client-side engagement evaluation as a source of truth.
+- Removed the `Update View` action from active saved view controls.
+
+### Fixed
+
+- Fixed bulk mutation recovery so grouped status changes can restore mixed prior states safely.
+- Fixed weak page-level recovery behavior where clearing errors did not retry failed loads.
+- Fixed saved-view toolbar and selection test assumptions after sort and active-view workflows were introduced.
+- Fixed stats trend and aggregation issues affecting session counts, books finished, and sparse dashboard rendering.
+
+### Notes
+
+- v2.4 completes the engagement and insights expansion milestone on top of the stable authenticated, API-backed architecture introduced in v2.0–v2.3.
+- This release adds advanced UX and motivation systems without introducing a new architectural migration.
+- Correctness-sensitive derived data remains server-owned to preserve consistency across dashboard and engagement surfaces.
+
+---
+
 ## [v2.4.0-sprint-5] — Hardening, Accessibility & Release Lock (2026-04-06)
 
 ### Added
