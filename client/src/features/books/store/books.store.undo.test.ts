@@ -22,6 +22,7 @@ function seedBooks(): Book[] {
       status: "reading",
       createdAt: "2024-01-02",
       updatedAt: "2024-01-02",
+      startedAt: "2024-01-02T10:00:00.000Z",
     },
   ] as Book[];
 }
@@ -31,7 +32,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
+describe("BooksStore Undo and Bulk Actions (v2.4 Sprint 1 + Sprint 5)", () => {
   it("delete removes book and sets undo record", async () => {
     const books = seedBooks();
 
@@ -152,7 +153,7 @@ describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
     expect(useBooksStore.getState().selectedCount()).toBe(2);
   });
 
-  it("bulk update changes selected books and clears selection", async () => {
+  it("bulk update changes selected books, clears selection, and sets grouped undo", async () => {
     const books = seedBooks();
 
     useBooksStore.setState({
@@ -179,6 +180,7 @@ describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
         ...books[1],
         status: "finished",
         updatedAt: "2026-03-27T10:00:00.000Z",
+        startedAt: books[1].startedAt,
         finishedAt: "2026-03-27T10:00:00.000Z",
       },
     ] as Book[]);
@@ -197,7 +199,16 @@ describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
 
     expect(state.selectedIds).toEqual([]);
     expect(state.books.every((book) => book.status === "finished")).toBe(true);
-    expect(state.undo).toBeNull();
+    expect(state.undo).not.toBeNull();
+    expect(state.undo?.meta.kind).toBe("bulk-update");
+
+    if (state.undo?.meta.kind === "bulk-update") {
+      expect(state.undo.meta.affectedIds).toEqual(["1", "2"]);
+      expect(state.undo.meta.restoreStatuses).toEqual([
+        { id: "1", status: "planned" },
+        { id: "2", status: "reading" },
+      ]);
+    }
   });
 
   it("bulk update restores previous books on failure", async () => {
@@ -218,6 +229,130 @@ describe("BooksStore Undo and Bulk Actions (Sprint 1)", () => {
 
     expect(ok).toBe(false);
     expect(useBooksStore.getState().books).toEqual(books);
+  });
+
+  it("undo after bulk update restores mixed prior statuses through the server and refreshes books", async () => {
+    const books = seedBooks();
+
+    useBooksStore.setState({
+      books,
+      selectedIds: ["1", "2"],
+    });
+
+    vi.mocked(BooksService.bulkUpdate).mockResolvedValue({
+      ok: true,
+      operationId: "bulk-update-1",
+      operation: "update",
+      affectedCount: 2,
+      affectedIds: ["1", "2"],
+    });
+
+    vi.mocked(BooksService.list)
+      .mockResolvedValueOnce([
+        {
+          ...books[0],
+          status: "finished",
+          updatedAt: "2026-03-27T10:00:00.000Z",
+          finishedAt: "2026-03-27T10:00:00.000Z",
+        },
+        {
+          ...books[1],
+          status: "finished",
+          updatedAt: "2026-03-27T10:00:00.000Z",
+          startedAt: books[1].startedAt,
+          finishedAt: "2026-03-27T10:00:00.000Z",
+        },
+      ] as Book[])
+      .mockResolvedValueOnce(books);
+
+    vi.mocked(BooksService.update)
+      .mockResolvedValueOnce(books[0])
+      .mockResolvedValueOnce(books[1]);
+
+    await useBooksStore
+      .getState()
+      .bulkUpdateSelectedBooks({ status: "finished" });
+
+    const undoOk = await useBooksStore.getState().undoLast();
+
+    expect(undoOk).toBe(true);
+    expect(BooksService.update).toHaveBeenNthCalledWith(1, "1", {
+      status: "planned",
+    });
+    expect(BooksService.update).toHaveBeenNthCalledWith(2, "2", {
+      status: "reading",
+    });
+
+    const state = useBooksStore.getState();
+    expect(state.books).toEqual(books);
+    expect(state.undo).toBeNull();
+    expect(state.selectedIds).toEqual([]);
+  });
+
+  it("undo after bulk update returns false and surfaces error when restore fails", async () => {
+    const books = seedBooks();
+
+    useBooksStore.setState({
+      books,
+      selectedIds: ["1", "2"],
+    });
+
+    vi.mocked(BooksService.bulkUpdate).mockResolvedValue({
+      ok: true,
+      operationId: "bulk-update-1",
+      operation: "update",
+      affectedCount: 2,
+      affectedIds: ["1", "2"],
+    });
+
+    vi.mocked(BooksService.list)
+      .mockResolvedValueOnce([
+        {
+          ...books[0],
+          status: "finished",
+          updatedAt: "2026-03-27T10:00:00.000Z",
+          finishedAt: "2026-03-27T10:00:00.000Z",
+        },
+        {
+          ...books[1],
+          status: "finished",
+          updatedAt: "2026-03-27T10:00:00.000Z",
+          startedAt: books[1].startedAt,
+          finishedAt: "2026-03-27T10:00:00.000Z",
+        },
+      ] as Book[])
+      .mockResolvedValueOnce([
+        {
+          ...books[0],
+          status: "finished",
+          updatedAt: "2026-03-27T10:00:00.000Z",
+          finishedAt: "2026-03-27T10:00:00.000Z",
+        },
+        {
+          ...books[1],
+          status: "finished",
+          updatedAt: "2026-03-27T10:00:00.000Z",
+          startedAt: books[1].startedAt,
+          finishedAt: "2026-03-27T10:00:00.000Z",
+        },
+      ] as Book[]);
+
+    vi.mocked(BooksService.update).mockRejectedValue(
+      new Error("Failed to restore bulk update"),
+    );
+
+    await useBooksStore
+      .getState()
+      .bulkUpdateSelectedBooks({ status: "finished" });
+
+    const undoOk = await useBooksStore.getState().undoLast();
+
+    expect(undoOk).toBe(false);
+
+    const state = useBooksStore.getState();
+    expect(state.undo).toBeNull();
+    expect(state.page.mode).toBe("error");
+    expect(state.page.error?.message).toBe("Failed to restore bulk update");
   });
 
   it("bulk delete removes selected books, clears selection, and sets grouped undo", async () => {

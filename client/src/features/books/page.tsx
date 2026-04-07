@@ -115,6 +115,12 @@ export function BooksPage() {
     return false;
   };
 
+  async function retryPageLoad() {
+    setError(undefined);
+    await loadBooks();
+    await loadSavedViews();
+  }
+
   if (!isBootstrapped) {
     return <LoadingState label="Loading books…" />;
   }
@@ -123,7 +129,14 @@ export function BooksPage() {
     return (
       <ErrorState
         message={error.message ?? "Unknown error"}
-        action={<Button onClick={() => setError(undefined)}>Dismiss</Button>}
+        action={
+          <div className="flex gap-2">
+            <Button onClick={() => void retryPageLoad()}>Retry</Button>
+            <Button variant="secondary" onClick={() => setError(undefined)}>
+              Dismiss
+            </Button>
+          </div>
+        }
       />
     );
   }

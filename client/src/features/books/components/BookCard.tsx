@@ -358,7 +358,11 @@ export function BookCard({
               </label>
 
               {localError ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                >
                   {localError}
                 </div>
               ) : null}

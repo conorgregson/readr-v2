@@ -204,7 +204,11 @@ export function AddBookPanel({ onClose, onSubmit }: Props) {
         </div>
 
         {error ? (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          >
             <span id={errorId}>{error}</span>
           </div>
         ) : null}

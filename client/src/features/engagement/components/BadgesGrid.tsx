@@ -73,6 +73,7 @@ export function BadgesGrid(props: { badges: BadgeProgress[] }) {
                 aria-valuemin={0}
                 aria-valuemax={badge.target}
                 aria-valuenow={badge.progress}
+                aria-valuetext={`${badge.progress} of ${badge.target}`}
               >
                 <div
                   className="h-2 rounded-full bg-teal-500 transition-all"

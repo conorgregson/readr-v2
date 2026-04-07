@@ -37,6 +37,7 @@ function GoalRow(props: { label: string; goal?: GoalProgress }) {
         aria-valuemin={0}
         aria-valuemax={props.goal.target}
         aria-valuenow={props.goal.progress}
+        aria-valuetext={`${props.goal.progress} of ${props.goal.target} complete`}
       >
         <div
           className="h-2 rounded-full bg-teal-500 transition-all"

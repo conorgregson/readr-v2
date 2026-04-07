@@ -206,34 +206,34 @@ Released: Mar 2026
 - Authentication remains intentionally minimal and implementation-focused.
 - Register/login endpoints now return structured rate-limit responses when abuse thresholds are exceeded.
 
-Release: Mar 2026
+Released: Mar 2026
 
 ---
 
-## 🎖️ Version 2.4 — Engagement & Insights Expansion
+## ✅ Version 2.4 — Engagement & Insights Expansion
 
 **Focus:** Reintroduce advanced UX and motivation systems on top of the stable API-backed, user-owned architecture.
 
-### Planned Work
+### Completed Work
 
-- Add bulk edit workflows for multi-book mutation
-- Add grouped Undo support for batch operations
-- Add saved views with server-backed filter persistence
-- Introduce server-derived reading statistics and summaries
-- Add streak tracking and badge progression
-- Add reading goals and progress surfaces
-- Add dashboard insights and chart-based visualizations
-- Preserve CRUD correctness, accessibility, and performance at scale
+- Added bulk edit workflows for multi-book mutation
+- Added grouped Undo support for batch operations
+- Added saved views with server-backed filter persistence
+- Introduced server-derived reading statistics and summaries
+- Added streak tracking and badge progression
+- Added reading goals and progress surfaces
+- Added dashboard insights and chart-based visualizations
+- Preserved CRUD correctness, accessibility, and performance through Sprint 5 hardening
 
 ### Notes
 
 - v2.4 is a controlled feature-layering release, not an architectural migration.
-- Derived engagement data should be computed server-side where correctness matters.
-- Bulk operations must preserve integrity, atomicity, and Undo guarantees.
-- Performance should remain acceptable with large user libraries.
+- Derived engagement data is computed server-side where correctness matters.
+- Bulk operations preserve integrity, atomicity, and grouped Undo guarantees.
+- Sprint 5 completed accessibility, recovery, and regression hardening across the release surface.
 - Social, public, and multi-user collaborative features remain out of scope for this phase.
 
-Planned: Q2 2026
+Released: Apr 2026
 
 ---
 
