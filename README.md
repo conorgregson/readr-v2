@@ -27,7 +27,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 
 <img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
 
-<img src="https://img.shields.io/badge/Status-v2.4%20Released-4CAF50?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v3.0%20In%20Progress-FF9800?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -895,13 +895,15 @@ Sprint 1 identified several environment and deployment hardening points:
 - The frontend base URL must be the backend origin only, not an `/api` path, because the client appends `/api` internally.
 - The backend runtime is centered on `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `PORT`, `CORS_ALLOWED_ORIGINS`, and auth rate-limit settings.
 - Root Prisma tooling uses `DATABASE_URL` separately from frontend deployment configuration.
-- No `.env.example` files currently exist, so Sprint 1 includes creating them from scratch.
+- No `.env.example` files existed previously, so Sprint 1 included creating them from scratch.
+- Auth rate-limit settings are now validated through centralized backend env parsing rather than being handled separately at runtime.
 
 ### Deployment environment baseline
 
 - **Render** is the active backend runtime environment and holds the backend-required variables.
 - **Vercel** provides the frontend build-time API base URL through `VITE_API_BASE_URL`.
-- Local client environment configuration was found to be out of sync with actual client code expectations and has been corrected as part of Sprint 1 hardening.
+- Local client environment configuration was previously out of sync with actual client code expectations and was corrected during Sprint 1 hardening.
+- Root Prisma tooling continues to use `DATABASE_URL` separately from frontend deployment configuration.
 
 ### Vercel managed environment variables
 
@@ -910,6 +912,19 @@ Several Neon/Postgres variables are still present in Vercel even though they do 
 These variables are **integration-managed** rather than manually created. Because they were provisioned through a connected Neon integration, they cannot be removed directly from the standard Environment Variables screen. Removing them would require disconnecting the project from the connected integration first.
 
 For now, these variables are being treated as **non-blocking configuration residue** rather than active frontend requirements. The frontend’s relevant deployment variable remains `VITE_API_BASE_URL`, while backend and database runtime configuration are handled separately through Render and Prisma-backed tooling.
+
+### Localhost audit result
+
+Sprint 1 found several `localhost` references across local tooling and development assets. These references are not automatically deployment problems.
+
+Confirmed acceptable local-only references include:
+
+- local Postman environment configuration
+- development and test tooling
+- local CORS defaults in server env parsing
+- client-side dev fallback behavior when running outside production
+
+No evidence has been found so far that production runtime behavior depends on localhost. The more important configuration gap identified during this pass was that auth rate-limit environment variables were being used at runtime without centralized env validation, which has now been corrected as part of Sprint 1 hardening.
 
 ---
 
@@ -923,9 +938,11 @@ Readr’s hosted architecture depends on clear separation of responsibilities ac
 - local `.env` files do not automatically carry into Vercel or Render
 - deployment platforms may also contain integration-managed variables that are not part of the app’s active runtime contract
 
-These boundaries matter because many deployment failures come from configuration drift, naming mismatches, or environment assumptions rather than from application logic itself.
+These boundaries matter because many deployment failures come from configuration drift, naming mismatches, undocumented assumptions, or environment-specific behavior rather than from application logic itself.
 
-By documenting the environment model clearly, Sprint 1 reduces deployment fragility, improves debugging, and makes the hosted stack easier to understand and maintain.
+Sprint 1 reduces that fragility by standardizing environment templates, correcting client API base configuration, centralizing backend env validation more fully, and documenting the current Vercel + Render + Neon deployment model more clearly.
+
+This makes the hosted stack easier to debug, easier to maintain, and easier to reason about as v3.0 continues.
 
 ---
 

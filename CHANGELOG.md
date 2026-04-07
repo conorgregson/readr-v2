@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v3.0.0-sprint-1] — Deployment Audit & Environment Hardening (2026-04-07)
+
+### Added
+
+- Added root, client, server, and server test `.env.example` templates.
+- Added clearer deployment and environment documentation for the Vercel, Render, and Neon stack.
+
+### Changed
+
+- Standardized local client API configuration to use `VITE_API_BASE_URL`.
+- Clarified that frontend API base values must use the backend origin only and must not include `/api`.
+- Centralized validation for auth rate-limit environment variables in backend env parsing.
+- Updated rate-limit middleware to consume validated environment config.
+- Expanded README deployment notes to distinguish root Prisma tooling, backend runtime config, Vercel responsibilities, and Render responsibilities.
+
+### Removed
+
+- Removed outdated reliance on older client environment naming such as `VITE_API_BASE`.
+
+### Notes
+
+- Sprint 1 establishes the deployment/configuration baseline for v3.0.
+- Hosted verification will complete after merge to `main`, since production deployment is tied to the main branch.
+
+---
+
 ## [v2.4.0] — Engagement & Insights Expansion (2026-04-06)
 
 ### Added
