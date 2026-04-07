@@ -699,61 +699,233 @@ This structure supports Readr’s versioned development model: preserving clear 
 
 ## Deployment & Environment
 
-Readr v2 is deployed as a **split frontend/backend architecture**:
+Readr v2 uses a split hosted architecture:
 
-- **Frontend:** Vercel (React + Vite)
-- **Backend:** Render (Express API)
-- **Database:** PostgreSQL (Neon for local)
+- **Frontend:** Vercel
+- **Backend:** Render
+- **Database:** Neon (hosted PostgreSQL)
+
+In local development, the frontend, backend, and database configuration are managed separately so the system can run predictably across environments.
 
 ---
 
-### Environment Configuration
+### Hosted Architecture
 
-The system relies on strict environment configuration for production:
+Production request flow:
 
-#### Frontend (Vercel)
+```txt
+browser -> Vercel frontend -> Render API -> Neon database
+```
+
+This separation means frontend and backend environment variables are not interchangeable:
+
+- **Vercel** provides the frontend build-time API base URL
+- **Render** provides the backend runtime configuration
+- **Neon / local PostgreSQL** provides the database connection used by Prisma and the API
+
+---
+
+### Environment Files
+
+Readr uses separate environment files for different responsibilities:
+
+#### Root (`/.env`)
+
+Used by **root-level Prisma tooling**.
+
+Required variable:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+```
+
+This is used by repository-level Prisma configuration and database tooling.
+
+---
+
+#### Frontend (`client/.env`)
+
+Used by the **Vite frontend** during local development.
+
+Required variable:
+
+```env
+VITE_API_BASE_URL="http://localhost:4000"
+```
+
+Important:
+
+This value should be the **backend origin only**
+Do **not** include `/api`
+The frontend appends `/api` internally when making requests
+
+Example:
+
+Correct: `http://localhost:4000`
+Incorrect: `http://localhost:4000/api`
+
+---
+
+#### Backend (`server/.env`)
+
+Used by the **Render-hosted Express API** and local backend runtime.
+
+Required variables:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+JWT_SECRET="replace-with-a-secure-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="development"
+PORT="4000"
+CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
+AUTH_RATE_LIMIT_WINDOW_MS="900000"
+AUTH_RATE_LIMIT_MAX="10"
+```
+
+---
+
+#### Backend test environment (`server/.env.test`)
+
+Used by backend integration tests.
+
+Example:
+
+```env
+DATABASE_URL="postgresql://username:password@host/test_database"
+JWT_SECRET="test-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="test"
+CORS_ALLOWED_ORIGINS="http://localhost:5173"
+```
+
+---
+
+### Example Environment Templates
+
+To document setup safely, the repository should include:
+
+- `/.env.example`
+- `client/.env.example`
+- `server/.env.example`
+- `server/.env.test.example`
+
+These files should contain **placeholder values only**, never real secrets or live connection strings.
+
+Example templates:
+
+`/.env.example`:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+```
+
+`client/.env.example`:
+
+```env
+VITE_API_BASE_URL="http://localhost:4000"
+```
+
+`server/.env.example`:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+JWT_SECRET="replace-with-a-secure-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="development"
+PORT="4000"
+CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
+AUTH_RATE_LIMIT_WINDOW_MS="900000"
+AUTH_RATE_LIMIT_MAX="10"
+```
+
+`server/.env.test.example`:
+
+```env
+DATABASE_URL="postgresql://username:password@host/test_database"
+JWT_SECRET="test-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="test"
+CORS_ALLOWED_ORIGINS="http://localhost:5173"
+```
+
+---
+
+### Production Environment Responsibilities
+
+**Vercel**
+
+The frontend currently requires:
 
 - `VITE_API_BASE_URL`
-  - Points to the deployed backend API
-  - Example:
-    ```
-    https://readr-impd.onrender.com
-    ```
 
-#### Backend (Render)
+This should point to the deployed Render backend origin, for example:
+
+```env
+VITE_API_BASE_URL="https://your-render-service.onrender.com"
+```
+
+It should **not** include `/api`.
+
+> Some Neon-generated environment variables may still appear in Vercel even when they are not actively used by the frontend, because they were provisioned through a connected integration and cannot be removed from the standard environment variable screen without disconnecting that integration first.
+
+**Render**
+
+The backend runtime requires:
 
 - `DATABASE_URL`
 - `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `NODE_ENV`
+- `PORT`
+- `CORS_ALLOWED_ORIGINS`
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
 
-These variables are required at runtime and must be configured in the deployment platform (not just `.env` locally).
+These values must be configured directly in Render and do not inherit from local `.env` files.
 
 ---
 
-### Key Lessons from Deployment
+### Sprint 1 Environment Audit Findings
 
-During production rollout, several issues were identified and resolved:
+Sprint 1 identified several environment and deployment hardening points:
 
-- **Environment variable mismatch**
-  - `VITE_API_BASE_URL` was misnamed, causing the frontend to fail API calls
+- The frontend uses `VITE_API_BASE_URL` as its API base variable.
+- Older names such as `VITE_API_BASE` are stale and should not be used.
+- The frontend base URL must be the backend origin only, not an `/api` path, because the client appends `/api` internally.
+- The backend runtime is centered on `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `PORT`, `CORS_ALLOWED_ORIGINS`, and auth rate-limit settings.
+- Root Prisma tooling uses `DATABASE_URL` separately from frontend deployment configuration.
+- No `.env.example` files currently exist, so Sprint 1 includes creating them from scratch.
 
-- **Missing backend secret**
-  - `JWT_SECRET` was not configured in Render, causing authentication failures (`500` errors)
+### Deployment environment baseline
 
-- **Local vs production parity**
-  - Local `.env` values do not carry over to Vercel/Render automatically
-  - Each platform requires explicit configuration
+- **Render** is the active backend runtime environment and holds the backend-required variables.
+- **Vercel** provides the frontend build-time API base URL through `VITE_API_BASE_URL`.
+- Local client environment configuration was found to be out of sync with actual client code expectations and has been corrected as part of Sprint 1 hardening.
+
+### Vercel managed environment variables
+
+Several Neon/Postgres variables are still present in Vercel even though they do not appear to be used by the frontend application code.
+
+These variables are **integration-managed** rather than manually created. Because they were provisioned through a connected Neon integration, they cannot be removed directly from the standard Environment Variables screen. Removing them would require disconnecting the project from the connected integration first.
+
+For now, these variables are being treated as **non-blocking configuration residue** rather than active frontend requirements. The frontend’s relevant deployment variable remains `VITE_API_BASE_URL`, while backend and database runtime configuration are handled separately through Render and Prisma-backed tooling.
 
 ---
 
 ### Why This Matters
 
-These fixes reinforced critical full-stack principles:
+Readr’s hosted architecture depends on clear separation of responsibilities across environments:
 
-- Production systems depend on **correct environment configuration**
-- Authentication systems require **secure and consistent secrets**
-- Deployment platforms are **isolated environments**, not extensions of local dev
+- frontend configuration must point to the correct backend origin
+- backend runtime must expose the correct secrets, CORS settings, and rate-limit configuration
+- Prisma tooling and backend runtime must each have valid database access where required
+- local `.env` files do not automatically carry into Vercel or Render
+- deployment platforms may also contain integration-managed variables that are not part of the app’s active runtime contract
 
-This mirrors real-world debugging scenarios where infrastructure — not code — is often the source of failure.
+These boundaries matter because many deployment failures come from configuration drift, naming mismatches, or environment assumptions rather than from application logic itself.
+
+By documenting the environment model clearly, Sprint 1 reduces deployment fragility, improves debugging, and makes the hosted stack easier to understand and maintain.
 
 ---
 
@@ -948,44 +1120,88 @@ npm install
 
 ### 3. Configure environment variables
 
-Readr v2 requires separate environment configuration for the frontend and backend.
+Readr uses separate environment files for **root tooling**, **frontend local development**, and **backend runtime**.
+
+Create the following files before starting the app.
+
+#### Root (`/.env`)
+
+Create a root `.env` file for Prisma and repository-level database tooling:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+```
+
+This value is used by Prisma configuration and database commands run from the repository. Do **not** commit real credentials.
 
 #### Frontend (`client/.env`)
 
-Create a `.env` file inside `client/`:
+Create a `.env` file inside client/:
 
 ```env
-VITE_API_BASE_URL=http://localhost:4000
+VITE_API_BASE_URL="http://localhost:4000"
 ```
 
 This tells the frontend where to send API requests during local development.
+
+Important:
+
+- Use the **backend origin only**
+- Do **not** include `/api`
+- The frontend appends `/api` internally when making requests
+
+Examples:
+
+Correct: `http://localhost:4000`
+Incorrect: `http://localhost:4000/api`
 
 #### Backend (`server/.env`)
 
 Create a `.env` file inside `server/`:
 
 ```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/readr_v2
-JWT_SECRET=your-development-secret
-PORT=4000
-AUTH_RATE_LIMIT_WINDOW_MS=900000
-AUTH_RATE_LIMIT_MAX=10
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+JWT_SECRET="your-development-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="development"
+PORT="4000"
+CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
+AUTH_RATE_LIMIT_WINDOW_MS="900000"
+AUTH_RATE_LIMIT_MAX="10"
 ```
 
 Required backend variables:
 
 - `DATABASE_URL`
-  - PostgreSQL connection string for local development
+  - PostgreSQL connection string used by the API runtime
 - `JWT_SECRET`
   - Secret used to sign and verify JWTs
+- `JWT_EXPIRES_IN`
+  - JWT lifetime configuration
+- `NODE_ENV`
+  - Runtime environment name
 - `POST`
   - Local backend port
+- `CORS_ALLOWED_ORIGINS`
+  - Comma-separated list of allowed frontend origins
 - `AUTH_RATE_LIMIT_WINDOW_MS`
   - Rate-limit window for auth write endpoints, in milliseconds
 - `AUTH_RATE_LIMIT_MAX`
   - Maximum register/login attempts allowed within the configured window
 
-> These values must also be configured separately in production environments such as Vercel and Render.
+#### Backend test environment (`server/.env.test`)
+
+Create a `.env.test` file inside `server/` for backend integration tests:
+
+```env
+DATABASE_URL="postgresql://username:password@host/test_database"
+JWT_SECRET="test-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="test"
+CORS_ALLOWED_ORIGINS="http://localhost:5173"
+```
+
+> Local `.env` files do not automatically carry into Vercel or Render. Production environment variables must be configured separately in each deployment platform.
 
 ### 4. Ensure PostgreSQL is available
 

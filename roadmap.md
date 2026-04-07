@@ -239,23 +239,253 @@ Released: Apr 2026
 
 ## 🌍 Version 3.0 — Deployment & Growth
 
-**Focus:** Harden Readr for production infrastructure, operational reliability, and public hosting maturity.
+**Focus:** Harden Readr’s existing deployed stack for reliability, consistency, and production maturity.
+
+### Goals
+
+- Strengthen the current Vercel + Render + Neon deployment
+- Standardize local and production setup
+- Improve deployment reliability, observability, and environment handling
+- Reduce friction when running, testing, and shipping the app
+
+---
+
+## Scope
+
+### Deployment Hardening
+
+- Validate and document the full Vercel + Render + Neon architecture
+- Review production environment variables across all services
+- Remove any remaining localhost assumptions
+- Confirm stable frontend-to-backend communication in production
+- Verify Neon connection handling and production database reliability
+
+### Local Environment Standardization
+
+- Add Docker support for local development
+- Add Docker Compose for multi-service local setup
+- Standardize local API + database workflows
+- Ensure local setup is easier and more predictable across environments
+
+### Reliability & Operations
+
+- Improve health check coverage
+- Add readiness expectations for backend startup
+- Strengthen structured logging baseline
+- Improve error visibility for production failures
+- Re-check CORS, security headers, and deployment-safe configuration
+
+### CI/CD & Release Confidence
+
+- Expand CI to validate build, lint, tests, and deploy readiness
+- Add container build validation where useful
+- Introduce a deployment/release checklist
+- Improve confidence in production pushes and rollback readiness
+
+### Documentation
+
+- Document deployed architecture clearly in README
+- Document local Docker workflow
+- Document environment variable setup for Vercel, Render, and Neon
+- Document common deployment/debugging steps
+- Add a simple recovery checklist for production issues
+
+---
+
+## Technical Direction
+
+### Core stack for v3.0
+
+- **Frontend hosting:** Vercel
+- **Backend hosting:** Render
+- **Database:** Neon Postgres
+- **Local containerization:** Docker + Docker Compose
+- **Kubernetes:** Out of scope
+- **AWS:** Out of scope for core milestone
+
+### Why this direction
+
+- Readr already has a real deployed architecture, so v3.0 should improve that foundation rather than replace it.
+- Docker solves a practical local-development and environment-consistency problem.
+- Kubernetes would add complexity without solving the most immediate needs of the project.
+- AWS can still be explored later if there is a strong portfolio or cloud-learning reason.
+
+---
+
+## Acceptance Criteria
+
+- Production deployment remains stable on Vercel + Render + Neon
+- Local development can be started through a documented, repeatable workflow
+- Dockerized local setup works reliably for the backend and supporting services
+- Frontend communicates correctly with production backend in deployed environments
+- Neon-backed persistence is stable and verified
+- Health check and basic runtime diagnostics are available
+- CI validates build/test/deploy readiness before release
+- README clearly documents deployment architecture and environment setup
+- No production path depends on localhost configuration
+
+---
+
+## Deliverables
+
+- backend `Dockerfile`
+- optional frontend `Dockerfile`
+- `docker-compose.yml` for local development
+- updated `.env.example` files
+- deployment architecture documentation
+- release/deployment checklist
+- verified live deployment with documented environment flow
+
+---
+
+## Notes
+
+- v3.0 is a deployment-hardening release, not an infrastructure migration.
+- The goal is to make the current hosted stack more reliable and easier to run, debug, and maintain.
+- Docker is included because it improves consistency and developer experience.
+- Kubernetes and AWS are intentionally deferred to avoid overengineering this milestone.
+
+Planned: Q2 2026
+
+---
+
+## 🌐 Version 3.1 — Account & Profile Management
+
+**Focus:** Expand Readr’s identity layer into a fuller account platform with profile customization, account recovery, and stronger security controls.
 
 ### Planned Work
 
-- Production hosting architecture refinement
-- CI/CD deployment pipeline hardening
-- Environment-based configuration validation
-- Production database infrastructure and reliability planning
-- Public demo environment stabilization
-- Monitoring and logging baseline
-- Operational error visibility and alerting foundation
+- Password reset / forgot password flow
+- Change email and password
+- Delete account
+- Reset profile / clear all user data
+- Display name and profile customization
+- Avatar system and optional profile photo upload
+- Sign in with Google
+- Two-step authentication
 
 ### Notes
 
-- v3.0 is focused on infrastructure maturity rather than end-user feature expansion.
-- The goal is to make deployment, observability, and environment handling more production-ready.
-- Local Docker support may be considered later if it meaningfully improves setup consistency, but it is not required for the core milestone.
+- v3.1 builds directly on the authentication and ownership foundation established in v2.3.
+- This release is about account lifecycle maturity, not social features.
+- Security and account recovery should be stable before adding broader community features.
+
+Planned: Q2 2026
+
+---
+
+## 📚 Version 3.2 — Library Organization & Metadata
+
+**Focus:** Make Readr feel more like a complete personal library by improving organization, metadata structure, and bulk management.
+
+### Planned Work
+
+- Collections / shelves for books
+- Tags for books
+- Favorite genres, authors, and books
+- Genre dropdown from existing values
+- Multi-genre support per book
+- Bulk edit for genre, series, series type, format, and subtype
+- Total books count and richer library summaries
+- Add/edit start and finish dates for books read in the past
+
+### Notes
+
+- v3.2 deepens library organization without changing the core product direction.
+- This release should make metadata more structured and reusable across filters, recommendations, and future discovery features.
+- Collections and tags should be designed to scale cleanly into future social and recommendation systems.
+
+Planned: Q2 2026
+
+---
+
+## 🎯 Version 3.3 — Reviews, History & Rereads
+
+**Focus:** Improve how Readr represents real reading history over time, including rereads, reviews, and retrospective logging.
+
+### Planned Work
+
+- Book ratings
+- Written reviews
+- Better support for historical reading entries
+- Add start/finish dates for previously completed books
+- Reread support without requiring duplicate book records
+- Richer completion history and per-book reading timelines
+
+### Notes
+
+- v3.3 is an important model-layer upgrade, not just UI polish.
+- Reread support should preserve analytics integrity while avoiding duplicate-library clutter.
+- Reviews and history features will create stronger inputs for future recommendation systems.
+
+Planned: Q3 2026
+
+---
+
+## 🤝 Version 3.4 — Social & Community Features
+
+**Focus:** Introduce optional reader-to-reader features that allow connection, shared experiences, and group reading workflows.
+
+### Planned Work
+
+- Friends / connections
+- Book club support
+- Group reading sessions
+- Book-club discussion or chat spaces
+- Shared activity surfaces
+- Seasonal or community-based badges
+
+### Notes
+
+- v3.4 marks a major product expansion beyond single-user reading management.
+- Social systems should come only after account, metadata, and reading-history models are mature.
+- Messaging and group activity should be scoped carefully to avoid unnecessary moderation and complexity too early.
+
+Planned: TBD
+
+---
+
+## 🤖 Version 3.5 — Discovery & Recommendations
+
+**Focus:** Help users discover books more effectively through personalization, richer metadata, and recommendation systems.
+
+### Planned Work
+
+- Personalized recommendations based on genre, author, favorites, and reading history
+- Recommendation explanations
+- External books API integration
+- Metadata autofill and book lookup
+- Discovery flows based on past reading behavior
+- Recommendation surfaces tied to shelves, tags, and reviews
+
+### Notes
+
+- v3.5 depends on strong metadata and reading-history signals from earlier releases.
+- External API integrations should improve convenience without making the product dependent on a single provider.
+- Recommendation quality will improve substantially once ratings, favorites, and reread history exist.
+
+Planned: TBD
+
+---
+
+## 📱 Version 3.6 — Mobile & App Experience
+
+**Focus:** Refine Readr into a stronger cross-device product with a more polished mobile and app-like experience.
+
+### Planned Work
+
+- Improved mobile UX and layout
+- Mobile-specific interaction refinements
+- Downloadable desktop/mobile app experience
+- Better install flows and app-shell polish
+- More robust device-aware behaviors
+- Future support for richer app notifications and mobile workflows
+
+### Notes
+
+- v3.6 is about product polish and usability across devices, not core domain expansion.
+- This release should build on the stable feature set from earlier 3.x versions rather than introducing major new product models.
+- The goal is to make frequent daily use feel smoother and more native-like.
 
 Planned: TBD
 
@@ -265,17 +495,13 @@ Planned: TBD
 
 These are intentionally de-scoped from near-term planning:
 
-- Team / group reading spaces
-- Public profiles and challenges
-- External API integrations (e.g., Goodreads)
-- Advanced exports (Markdown, PDF, Notion)
-- Custom fields and templates
-- AI-assisted reading insights (opt-in only)
-
----
-
-## Contributing
-
-- Check open issues ofr active discussions.
-- Suggest new features via the feature request template.
-- This roadmap evolves alongside real-world usage and feedback.
+- Author pages and series progress tracking
+- DNF / abandoned-book support
+- Book cover upload and metadata enrichment
+- Year in Review and monthly recap experiences
+- Quote / highlight saving
+- Reading pace forecasting
+- Privacy controls for future public/social features
+- Notification center / inbox
+- Admin / moderation tools for groups and chat
+- Data portability and compliance tooling
