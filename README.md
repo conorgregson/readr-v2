@@ -10,8 +10,8 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Deployment-000000?style=for-the-badge&logo=vercel" />
 </a>
 
-<a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.3.0">
-  <img src="https://img.shields.io/badge/Latest%20Release-v2.3.0-4CAF50?style=for-the-badge" />
+<a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.4.0">
+  <img src="https://img.shields.io/badge/Latest%20Release-v2.4.0-4CAF50?style=for-the-badge" />
 </a>
 
 <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
@@ -27,7 +27,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 
 <img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
 
-<img src="https://img.shields.io/badge/Status-v2.4%20In%20Progress-F9A825?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v2.4%20Released-4CAF50?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -49,10 +49,10 @@ The demo is now connected to the **Express + PostgreSQL backend**, with all read
 - **Authentication + user-scoped data now live in v2.3**
 - **Backup export/import now live with ownership enforcement**
 - **Basic auth endpoint rate limiting now protects repeated register/login attempts**
-- **v2.4 is currently in progress**, focused on engagement systems, analytics surfaces, and advanced library workflows
+- **v2.4 is now live**, adding engagement systems, analytics surfaces, and advanced library workflows
 
-> Current stable release: **v2.3.0**
-> Current development milestone: **v2.4 — Engagement & Insights Expansion**
+> Current stable release: **v2.4.0**
+> Next development milestone: **v3.0 — Deployment & Growth**
 
 ---
 
@@ -74,26 +74,23 @@ Each version isolates a specific risk area (parity, persistence, ownership) befo
 The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
-> Latest official release: **v2.3.0 — Authentication & data ownership**
-> Current development milestone: **v2.4.0 — Engagement & insights expansion**
+> Latest official release: **v2.4.0 — Engagement & insights expansion**
+> Next development milestone: **v3.0.0 — Deployment & growth**
 
 ---
 
-## Current Development Focus (v2.4)
+## Latest Release (v2.4)
 
-Readr v2.4 is currently in progress.
-
-This phase expands the stable authenticated, API-backed architecture with a new layer of advanced UX and derived read models, including:
+Readr v2.4 expands the stable authenticated, API-backed architecture with advanced UX and server-derived read models, including:
 
 - bulk edit workflows for multi-book mutation
+- grouped Undo support for bulk operations
 - saved library views with persistent filters/sorts
 - dashboard statistics and chart-ready summaries
 - reading goals, streaks, and badge progression
-- accessibility, performance, and release hardening for larger libraries
+- Sprint 5 hardening for accessibility, recovery, and regression safety
 
-v2.4 is a **feature-layering release**, not an architectural migration.
-
-That means the primary goal is to extend the system safely on top of the stable boundaries established in v2.0–v2.3 rather than rewrite persistence, routing, or ownership architecture again.
+v2.4 is a feature-layering release built on the stable boundaries established in v2.0–v2.3.
 
 ---
 
@@ -364,7 +361,7 @@ Only SemVer releases represent official “ship-ready” states.
 - **v2.1.0** — React frontend rebuild with full v1.9 behavioral parity ✅
 - **v2.2.0** — API integration & persistence migration (local-first → API) ✅
 - **v2.3.0** — Authentication, accounts, and multi-user data boundaries ✅
-- **v2.4.0** — Engagement & insights expansion _(in progress)_ 🚧
+- **v2.4.0** — Engagement & insights expansion ✅
 - **v3.0.0** — Production infrastructure & hosted deployment architecture
 
 For detailed version history and architectural milestones, see [`roadmap.md`](./roadmap.md).
@@ -402,7 +399,7 @@ This layered strategy helps ensure that architectural changes do not introduce r
 
 ---
 
-### Frontend Testing (v2.1 → v2.3)
+### Frontend Testing (v2.1 → v2.4)
 
 The frontend test suite protects core UI behavior as the app evolves from parity-focused rebuild work into authenticated, API-backed flows.
 
@@ -415,6 +412,10 @@ Covered areas include:
 - Auth store behavior
 - Token restore flow
 - Logout state reset behavior
+- Bulk selection and grouped Undo recovery
+- Saved views and library control behavior
+- Dashboard recovery and engagement UI behavior
+- Accessibility semantics for search/list navigation and progress surfaces
 
 Tools:
 
@@ -487,6 +488,8 @@ In addition to automated tests, the API is validated using structured Postman co
 - `Backup/`
 - `Books/`
 - `Sessions/`
+- `Stats/`
+- `Engagement/`
 
 These collections support:
 
@@ -545,12 +548,17 @@ readr-v2/
 │   │   │   │   ├── services/
 │   │   │   │   ├── store/
 │   │   │   │   └── page.tsx
-│   │   │   ├── books/                # Book library flows
+│   │   │   ├── books/                # Book library flows, bulk actions, saved views
 │   │   │   │   ├── components/
 │   │   │   │   ├── search/
 │   │   │   │   ├── services/
 │   │   │   │   ├── store/
 │   │   │   │   ├── page.tsx
+│   │   │   │   └── types.ts
+│   │   │   ├── engagement/           # Goals, streaks, badges, engagement UI/state
+│   │   │   │   ├── components/
+│   │   │   │   ├── services/
+│   │   │   │   ├── store/
 │   │   │   │   └── types.ts
 │   │   │   ├── sessions/             # Reading session flows
 │   │   │   │   ├── components/
@@ -558,14 +566,19 @@ readr-v2/
 │   │   │   │   ├── store/
 │   │   │   │   ├── page.tsx
 │   │   │   │   └── types.ts
-│   │   │   └── settings/             # Import/export and app settings flows
+│   │   │   ├── settings/             # Import/export and app settings flows
+│   │   │   │   ├── services/
+│   │   │   │   └── page.tsx
+│   │   │   └── stats/                # Dashboard summaries, trends, and stats state
+│   │   │       ├── components/
 │   │   │       ├── services/
+│   │   │       ├── store/
 │   │   │       └── page.tsx
 │   │   ├── shared/                   # Cross-feature building blocks
 │   │   │   ├── a11y/                 # Accessibility helpers
 │   │   │   ├── api/                  # API client helpers and shared request logic
 │   │   │   ├── data/                 # Shared data helpers/constants
-│   │   │   ├── types/                # Shared TypeScript types
+│   │   │   ├── types/                # Shared frontend TypeScript types
 │   │   │   └── ui/                   # Reusable UI primitives/states
 │   │   │       └── states/
 │   │   ├── test/                     # Frontend test setup and helpers
@@ -594,11 +607,16 @@ readr-v2/
 │   │   │   ├── auth/                 # Register, login, me
 │   │   │   ├── backup/               # Import/export with ownership enforcement
 │   │   │   ├── books/                # Book CRUD
-│   │   │   └── sessions/             # Session CRUD
+│   │   │   ├── engagement/           # Goals, streaks, badges aggregation
+│   │   │   ├── saved-views/          # Persistent saved library views
+│   │   │   ├── sessions/             # Session CRUD
+│   │   │   ├── stats/                # Dashboard summaries and trends
+│   │   │   └── views/                # Shared view mappers / read-model helpers
 │   │   ├── tests/
 │   │   │   ├── helpers/
 │   │   │   ├── integration/          # API integration and hardening tests
-│   │   │   └── setup.ts
+│   │   │   ├── setup.ts
+│   │   │   └── unit/                 # Focused unit tests (including engagement logic)
 │   │   ├── types/
 │   │   ├── utils/
 │   │   ├── app.ts                    # Express app composition
@@ -607,6 +625,9 @@ readr-v2/
 │   └── tsconfig.json
 │
 ├── docs/                             # Architecture notes, sprint docs, dependency maps, screenshots
+├── shared/                           # Repo-level cross-app shared contracts
+│   └── types/
+│       └── v2.4.ts                   # Shared DTOs/types used by both client and server
 ├── CHANGELOG.md
 ├── roadmap.md
 ├── LICENSE.md
@@ -618,16 +639,17 @@ readr-v2/
 A few intentional boundaries shape the repository:
 
 - **Frontend features are domain-oriented**
-  - Authentication, books, sessions, and settings are grouped by behavior rather than by file type alone
+  - Authentication, books, sessions, stats, engagement, and settings are grouped by behavior rather than by file type alone
 - **Shared frontend infrastructure stays centralized**
-  - Accessibility, API helpers, shared UI, data helpers, and common types live under `shared/`
-- **Backend modules map directly to API responsibilities**
-  - Auth, backup, books, and sessions are isolated into focused route-domain modules
-- **Validation, auth, and persistence stay near the backend boundary**
-  - Middleware, Prisma access, runtime config, and module logic are separated from presentation concerns
+  - Accessibility, API helpers, shared UI, data helpers, and common types live under `client/src/shared/`
+- **Cross-app contracts live at the repo level**
+  - Shared DTOs used by both the client and server live under `shared/types/` to reduce contract drift
+- **Backend modules map directly to API and derived-read responsibilities**
+  - Auth, backup, books, saved views, stats, engagement, and sessions are isolated into focused route-domain modules
 - **Testing exists at multiple layers**
   - Frontend tests protect behavioral parity and UI correctness
   - Backend integration tests protect API contracts, auth correctness, and ownership enforcement
+  - Backend unit tests cover focused logic such as engagement evaluation and derived-state helpers
   - Postman collections support structured manual regression checks
 
 This structure supports Readr’s versioned development model: preserving clear architectural boundaries while the system evolves from parity-focused frontend work into secure, multi-user full-stack behavior.
@@ -821,7 +843,7 @@ By locking these assumptions early, later sprint work can build on stable contra
 
 ## Screenshots
 
-The UI below reflects the current full-stack system with API-backed persistence, authentication, and user-scoped data.
+The UI below reflects the current full-stack system with API-backed persistence, authentication, user-scoped data, and the v2.4 engagement and insights layer.
 
 > All screenshots reflect the live application connected to the production API.
 
@@ -831,9 +853,17 @@ The UI below reflects the current full-stack system with API-backed persistence,
 
 ![Auth](./docs/screenshots/auth.png)
 
-**Library view with search, filtering, and status tracking**
+---
+
+**Library view with search, filtering, status tracking, and server-backed books data**
 
 ![Library](./docs/screenshots/library.png)
+
+---
+
+**Saved views with persistent filters, sort state, and active view controls**
+
+![Saved Views](./docs/screenshots/saved-views.png)
 
 ---
 
@@ -843,9 +873,27 @@ The UI below reflects the current full-stack system with API-backed persistence,
 
 ---
 
-**Undo system (~6s window) preserving state, filters, and ordering**
+**Bulk selection and grouped library actions**
 
-![Undo](./docs/screenshots/undo.png)
+![Bulk Actions](./docs/screenshots/bulk-actions.png)
+
+---
+
+**Grouped Undo after bulk status updates**
+
+![Bulk Undo](./docs/screenshots/bulk-undo.png)
+
+---
+
+**Dashboard with server-derived reading stats and chart-based summaries**
+
+![Dashboard](./docs/screenshots/dashboard.png)
+
+---
+
+**Goals, streaks, and badge progression**
+
+![Engagement](./docs/screenshots/engagement.png)
 
 ---
 

@@ -35,6 +35,20 @@ type UndoRecord =
         kind: "bulk-delete";
         affectedIds: BookId[];
       };
+    }
+  | {
+      createdAtMs: number;
+      expiresAtMs: number;
+      label: string;
+      before: Book[];
+      meta: {
+        kind: "bulk-update";
+        affectedIds: BookId[];
+        restoreStatuses: Array<{
+          id: BookId;
+          status: Book["status"];
+        }>;
+      };
     };
 
 function reqTrim(label: string, value: unknown): string {
@@ -547,6 +561,13 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     const before = get().books;
     const nowIso = new Date().toISOString();
 
+    const restoreStatuses = before
+      .filter((book) => ids.includes(book.id))
+      .map((book) => ({
+        id: book.id,
+        status: book.status,
+      }));
+
     const optimisticBooks = before.map((book) => {
       if (!ids.includes(book.id)) return book;
 
@@ -591,15 +612,47 @@ export const useBooksStore = create<BooksState>((set, get) => ({
 
       const refreshedBooks = await BooksService.list();
 
+      clearUndoTimer();
+
+      const nowMS = Date.now();
+      const rec: UndoRecord = {
+        createdAtMs: nowMS,
+        expiresAtMs: nowMS + UNDO_MS,
+        label:
+          ids.length === 1 ? "1 book updated" : `${ids.length} books updated`,
+        before,
+        meta: {
+          kind: "bulk-update",
+          affectedIds: ids,
+          restoreStatuses,
+        },
+      };
+
       set({
         books: refreshedBooks,
         selectedIds: [],
-        undo: null,
+        undo: rec,
         page: { mode: "results" },
       });
 
+      undoTimer = window.setTimeout(() => {
+        const cur = get().undo;
+
+        if (
+          cur &&
+          cur.meta.kind === "bulk-update" &&
+          Date.now() > cur.expiresAtMs
+        ) {
+          set({ undo: null });
+        }
+
+        undoTimer = null;
+      }, UNDO_MS + 50);
+
       return true;
     } catch (e) {
+      clearUndoTimer();
+
       set({
         books: before,
         page: {
@@ -920,6 +973,64 @@ export const useBooksStore = create<BooksState>((set, get) => ({
     }
 
     clearUndoTimer();
+
+    if (rec.meta.kind === "bulk-update") {
+      set({
+        books: rec.before,
+        undo: null,
+        selectedIds: [],
+        page: { mode: "results" },
+      });
+
+      try {
+        await Promise.all(
+          rec.meta.restoreStatuses.map(({ id, status }) =>
+            BooksService.update(id, { status }),
+          ),
+        );
+
+        const refreshedBooks = await BooksService.list();
+
+        set({
+          books: refreshedBooks,
+          selectedIds: [],
+          undo: null,
+          page: { mode: "results" },
+        });
+
+        return true;
+      } catch (e) {
+        try {
+          const serverBooks = await BooksService.list();
+          set({
+            books: serverBooks,
+            selectedIds: [],
+            undo: null,
+            page: {
+              mode: "error",
+              error: {
+                message:
+                  (e as Error)?.message ?? "Failed to restore bulk update",
+              },
+            },
+          });
+        } catch {
+          set({
+            selectedIds: [],
+            undo: null,
+            page: {
+              mode: "error",
+              error: {
+                message:
+                  (e as Error)?.message ?? "Failed to restore bulk update",
+              },
+            },
+          });
+        }
+
+        return false;
+      }
+    }
 
     set({
       undo: null,

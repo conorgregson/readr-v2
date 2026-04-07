@@ -23,6 +23,8 @@ export function BookList({
 
   const selectedIds = useBooksStore((s) => s.selectedIds);
   const toggleSelected = useBooksStore((s) => s.toggleSelected);
+  const activeOptionId =
+    activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined;
 
   useEffect(() => {
     if (books.length === 0) {
@@ -47,6 +49,7 @@ export function BookList({
       tabIndex={0}
       role="listbox"
       aria-label="Books results"
+      aria-activedescendant={activeOptionId}
       data-active-index={activeIndex}
       className="space-y-3 outline-none focus-visible:ring-2 focus-visible:ring-slate-300 rounded-md"
       onKeyDown={(e) => {
@@ -91,6 +94,7 @@ export function BookList({
         return (
           <li
             key={b.id}
+            id={`${id}-option-${i}`}
             role="option"
             aria-selected={active}
             data-result-index={i}

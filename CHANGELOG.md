@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.4.0-sprint-5] — Hardening, Accessibility & Release Lock (2026-04-06)
+
+### Added
+
+- Added real grouped Undo support for bulk status updates with mixed-status restore handling.
+- Added Retry actions to Books and Stats error states.
+- Added accessibility improvements for books search/list navigation, inline validation messaging, dashboard chart narration, and engagement progress surfaces.
+- Added page-level regression tests for grouped bulk update Undo behavior.
+- Added regression coverage for Retry-based recovery on Books and Stats pages.
+- Added toolbar regression coverage for pending bulk-action disabled states.
+
+### Changed
+
+- Changed bulk status Undo from deferred/unsafe behavior to a server-backed grouped restore flow.
+- Changed BooksPage error recovery from dismiss-only to Retry + Dismiss actions.
+- Changed StatsPage error recovery from dismiss-only to Retry + Dismiss actions.
+- Changed books search and results semantics to improve combobox/listbox accessibility.
+- Changed Sprint 5 focus from feature expansion to release-lock hardening, accessibility, recovery, and regression safety.
+
+### Removed
+
+- Removed the remaining gap where bulk status updates had no real grouped Undo path.
+- Removed dismiss-only recovery behavior as the only response to failed Books and Stats loads.
+
+### Fixed
+
+- Fixed grouped bulk status changes so original mixed statuses can be restored safely.
+- Fixed weak recovery flows where clearing page errors did not retry failed loads.
+- Fixed accessibility gaps in search suggestions, active result semantics, inline validation announcements, and chart/progress narration.
+- Fixed Sprint 5 regression gaps around grouped mutation recovery and dashboard reload behavior.
+
+### Notes
+
+- Sprint 5 completes the v2.4 hardening phase and prepares the milestone for release.
+- This sprint focuses on correctness, accessibility, recovery, and regression confidence rather than introducing major new surfaces.
+
+---
+
 ## [v2.4.0-sprint-4] — Goals, Streaks & Badges (2026-04-06)
 
 ### Added

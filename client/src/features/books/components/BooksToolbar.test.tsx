@@ -997,6 +997,39 @@ describe("BooksToolbar bulk actions", () => {
     expect(useBooksStore.getState().selectedIds).toEqual([]);
   });
 
+  it("removes the bulk action row after clearing selection", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({ selectedIds: ["b1", "b2"] });
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    expect(screen.getByText("2 books selected")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /clear selected books/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/books selected/i)).not.toBeInTheDocument();
+    });
+  });
+
   it("runs bulk status update from the toolbar", async () => {
     const user = userEvent.setup();
 
@@ -1031,6 +1064,74 @@ describe("BooksToolbar bulk actions", () => {
     );
 
     expect(bulkUpdateSpy).toHaveBeenCalledWith({ status: "finished" });
+  });
+
+  it("disables bulk status buttons while a bulk update is pending", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      books: makeBooks(),
+      selectedIds: ["b1", "b2"],
+    });
+
+    let resolveBulkUpdate: (value: boolean) => void = () => {};
+    const pendingBulkUpdate = new Promise<boolean>((resolve) => {
+      resolveBulkUpdate = resolve;
+    });
+
+    vi.spyOn(
+      useBooksStore.getState(),
+      "bulkUpdateSelectedBooks",
+    ).mockReturnValue(pendingBulkUpdate);
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /mark selected books as finished/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /mark selected books as planned/i }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /mark selected books as reading/i }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", {
+          name: /mark selected books as finished/i,
+        }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /delete selected books/i }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /clear selected books/i }),
+      ).toBeDisabled();
+    });
+
+    resolveBulkUpdate(true);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /mark selected books as planned/i }),
+      ).not.toBeDisabled();
+    });
   });
 
   it("runs bulk delete from the toolbar after confirm", async () => {
@@ -1071,5 +1172,75 @@ describe("BooksToolbar bulk actions", () => {
     expect(bulkDeleteSpy).toHaveBeenCalled();
 
     confirmSpy.mockRestore();
+  });
+
+  it("disables delete and clear while bulk delete is pending", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      books: makeBooks(),
+      selectedIds: ["b1", "b2"],
+    });
+
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    let resolveBulkDelete: (value: boolean) => void = () => {};
+    const pendingBulkDelete = new Promise<boolean>((resolve) => {
+      resolveBulkDelete = resolve;
+    });
+
+    vi.spyOn(
+      useBooksStore.getState(),
+      "bulkDeleteSelectedBooks",
+    ).mockReturnValue(pendingBulkDelete);
+
+    render(
+      <BooksToolbar
+        books={makeBooks()}
+        booksTotal={2}
+        visibleCount={2}
+        filters={makeFilters()}
+        searchQuery=""
+        committedQuery=""
+        onPreviewQuery={vi.fn()}
+        onCommitQuery={vi.fn()}
+        onFocusResults={vi.fn()}
+        searchInputRef={createRef<HTMLInputElement>()}
+        onAddBook={vi.fn()}
+        addButtonRef={createRef<HTMLButtonElement>()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /delete selected books/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /mark selected books as planned/i }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /mark selected books as reading/i }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", {
+          name: /mark selected books as finished/i,
+        }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /delete selected books/i }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: /clear selected books/i }),
+      ).toBeDisabled();
+    });
+
+    resolveBulkDelete(true);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /delete selected books/i }),
+      ).not.toBeDisabled();
+    });
   });
 });

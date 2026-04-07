@@ -82,6 +82,89 @@ describe("BooksPage bootstrapping", () => {
 
     expect(await screen.findByText("Dune")).toBeInTheDocument();
   });
+
+  it("retries loading books after an error", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      isBootstrapped: true,
+      page: { mode: "error", error: { message: "Failed to load books" } },
+      books: [],
+      filters: {
+        status: [],
+        authors: [],
+        genres: [],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "",
+      highlightQuery: "",
+      searchFuzzyOverride: null,
+      undo: null,
+      sort: { key: "createdAt", direction: "desc" },
+      savedViews: [],
+      savedViewsLoaded: false,
+      activeViewId: null,
+    });
+
+    vi.mocked(BooksService.list).mockResolvedValue([
+      makeBook({ id: "a", title: "Dune" }),
+    ]);
+    vi.mocked(SavedViewsService.list).mockResolvedValue([]);
+
+    render(<BooksPage />);
+
+    expect(screen.getByText("Failed to load books")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^retry$/i }));
+
+    await waitFor(() => {
+      expect(BooksService.list).toHaveBeenCalledTimes(1);
+      expect(SavedViewsService.list).toHaveBeenCalledTimes(1);
+    });
+
+    expect(await screen.findByText("Dune")).toBeInTheDocument();
+  });
+
+  it("dismisses error without retrying", async () => {
+    const user = userEvent.setup();
+
+    useBooksStore.setState({
+      isBootstrapped: true,
+      page: { mode: "error", error: { message: "Failed to load books" } },
+      books: [makeBook({ id: "a", title: "Dune" })],
+      filters: {
+        status: [],
+        authors: [],
+        genres: [],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "",
+      highlightQuery: "",
+      searchFuzzyOverride: null,
+      undo: null,
+      sort: { key: "createdAt", direction: "desc" },
+      savedViews: [],
+      savedViewsLoaded: true,
+      activeViewId: null,
+    });
+
+    render(<BooksPage />);
+
+    expect(screen.getByText("Failed to load books")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^dismiss$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Dune")).toBeInTheDocument();
+    });
+
+    expect(BooksService.list).not.toHaveBeenCalled();
+    expect(SavedViewsService.list).not.toHaveBeenCalled();
+  });
 });
 
 describe("BooksPage undo flow", () => {
@@ -130,5 +213,116 @@ describe("BooksPage undo flow", () => {
     expect(screen.getByText("Dune")).toBeInTheDocument();
     expect(screen.getByText("Hyperion")).toBeInTheDocument();
     expect(BooksService.remove).not.toHaveBeenCalled();
+  });
+
+  it("restores original statuses when bulk update is undone", async () => {
+    const user = userEvent.setup();
+
+    const originalBooks = [
+      makeBook({ id: "a", title: "Dune", status: "planned" }),
+      makeBook({
+        id: "b",
+        title: "Hyperion",
+        status: "reading",
+        startedAt: "2026-03-01T10:00:00.000Z",
+      }),
+    ];
+
+    const finishedBooks = [
+      makeBook({
+        id: "a",
+        title: "Dune",
+        status: "finished",
+        finishedAt: "2026-03-27T10:00:00.000Z",
+        updatedAt: "2026-03-27T10:00:00.000Z",
+      }),
+      makeBook({
+        id: "b",
+        title: "Hyperion",
+        status: "finished",
+        startedAt: "2026-03-01T10:00:00.000Z",
+        finishedAt: "2026-03-27T10:00:00.000Z",
+        updatedAt: "2026-03-27T10:00:00.000Z",
+      }),
+    ];
+
+    vi.mocked(BooksService.bulkUpdate).mockResolvedValue({
+      ok: true,
+      operationId: "bulk-update-1",
+      operation: "update",
+      affectedCount: 2,
+      affectedIds: ["a", "b"],
+    });
+
+    vi.mocked(BooksService.list)
+      .mockResolvedValueOnce(finishedBooks)
+      .mockResolvedValueOnce(originalBooks);
+
+    vi.mocked(BooksService.update)
+      .mockResolvedValueOnce(originalBooks[0])
+      .mockResolvedValueOnce(originalBooks[1]);
+
+    useBooksStore.setState({
+      isBootstrapped: true,
+      page: { mode: "results" },
+      books: originalBooks,
+      filters: {
+        status: [],
+        authors: [],
+        genres: [],
+        series: [],
+        tbrOnly: false,
+        tbrMonth: "",
+      },
+      searchQuery: "",
+      highlightQuery: "",
+      searchFuzzyOverride: null,
+      undo: null,
+      selectedIds: ["a", "b"],
+      sort: { key: "createdAt", direction: "desc" },
+      savedViews: [],
+      savedViewsLoaded: true,
+      activeViewId: null,
+    });
+
+    render(<BooksPage />);
+
+    expect(screen.getByText("Dune")).toBeInTheDocument();
+    expect(screen.getByText("Hyperion")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: /mark selected books as finished/i }),
+    );
+
+    await waitFor(() => {
+      expect(useBooksStore.getState().undo?.meta.kind).toBe("bulk-update");
+    });
+
+    expect(screen.getByRole("button", { name: /^undo$/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^undo$/i }));
+
+    await waitFor(() => {
+      expect(BooksService.update).toHaveBeenNthCalledWith(1, "a", {
+        status: "planned",
+      });
+      expect(BooksService.update).toHaveBeenNthCalledWith(2, "b", {
+        status: "reading",
+      });
+    });
+
+    await waitFor(() => {
+      const state = useBooksStore.getState();
+      expect(
+        state.books.map((book) => ({ id: book.id, status: book.status })),
+      ).toEqual([
+        { id: "a", status: "planned" },
+        { id: "b", status: "reading" },
+      ]);
+      expect(state.undo).toBeNull();
+    });
+
+    expect(screen.getByText("Dune")).toBeInTheDocument();
+    expect(screen.getByText("Hyperion")).toBeInTheDocument();
   });
 });

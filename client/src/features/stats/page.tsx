@@ -77,17 +77,22 @@ function SimpleTrendChart(props: {
   }
 
   function formatShortDate(label: string) {
-    return label.slice(5); // MM-DD
+    return label.slice(5);
   }
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+    <figure className="rounded-xl border border-slate-800 bg-slate-900 p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-slate-50">
+        <figcaption className="text-base font-semibold text-slate-50">
           {formatMetricLabel(props.metric)} — last 30 days
-        </h2>
+        </figcaption>
         <div className="text-xs text-slate-400">Server-derived trend</div>
       </div>
+
+      <p className="mb-3 text-xs text-slate-400">
+        Trend for {formatMetricLabel(props.metric).toLowerCase()} across the
+        last 30 days. Highest daily value: {maxValue}.
+      </p>
 
       <div className="overflow-x-auto">
         <svg
@@ -96,7 +101,6 @@ function SimpleTrendChart(props: {
           role="img"
           aria-label={`${formatMetricLabel(props.metric)} bar chart for the last 30 days`}
         >
-          {/* Grid lines */}
           {yTicks.map((tick) => {
             const y = yScale(tick);
 
@@ -123,7 +127,6 @@ function SimpleTrendChart(props: {
             );
           })}
 
-          {/* Axes */}
           <line
             x1={margin.left}
             x2={margin.left}
@@ -141,7 +144,6 @@ function SimpleTrendChart(props: {
             strokeWidth="1"
           />
 
-          {/* Bars */}
           {props.values.map((value, index) => {
             if (value <= 0) return null;
 
@@ -165,7 +167,6 @@ function SimpleTrendChart(props: {
             );
           })}
 
-          {/* X-axis labels */}
           {props.labels.map((label, index) => {
             if (!showLabelIndexes.has(index)) return null;
 
@@ -192,7 +193,7 @@ function SimpleTrendChart(props: {
           })}
         </svg>
       </div>
-    </div>
+    </figure>
   );
 }
 
@@ -201,18 +202,19 @@ export function StatsPage() {
   const isBootstrapped = useStatsStore((s) => s.isBootstrapped);
   const isLoadingSummary = useStatsStore((s) => s.isLoadingSummary);
   const isLoadingTrend = useStatsStore((s) => s.isLoadingTrend);
-  const engagementPage = useEngagementStore((s) => s.page);
-  const engagementSnapshot = useEngagementStore((s) => s.snapshot);
-  const isEngagementBootstrapped = useEngagementStore((s) => s.isBootstrapped);
-  const isLoadingEngagement = useEngagementStore((s) => s.isLoading);
-  const loadEngagement = useEngagementStore((s) => s.loadEngagement);
-  const setEngagementError = useEngagementStore((s) => s.setError);
   const summary = useStatsStore((s) => s.summary);
   const trend = useStatsStore((s) => s.trend);
   const selectedMetric = useStatsStore((s) => s.selectedMetric);
   const loadStats = useStatsStore((s) => s.loadStats);
   const setSelectedMetric = useStatsStore((s) => s.setSelectedMetric);
   const setError = useStatsStore((s) => s.setError);
+
+  const engagementPage = useEngagementStore((s) => s.page);
+  const engagementSnapshot = useEngagementStore((s) => s.snapshot);
+  const isEngagementBootstrapped = useEngagementStore((s) => s.isBootstrapped);
+  const isLoadingEngagement = useEngagementStore((s) => s.isLoading);
+  const loadEngagement = useEngagementStore((s) => s.loadEngagement);
+  const setEngagementError = useEngagementStore((s) => s.setError);
 
   useEffect(() => {
     if (isBootstrapped) return;
@@ -234,6 +236,12 @@ export function StatsPage() {
     [trend],
   );
 
+  async function retryDashboardLoad() {
+    setError(undefined);
+    setEngagementError(undefined);
+    await Promise.all([loadStats(), loadEngagement()]);
+  }
+
   if (
     (!isBootstrapped &&
       (isLoadingSummary || isLoadingTrend || !summary || !trend)) ||
@@ -251,14 +259,18 @@ export function StatsPage() {
           "Unknown error"
         }
         action={
-          <Button
-            onClick={() => {
-              setError(undefined);
-              setEngagementError(undefined);
-            }}
-          >
-            Dismiss
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => void retryDashboardLoad()}>Retry</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setError(undefined);
+                setEngagementError(undefined);
+              }}
+            >
+              Dismiss
+            </Button>
+          </div>
         }
       />
     );

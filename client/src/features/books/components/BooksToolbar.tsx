@@ -98,7 +98,7 @@ export function BooksToolbar({
   onAddBook: () => void;
   addButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
-  const resultsId = "books-results";
+  const suggestionsId = "books-search-suggestions";
 
   const selectedCount = useBooksStore((s) => s.selectedCount());
   const clearSelection = useBooksStore((s) => s.clearSelection);
@@ -450,6 +450,11 @@ export function BooksToolbar({
   }
 
   const bulkBusy = isBulkUpdating || isBulkDeleting;
+  const suggestionsOpen = showSuggest && suggestions.length > 0;
+  const activeSuggestionId =
+    suggestionsOpen && activeSuggestion >= 0
+      ? `${suggestionsId}-option-${activeSuggestion}`
+      : undefined;
 
   return (
     <div className="space-y-3">
@@ -739,9 +744,10 @@ export function BooksToolbar({
                 type="search"
                 role="combobox"
                 aria-autocomplete="list"
-                aria-expanded={showSuggest && suggestions.length > 0}
+                aria-expanded={suggestionsOpen}
                 aria-haspopup="listbox"
-                aria-controls={resultsId}
+                aria-controls={suggestionsOpen ? suggestionsId : undefined}
+                aria-activedescendant={activeSuggestionId}
                 aria-label="Search books"
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-700 text-sm outline-none focus:ring-2 focus:ring-slate-300"
                 value={draftQuery}
@@ -760,7 +766,7 @@ export function BooksToolbar({
                   window.setTimeout(() => setShowSuggest(false), 100);
                 }}
                 onKeyDown={(e) => {
-                  if (showSuggest && suggestions.length > 0) {
+                  if (suggestionsOpen) {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
                       setActiveSuggestion((i) =>
@@ -803,14 +809,17 @@ export function BooksToolbar({
                 }}
               />
 
-              {showSuggest && suggestions.length > 0 ? (
+              {suggestionsOpen ? (
                 <div
+                  id={suggestionsId}
                   role="listbox"
+                  aria-label="Search suggestions"
                   className="absolute z-20 mt-1 w-full rounded-md border border-slate-200 bg-white text-slate-700 shadow-lg"
                 >
                   {suggestions.map((s, i) => (
                     <div
                       key={`${s}-${i}`}
+                      id={`${suggestionsId}-option-${i}`}
                       role="option"
                       aria-selected={i === activeSuggestion}
                       className={`cursor-pointer px-3 py-2 text-sm ${

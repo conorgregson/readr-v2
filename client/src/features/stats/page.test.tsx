@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { StatsPage } from "./page";
 import { type StatsState, useStatsStore } from "./store/stats.store";
 import {
@@ -222,6 +223,7 @@ describe("StatsPage", () => {
     render(<StatsPage />);
 
     expect(screen.getByText("Failed to load dashboard")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
   });
 
@@ -242,6 +244,7 @@ describe("StatsPage", () => {
     expect(
       screen.getByText("Failed to load engagement data"),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
   });
 
@@ -273,6 +276,42 @@ describe("StatsPage", () => {
 
     expect(statsSetError).toHaveBeenCalledWith(undefined);
     expect(engagementSetError).toHaveBeenCalledWith(undefined);
+  });
+
+  it("retry reloads both stats and engagement data", async () => {
+    const user = userEvent.setup();
+
+    const loadStats = vi.fn().mockResolvedValue(undefined);
+    const loadEngagement = vi.fn().mockResolvedValue(undefined);
+    const statsSetError = vi.fn();
+    const engagementSetError = vi.fn();
+
+    const statsState = createStatsState({
+      page: {
+        mode: "error",
+        error: { message: "Failed to load dashboard" },
+      },
+      loadStats,
+      setError: statsSetError,
+    });
+
+    const engagementState = createEngagementState({
+      loadEngagement,
+      setError: engagementSetError,
+    });
+
+    wireStores(statsState, engagementState);
+
+    render(<StatsPage />);
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    await waitFor(() => {
+      expect(statsSetError).toHaveBeenCalledWith(undefined);
+      expect(engagementSetError).toHaveBeenCalledWith(undefined);
+      expect(loadStats).toHaveBeenCalledTimes(1);
+      expect(loadEngagement).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("clicking a metric button calls setSelectedMetric", () => {
