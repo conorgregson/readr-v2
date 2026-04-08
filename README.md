@@ -52,7 +52,7 @@ The demo is now connected to the **Express + PostgreSQL backend**, with all read
 - **v2.4 is now live**, adding engagement systems, analytics surfaces, and advanced library workflows
 
 > Current stable release: **v2.4.0**
-> Next development milestone: **v3.0 — Deployment & Growth**
+> In progress: **v3.0 — Deployment & Growth**
 
 ---
 
@@ -75,7 +75,7 @@ The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
 
 > Latest official release: **v2.4.0 — Engagement & insights expansion**
-> Next development milestone: **v3.0.0 — Deployment & growth**
+> In progress: **v3.0.0 — Deployment & growth**
 
 ---
 
@@ -362,7 +362,7 @@ Only SemVer releases represent official “ship-ready” states.
 - **v2.2.0** — API integration & persistence migration (local-first → API) ✅
 - **v2.3.0** — Authentication, accounts, and multi-user data boundaries ✅
 - **v2.4.0** — Engagement & insights expansion ✅
-- **v3.0.0** — Production infrastructure & hosted deployment architecture
+- **v3.0.0** — Production infrastructure & hosted deployment architecture _in progress_ 🚧
 
 For detailed version history and architectural milestones, see [`roadmap.md`](./roadmap.md).
 
@@ -705,7 +705,12 @@ Readr v2 uses a split hosted architecture:
 - **Backend:** Render
 - **Database:** Neon (hosted PostgreSQL)
 
-In local development, the frontend, backend, and database configuration are managed separately so the system can run predictably across environments.
+In local development, the frontend, backend, and database configuration can now be managed in either:
+
+- a traditional manual workflow
+- a Docker-based backend + database workflow introduced during **v3.0 Sprint 2**
+
+This keeps local setup more predictable without replacing the hosted production stack.
 
 ---
 
@@ -768,7 +773,7 @@ Incorrect: `http://localhost:4000/api`
 
 #### Backend (`server/.env`)
 
-Used by the **Render-hosted Express API** and local backend runtime.
+Used by the Express API during local development when running outside Docker.
 
 Required variables:
 
@@ -851,6 +856,81 @@ CORS_ALLOWED_ORIGINS="http://localhost:5173"
 
 ---
 
+### Local Docker Workflow (v3.0 Sprint 2)
+
+Readr now supports a Docker-based local backend workflow for improved environment consistency.
+
+This Docker workflow currently covers:
+
+- local PostgreSQL
+- local Express backend
+
+The frontend remains optional outside Docker and can continue running through Vite as normal.
+
+#### Docker services
+
+The Docker Compose setup is intended to provide:
+
+- a local Postgres container
+- a local backend container connected to that database
+- a persistent Docker volume for local DB state
+
+#### Typical Docker environment values
+
+The backend container uses a local containerized database connection similar to:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@db:5432/readr_v3?schema=public"
+PORT="4000"
+NODE_ENV="development"
+CLIENT_ORIGIN="http://localhost:5173"
+JWT_SECRET="dev_jwt_secret_change_me"
+```
+
+These values are for **local container orchestration only** and do **not** replace hosted Render/Neon configuration.
+
+#### Start Docker workflow
+
+From the repository root:
+
+```env
+docker compose up
+```
+
+#### Rebuild Docker workflow
+
+```env
+docker compose build --no-cache
+docker compose up
+```
+
+#### Stop Docker workflow
+
+```env
+docker compose down
+```
+
+#### Reset Docker local database volume
+
+Use this only if you intentionally want to wipe the local containerized database state:
+
+```env
+docker compose down -v
+```
+
+#### Verified Sprint 2 result
+
+The backend + database Docker workflow has been verified locally:
+
+local Postgres starts successfully in Docker
+Prisma client generates successfully inside the backend container
+backend starts successfully on port `4000`
+local `/health` responds successfully
+
+This confirms the core backend Docker path is working as intended for local development.
+
+---
+
 ### Production Environment Responsibilities
 
 **Vercel**
@@ -886,7 +966,240 @@ These values must be configured directly in Render and do not inherit from local
 
 ---
 
-### Sprint 1 Environment Audit Findings
+## Installation & Development
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/conorgregson/readr-v2.git
+cd readr-v2
+```
+
+---
+
+### 2. Install dependencies
+
+Install dependencies separately for the frontend and backend:
+
+```bash
+cd client
+npm install
+```
+
+```bash
+cd ../server
+npm install
+```
+
+---
+
+### 3. Configure environment variables
+
+Readr uses separate environment files for **root tooling**, **frontend local development**, and **backend runtime**.
+
+Create the following files before starting the app.
+
+#### Root (`/.env`)
+
+Create a root `.env` file for Prisma and repository-level database tooling:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+```
+
+This value is used by Prisma configuration and database commands run from the repository. Do **not** commit real credentials.
+
+#### Frontend (`client/.env`)
+
+Create a `.env` file inside `client/`:
+
+```env
+VITE_API_BASE_URL="http://localhost:4000"
+```
+
+This tells the frontend where to send API requests during local development.
+
+Important:
+
+Use the **backend origin only**
+Do **not** include `/api`
+The frontend appends `/api` internally when making requests
+
+Examples:
+
+Correct: `http://localhost:4000`
+Incorrect: `http://localhost:4000/api`
+
+#### Backend (`server/.env`)
+
+Create a `.env` file inside `server/`:
+
+```env
+DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+JWT_SECRET="your-development-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="development"
+PORT="4000"
+CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
+AUTH_RATE_LIMIT_WINDOW_MS="900000"
+AUTH_RATE_LIMIT_MAX="10"
+```
+
+Required backend variables:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `NODE_ENV`
+- `PORT`
+- `CORS_ALLOWED_ORIGINS`
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
+
+Backend test environment (`server/.env.test`)
+
+Create a `.env.test` file inside `server/` for backend integration tests:
+
+```env
+DATABASE_URL="postgresql://username:password@host/test_database"
+JWT_SECRET="test-secret"
+JWT_EXPIRES_IN="7d"
+NODE_ENV="test"
+CORS_ALLOWED_ORIGINS="http://localhost:5173"
+```
+
+> Local `.env` files do not automatically carry into Vercel or Render. Production environment variables must be configured separately in each deployment platform.
+
+---
+
+### 4. Choose a local development workflow
+
+Readr now supports two local backend workflows.
+
+#### Option A — Traditional manual workflow
+
+Use your own local PostgreSQL instance or hosted dev database.
+
+Make sure `DATABASE_URL` points to a valid database before running backend commands.
+
+Apply schema:
+
+```bash
+cd server
+npx prisma generate
+npx prisma migrate dev
+```
+
+Start backend:
+
+```bash
+npm run dev
+```
+
+Backend runs at:
+
+```bash
+http://localhost:4000
+```
+
+Start frontend:
+
+```bash
+cd ../client
+npm run dev
+```
+
+Frontend typically runs at:
+
+```bash
+http://localhost:5173
+```
+
+#### Option B — Docker backend workflow
+
+Use Docker Compose for local Postgres + backend orchestration.
+
+From the repository root:
+
+```bash
+docker compose up
+```
+
+This starts:
+
+- local PostgreSQL
+- local Express backend
+
+Then start the frontend separately:
+
+```bash
+cd client
+npm run dev
+```
+
+The frontend will still point to:
+
+```bash
+http://localhost:4000
+```
+
+through `VITE_API_BASE_URL`.
+
+---
+
+### 5. Run tests
+
+**Frontend tests**
+
+From `client/`:
+
+```bash
+npm run test
+```
+
+**Backend tests**
+
+From `server/`:
+
+```bash
+npm run test
+```
+
+If backend integration tests use a dedicated test database, ensure it is configured and available before running the suite.
+
+---
+
+### 6. Production deployment
+
+Readr v2 uses a split deployment model:
+
+- **Frontend**: Vercel
+- **Backend**: Render
+- **Database**: Neon (production) / PostgreSQL for local development
+
+Production environments must provide valid runtime configuration for:
+
+- `VITE_API_BASE_URL`
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
+
+---
+
+### Development Notes
+
+- The frontend depends on the backend being available at the configured API base URL
+- Authentication and all protected data flows require a valid backend `JWT_SECRET`
+- Register/login endpoints are protected by basic rate limiting in v2.3
+- Books, sessions, and backup operations are user-scoped in v2.3
+- Local development requires a reachable PostgreSQL database via `DATABASE_URL`
+- Docker-based local development is now supported for backend + database orchestration
+- Local `.env` files do not automatically carry into deployed environments
+
+---
+
+### v3.0 Sprint 1 Environment Audit Findings
 
 Sprint 1 identified several environment and deployment hardening points:
 

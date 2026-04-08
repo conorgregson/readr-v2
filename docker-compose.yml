@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: readr_v3_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: readr_v3
+    ports:
+      - "5433:5432"
+    volumes:
+      - readr_v3_postgres_data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: readr_v3_server
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/readr_v3?schema=public
+      JWT_SECRET: dev_jwt_secret_change_me
+      CLIENT_ORIGIN: http://localhost:5173
+      NODE_ENV: development
+    ports:
+      - "4000:4000"
+    working_dir: /app/server
+    volumes:
+      - ./server:/app/server
+      - ./shared:/app/shared
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - /app/node_modules
+      - /app/server/node_modules
+    command: sh -c "npx prisma generate && npm run dev"
+
+volumes:
+  readr_v3_postgres_data:
