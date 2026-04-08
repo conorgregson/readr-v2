@@ -52,5 +52,5 @@ process.on("unhandledRejection", (err) => {
 });
 
 server = app.listen(port, () => {
-  console.log(`Readr v2 API listening on port ${port}`);
+  console.log(`Readr API listening on port ${port}`);
 });
