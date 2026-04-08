@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v3.0.0-sprint-3] — Reliability, Health Checks & Runtime Visibility (2026-04-08)
+
+### Added
+
+- Added startup readiness logging for boot, database connection, and API-ready states.
+- Added optional runtime context to `AppError` for clearer operational diagnostics.
+- Added request-aware warning and error logging in the centralized HTTP error handler.
+- Added contextual logging for auth rate-limit events.
+- Added auth failure context for missing and malformed authorization headers.
+
+### Changed
+
+- Updated `/health` to return a more meaningful deployment-safe response with service, environment, and timestamp fields.
+- Simplified CORS origin handling while preserving deployment-safe rejection behavior.
+- Improved shutdown and fatal-process logging for clearer runtime visibility.
+- Improved environment validation logs so invalid config fails fast with clearer startup output.
+
+### Notes
+
+- Sprint 3 focused on operational confidence rather than feature work.
+- Verification passed for build, tests, health checks, request hardening, auth failures, rate limiting, startup validation, and hosted health verification.
+
+---
+
 ## [v3.0-sprint-2] — Docker & Local Environment Standardization (2026-04-08)
 
 ### Added
