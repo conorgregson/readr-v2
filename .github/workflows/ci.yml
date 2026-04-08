@@ -57,6 +57,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma client
+        run: npm run -w server prisma generate
+
       - name: Typecheck server
         run: npm run -w server typecheck
 
@@ -108,6 +111,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run -w server prisma generate
 
       - name: Prepare test database
         run: npm run -w server test:db:push
@@ -174,6 +180,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma generate
 
       - name: Prepare test database
         run: npm run test:db:push
