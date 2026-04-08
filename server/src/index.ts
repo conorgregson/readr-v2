@@ -9,14 +9,32 @@ const port = env.PORT;
 let server: Server | undefined;
 let shuttingDown = false;
 
+function logInfo(message: string, meta?: Record<string, unknown>) {
+  if (meta) {
+    console.log(message, meta);
+    return;
+  }
+
+  console.log(message);
+}
+
+function logError(message: string, meta?: Record<string, unknown>) {
+  if (meta) {
+    console.error(message, meta);
+    return;
+  }
+
+  console.error(message);
+}
+
 async function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
 
-  console.log(`[shutdown] Received ${signal}. Closing server...`);
+  logInfo("[shutdown] Shutdown initiated", { signal });
 
   const forceTimer = setTimeout(() => {
-    console.error("[shutdown] Force exit after timeout");
+    logError("[shutdown] Force exit after timeout", { timeoutMs: 10_000 });
     process.exit(1);
   }, 10_000);
 
@@ -28,10 +46,10 @@ async function shutdown(signal: string) {
 
     await prisma.$disconnect();
 
-    console.log("[shutdown] Clean shutdown complete.");
+    logInfo("[shutdown] Clean shutdown complete");
     process.exitCode = 0;
   } catch (err) {
-    console.error("[shutdown] Error during shutdown", err);
+    logError("[shutdown] Error during shutdown", { err });
     process.exitCode = 1;
   } finally {
     clearTimeout(forceTimer);
@@ -42,15 +60,36 @@ process.on("SIGTERM", () => void shutdown("SIGTERM"));
 process.on("SIGINT", () => void shutdown("SIGINT"));
 
 process.on("uncaughtException", (err) => {
-  console.error("[fatal] uncaughtException", err);
+  logError("[fatal] uncaughtException", { err });
   void shutdown("uncaughtException");
 });
 
 process.on("unhandledRejection", (err) => {
-  console.error("[fatal] unhandledRejection", err);
+  logError("[fatal] unhandledRejection", { err });
   void shutdown("unhandledRejection");
 });
 
-server = app.listen(port, () => {
-  console.log(`Readr API listening on port ${port}`);
-});
+async function start() {
+  try {
+    logInfo("[startup] Booting Readr API", {
+      env: env.NODE_ENV,
+      port,
+    });
+
+    await prisma.$connect();
+
+    logInfo("[startup] Database connection established");
+
+    server = app.listen(port, () => {
+      logInfo("[startup] Readr API ready", {
+        port,
+        env: env.NODE_ENV,
+      });
+    });
+  } catch (err) {
+    logError("[startup] Failed to start server", { err });
+    process.exit(1);
+  }
+}
+
+void start();
