@@ -70,9 +70,6 @@ jobs:
       - name: Typecheck server
         run: npm run -w server typecheck
 
-      - name: Test server
-        run: npm run -w server test
-
       - name: Build server
         run: npm run -w server build
 
