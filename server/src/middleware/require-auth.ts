@@ -11,6 +11,11 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
         new AppError("Unauthorized", {
           status: 401,
           code: "AUTH_UNAUTHORIZED",
+          context: {
+            reason: "missing_authorization_header",
+            path: req.originalUrl,
+            method: req.method,
+          },
         }),
       );
     }
@@ -22,6 +27,11 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
         new AppError("Unauthorized", {
           status: 401,
           code: "AUTH_UNAUTHORIZED",
+          context: {
+            reason: "invalid_authorization_header",
+            path: req.originalUrl,
+            method: req.method,
+          },
         }),
       );
     }

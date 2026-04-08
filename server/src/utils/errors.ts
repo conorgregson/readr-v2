@@ -16,6 +16,7 @@ export class AppError extends Error {
   public status: number;
   public code: AppErrorCode;
   public details?: unknown;
+  public context?: Record<string, unknown>;
 
   constructor(
     message: string,
@@ -23,6 +24,7 @@ export class AppError extends Error {
       status?: number;
       code?: AppErrorCode;
       details?: unknown;
+      context?: Record<string, unknown>;
     },
   ) {
     super(message);
@@ -30,6 +32,7 @@ export class AppError extends Error {
     this.status = options?.status ?? 500;
     this.code = options?.code ?? "INTERNAL_ERROR";
     this.details = options?.details;
+    this.context = options?.context;
   }
 }
 
@@ -38,5 +41,24 @@ export function zodToAppError(error: ZodError): AppError {
     status: 400,
     code: "VALIDATION_ERROR",
     details: error.format(),
+  });
+}
+
+export function toAppError(error: unknown): AppError {
+  if (error instanceof AppError) return error;
+
+  if (error instanceof Error) {
+    return new AppError(error.message || "Internal server error", {
+      status: 500,
+      code: "INTERNAL_ERROR",
+      context: {
+        causeName: error.name,
+      },
+    });
+  }
+
+  return new AppError("Internal server error", {
+    status: 500,
+    code: "INTERNAL_ERROR",
   });
 }

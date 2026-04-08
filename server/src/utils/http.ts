@@ -3,6 +3,23 @@ import type { ZodTypeAny } from "zod";
 import { ZodError } from "zod";
 import { AppError, zodToAppError } from "./errors";
 
+function getRequestContext(req: Request) {
+  return {
+    method: req.method,
+    path: req.originalUrl || req.url,
+    origin: req.get("origin") ?? null,
+    ip: req.ip ?? null,
+  };
+}
+
+function logWarn(message: string, meta: Record<string, unknown>) {
+  console.warn(message, meta);
+}
+
+function logError(message: string, meta: Record<string, unknown>) {
+  console.error(message, meta);
+}
+
 export function validateBody(schema: ZodTypeAny) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
@@ -64,7 +81,7 @@ export function sendNoContent(res: Response) {
 }
 
 export function notFoundHandler(
-  _req: Request,
+  req: Request,
   _res: Response,
   next: NextFunction,
 ) {
@@ -72,17 +89,24 @@ export function notFoundHandler(
     new AppError("Route not found", {
       status: 404,
       code: "NOT_FOUND",
+      context: getRequestContext(req),
     }),
   );
 }
 
 export function errorHandler(
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ) {
+  const requestContext = getRequestContext(req);
+
   if (err instanceof SyntaxError && "body" in err) {
+    logWarn("Malformed JSON body", {
+      ...requestContext,
+    });
+
     return res.status(400).json({
       ok: false,
       error: {
@@ -98,6 +122,10 @@ export function errorHandler(
     "type" in err &&
     err.type === "entity.too.large"
   ) {
+    logWarn("Request body too large", {
+      ...requestContext,
+    });
+
     return res.status(413).json({
       ok: false,
       error: {
@@ -108,6 +136,20 @@ export function errorHandler(
   }
 
   if (err instanceof AppError) {
+    const meta = {
+      ...requestContext,
+      status: err.status,
+      code: err.code,
+      details: err.code === "VALIDATION_ERROR" ? err.details : undefined,
+      context: err.context,
+    };
+
+    if (err.status >= 500) {
+      logError("Application error", meta);
+    } else {
+      logWarn("Application error", meta);
+    }
+
     return res.status(err.status).json({
       ok: false,
       error: {
@@ -118,7 +160,10 @@ export function errorHandler(
     });
   }
 
-  console.error("Unexpected error:", err);
+  logError("Unexpected error", {
+    ...requestContext,
+    err,
+  });
 
   return res.status(500).json({
     ok: false,
