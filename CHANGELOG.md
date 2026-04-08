@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v3.0-sprint-2] — Docker & Local Environment Standardization (2026-04-08)
+
+### Added
+
+- Added a backend Dockerfile for local containerized development.
+- Added a root `.dockerignore` to reduce noisy Docker build context.
+- Added a `docker-compose.yml` workflow for local Postgres + backend orchestration.
+- Added documented Docker startup, rebuild, shutdown, and reset commands to the README.
+
+### Changed
+
+- Standardized local backend development around a verified Docker-based workflow.
+- Aligned container startup with the repo’s actual TypeScript, shared config, and Prisma requirements.
+- Clarified local vs hosted environment responsibilities in project documentation.
+
+### Notes
+
+- Verified local Docker workflow now starts Postgres and the backend successfully.
+- Confirmed Prisma client generation works inside the backend container.
+- Confirmed the backend health route responds successfully in the Dockerized local setup.
+- Frontend containerization remains optional and out of scope for this sprint.
+
+---
+
 ## [v3.0.0-sprint-1] — Deployment Audit & Environment Hardening (2026-04-07)
 
 ### Added
