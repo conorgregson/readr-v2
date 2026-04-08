@@ -42,6 +42,13 @@ jobs:
     name: Server Validation
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:5tF89%24mx2%40qes%25Gp2cH@127.0.0.1:5432/readr_v2_test
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
 
     steps:
       - name: Checkout repository
