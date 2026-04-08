@@ -1,10 +1,11 @@
 {
   "info": {
     "_postman_id": "e55526f7-9ae8-41a2-bd6c-81728d227461",
-    "name": "Readr v2 API",
+    "name": "Readr v2 API — Contract Tests",
+    "description": "This Postman collection validates the backend API contract for the Readr v2 application.\n\nEndpoints covered:\n\n- Health (service availability)\n    \n- Auth\n    \n- Books CRUD\n    \n- Sessions CRUD\n    \n- Backup\n    \n\nThe tests verify:\n\n- endpoint behavior\n    \n- request validation\n    \n- response schemas\n    \n- deterministic ordering\n    \n- error handling\n    \n\nThese requests are used during development to confirm that backend behavior matches the expected frontend contract before integration.\n\nTest environments assume:\n\nbaseUrl = [http://localhost:4000](http://localhost:4000)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "47436581",
-    "_collection_link": "https://conor-gregson-8807727.postman.co/workspace/6cb5e5dc-6b9c-4dce-823d-f73d1bdd8243/collection/47436581-e55526f7-9ae8-41a2-bd6c-81728d227461?action=share&source=collection_link&creator=47436581"
+    "_collection_link": "https://go.postman.co/collection/47436581-e55526f7-9ae8-41a2-bd6c-81728d227461?source=collection_link"
   },
   "item": [
     {
@@ -17,14 +18,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Health check returns 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"response has ok: true\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  pm.expect(json.ok).to.be.true;\r",
-                  "  pm.expect(json.status).to.eql(\"healthy\");\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Health response ok\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -44,45 +45,319 @@
               "path": [
                 "health"
               ]
-            }
+            },
+            "description": "Checks whether the Readr API server is running and reachable.\n\nThis endpoint is typically used as a preliminary test before executing  \nother API requests. If this request fails, the rest of the test suite  \nshould not be run.\n\nEndpoint  \nGET /api/health"
           },
           "response": []
         }
-      ]
+      ],
+      "description": "Health endpoint tests.\n\nUsed to confirm the server is running and reachable before executing other API tests.\n\nEndpoint:  \nGET /api/health"
     },
     {
-      "name": "Books",
+      "name": "Auth",
       "item": [
         {
-          "name": "books - list",
+          "name": "1. Register",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const uniqueEmail = `readr_test_${Date.now()}@example.com`;\r",
+                  "pm.environment.set(\"testEmail\", uniqueEmail);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Register returns 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Register response envelope is valid\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Register returns token and user\", function () {\r",
+                  "  pm.expect(json.data.token).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.user).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.user.email).to.eql(pm.environment.get(\"testEmail\"));\r",
+                  "});\r",
+                  "\r",
+                  "pm.environment.set(\"token\", json.data.token);\r",
+                  "pm.environment.set(\"userId\", json.data.user.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{testEmail}}\",\r\n  \"password\": \"{{testPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Login",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Login returns 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"returns ok: true and an array\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  pm.expect(json.ok).to.be.true;\r",
-                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Login response envelope is valid\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"first book has expected fields (if any)\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  const books = json?.data;\r",
-                  "  if (!Array.isArray(books) || books.length === 0) {\r",
-                  "    pm.expect(true).to.eql(true);\r",
-                  "    return;\r",
-                  "  }\r",
-                  "  const b = books[0];\r",
-                  "  pm.expect(b).to.have.property(\"id\");\r",
-                  "  pm.expect(b).to.have.property(\"title\");\r",
-                  "  pm.expect(b).to.have.property(\"status\");\r",
+                  "pm.test(\"Login returns token and user\", function () {\r",
+                  "  pm.expect(json.data.token).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.user).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.user.email).to.eql(pm.environment.get(\"testEmail\"));\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "pm.environment.set(\"token\", json.data.token);\r",
+                  "pm.environment.set(\"userId\", json.data.user.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{testEmail}}\",\r\n  \"password\": \"{{testPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Me returns 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Me response envelope is valid\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.user).to.be.an(\"object\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Me returns the expected user\", function () {\r",
+                  "  pm.expect(json.data.user.email).to.eql(pm.environment.get(\"testEmail\"));\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Register — Duplicate Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Duplicate register is rejected\", function () {\r",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 409]);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Duplicate register returns error envelope\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "  pm.expect(json.error.message).to.be.a(\"string\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{testEmail}}\",\r\n  \"password\": \"{{testPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Login — Invalid Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Invalid login is rejected\", function () {\r",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400, 401]);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid login returns error envelope\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "  pm.expect(json.error.message).to.be.a(\"string\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{testEmail}}\",\r\n  \"password\": \"WrongPassword123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Me — Unauthorized",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Unauthorized me request returns 401\", function () {\r",
+                  "  pm.response.to.have.status(401);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Unauthorized me returns error envelope\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "  pm.expect(json.error.code).to.eql(\"AUTH_UNAUTHORIZED\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -94,40 +369,170 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/books",
+              "raw": "{{baseUrl}}/api/auth/me",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "books"
+                "api",
+                "auth",
+                "me"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "books - create",
+          "name": "Auth/Login — Rate Limit",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 201\", function () {\r",
+                  "pm.test(\"Rate limit eventually returns 401 or 429\", function () {\r",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 429]);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response envelope is valid\", function () {\r",
+                  "  pm.expect(json.ok).to.be.a(\"boolean\");\r",
+                  "});\r",
+                  "\r",
+                  "if (pm.response.code === 401) {\r",
+                  "  pm.test(\"Unauthorized response is valid before threshold\", function () {\r",
+                  "    pm.expect(json.ok).to.eql(false);\r",
+                  "    pm.expect(json.error).to.be.an(\"object\");\r",
+                  "    pm.expect(json.error.message).to.be.a(\"string\");\r",
+                  "  });\r",
+                  "}\r",
+                  "\r",
+                  "if (pm.response.code === 429) {\r",
+                  "  pm.test(\"Rate-limited response matches contract\", function () {\r",
+                  "    pm.expect(json.ok).to.eql(false);\r",
+                  "    pm.expect(json.error).to.be.an(\"object\");\r",
+                  "    pm.expect(json.error.code).to.eql(\"RATE_LIMITED\");\r",
+                  "    pm.expect(json.error.message).to.eql(\r",
+                  "      \"Too many requests, please try again later.\"\r",
+                  "    );\r",
+                  "  });\r",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{testEmail}}\",\r\n  \"password\": \"WrongPassword123!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Contract tests for registration, login, authenticated identity lookup, and auth failure handling."
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "1. List Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response ok is true\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Books list returned\", function () {\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Each returned book has required fields\", function () {\r",
+                  "  if (json.data.length > 0) {\r",
+                  "    const book = json.data[0];\r",
+                  "    pm.expect(book.id).to.be.a(\"string\");\r",
+                  "    pm.expect(book.title).to.be.a(\"string\");\r",
+                  "    pm.expect(book.author).to.be.a(\"string\");\r",
+                  "    pm.expect(book.status).to.be.a(\"string\");\r",
+                  "  }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/books",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            },
+            "description": "Returns all books currently stored in the system.\n\nThis endpoint is commonly used during testing to retrieve a valid  \nbookId that can be reused for session creation tests.\n\nEndpoint  \nGET /api/books"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r",
                   "  pm.response.to.have.status(201);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"returns created book and saves id to env\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  pm.expect(json.ok).to.be.true;\r",
+                  "const json = pm.response.json();\r",
                   "\r",
-                  "  const b = json.data;\r",
-                  "  pm.expect(b).to.have.property(\"id\");\r",
-                  "  pm.expect(b.title).to.eql(\"Postman Test Book\");\r",
-                  "\r",
-                  "  pm.environment.set(\"bookId\", b.id);\r",
-                  "  pm.environment.set(\"bookId\", b.id);\r",
+                  "pm.test(\"Book created successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.id).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.title).to.eql(\"Postman Test Book\");\r",
+                  "  pm.expect(json.data.author).to.eql(\"Anon\");\r",
+                  "  pm.expect(json.data.status).to.eql(\"planned\");\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "pm.collectionVariables.set(\"createdBookId\", json.data.id);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -143,7 +548,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Postman Test Book\",\r\n  \"author\": \"Conor\",\r\n  \"genre\": \"Non-fiction\",\r\n  \"status\": \"PLANNED\",\r\n  \"pageCount\": 250,\r\n  \"currentPage\": 10\r\n}\r\n",
+              "raw": "{\r\n  \"title\": \"Postman Test Book\",\r\n  \"author\": \"Anon\",\r\n  \"genre\": \"Non-fiction\",\r\n  \"status\": \"planned\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -151,35 +556,60 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/books",
+              "raw": "{{baseUrl}}/api/books/",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "books"
+                "api",
+                "books",
+                ""
               ]
-            }
+            },
+            "description": "Creates a new book record.\n\nThis request verifies that the Books API correctly accepts valid  \nbook data and persists it in the database.\n\nThe returned book id can be reused in subsequent update or delete tests.\n\nEndpoint  \nPOST /api/books"
           },
           "response": []
         },
         {
-          "name": "books - with search & status",
+          "name": "3. List Books —  Search Query",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Status is 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"results only include PLANNED\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  json.data.forEach((b) => {\r",
-                  "    pm.expect(b.status).to.eql(\"PLANNED\");\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response ok is true\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Books list returned\", function () {\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Search results match query\", function () {\r",
+                  "  json.data.forEach((book) => {\r",
+                  "    const haystack = [\r",
+                  "      book.title ?? \"\",\r",
+                  "      book.author ?? \"\",\r",
+                  "      book.genre ?? \"\",\r",
+                  "      book.series ?? \"\",\r",
+                  "      book.isbn ?? \"\",\r",
+                  "    ]\r",
+                  "      .join(\" \")\r",
+                  "      .toLowerCase();\r",
+                  "\r",
+                  "    pm.expect(haystack).to.include(\"postman\");\r",
                   "  });\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "pm.test(\"Search returns at least one matching book\", function () {\r",
+                  "  pm.expect(json.data.length).to.be.above(0);\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -191,29 +621,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/books?search=Postman&status=PLANNED&limit=5&offset=0",
+              "raw": "{{baseUrl}}/api/books?search=Postman",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "books"
               ],
               "query": [
                 {
                   "key": "search",
                   "value": "Postman"
-                },
-                {
-                  "key": "status",
-                  "value": "PLANNED"
-                },
-                {
-                  "key": "limit",
-                  "value": "5"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
                 }
               ]
             }
@@ -221,23 +640,128 @@
           "response": []
         },
         {
-          "name": ":id - update title",
+          "name": "4. List Books — Limit Query",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Status is 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"book updated fields are returned\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  const b = json.data;\r",
-                  "  pm.expect(b.title).to.eql(\"Postman Test Book (Updated)\");\r",
-                  "  pm.expect(b.currentPage).to.eql(50);\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response ok is true\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "pm.test(\"Books list returned\", function () {\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Limit query returns at most 1 book\", function () {\r",
+                  "  pm.expect(json.data.length).to.be.at.most(1);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/books?limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. List Books —  Invalid Limit Query",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid limit is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/books?limit=999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "999"
+                }
+              ]
+            },
+            "description": "Verifies that out-of-range pagination inputs are rejected."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Update Created Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Book updated successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get(\"createdBookId\"));\r",
+                  "  pm.expect(json.data.title).to.eql(\"Updated Postman Test Book\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Author remains unchanged\", function () {\r",
+                  "  pm.expect(json.data.author).to.eql(\"Anon\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -250,7 +774,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Postman Test Book (Updated)\",\r\n  \"currentPage\": 50\r\n}\r\n",
+              "raw": "{\r\n  \"title\": \"Updated Postman Test Book\"\r\n}\r\n",
               "options": {
                 "raw": {
                   "language": "json"
@@ -258,35 +782,196 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "books",
-                "{{bookId}}"
+                "{{createdBookId}}"
               ]
-            }
+            },
+            "description": "Updates an existing book.\n\nThis request validates that partial updates work correctly and that  \nbook fields can be modified without affecting other fields.\n\nEndpoint  \nPATCH /api/books/:id"
           },
           "response": []
         },
         {
-          "name": "books — invalid currentPage > pageCount",
+          "name": "7. Update Book — empty patch",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 400 for validation error\", function () {\r",
+                  "pm.test(\"Status is 400\", function () {\r",
                   "  pm.response.to.have.status(400);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"error payload looks like Zod error\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  pm.expect(json.ok).to.be.false;\r",
-                  "  pm.expect(json.error).to.have.property(\"code\", \"VALIDATION_ERROR\");\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Empty patch is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{createdBookId}}"
+              ]
+            },
+            "description": "Verifies that an empty update body is rejected."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Update Book — invalid status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid status is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"status\": \"invalid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{createdBookId}}"
+              ]
+            },
+            "description": "Verifies that invalid enum values are rejected for book status."
+          },
+          "response": []
+        },
+        {
+          "name": "9. Create Book — Invalid Payload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Empty patch is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{createdBookId}}"
+              ]
+            },
+            "description": "Verifies that session reassignment rejects malformed book IDs."
+          },
+          "response": []
+        },
+        {
+          "name": "10. Create Bulk Book 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Bulk book 1 created successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.id).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.title).to.eql(\"Bulk Test Book 1\");\r",
+                  "  pm.expect(json.data.author).to.eql(\"Bulk Author\");\r",
+                  "  pm.expect(json.data.status).to.eql(\"planned\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"bulkBookId1\", json.data.id);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -299,7 +984,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Broken Book\",\r\n  \"pageCount\": 100,\r\n  \"currentPage\": 200\r\n}\r\n",
+              "raw": "{\r\n  \"title\": \"Bulk Test Book 1\",\r\n  \"author\": \"Bulk Author\",\r\n  \"genre\": \"Test\",\r\n  \"status\": \"planned\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -307,46 +992,41 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/books",
+              "raw": "{{baseUrl}}/api/books",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
                 "books"
               ]
             }
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Sessions",
-      "item": [
+        },
         {
-          "name": "sessions - create",
+          "name": "11. Create Bulk Book 2",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 201\", function () {\r",
+                  "pm.test(\"Status is 201\", function () {\r",
                   "  pm.response.to.have.status(201);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"returns session and saves sessionId\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  console.log(\"Create session response:\", json);\r",
+                  "const json = pm.response.json();\r",
                   "\r",
-                  "  pm.expect(json.ok).to.be.true;\r",
-                  "\r",
-                  "  const s = json.data;\r",
-                  "  pm.expect(s).to.have.property(\"id\");\r",
-                  "  pm.expect(s.bookId).to.eql(pm.environment.get(\"bookId\"));\r",
-                  "\r",
-                  "  pm.environment.set(\"sessionId\", s.id);\r",
+                  "pm.test(\"Bulk book 2 created successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.id).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.title).to.eql(\"Bulk Test Book 2\");\r",
+                  "  pm.expect(json.data.author).to.eql(\"Bulk Author\");\r",
+                  "  pm.expect(json.data.status).to.eql(\"planned\");\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "pm.collectionVariables.set(\"bulkBookId2\", json.data.id);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -359,7 +1039,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"minutes\": 30,\n  \"notes\": \"Postman test session\",\n  \"date\": \"2025-12-11\"\n}",
+              "raw": "{\r\n  \"title\": \"Bulk Test Book 2\",\r\n  \"author\": \"Bulk Author\",\r\n  \"genre\": \"Test\",\r\n  \"status\": \"planned\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -367,42 +1047,107 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/sessions",
+              "raw": "{{baseUrl}}/api/books",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "sessions"
+                "api",
+                "books"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "sessions — list for book",
+          "name": "12. Bulk Update Books",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Status is 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"all sessions belong to bookId\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  const expectedBookId = pm.environment.get(\"bookId\");\r",
+                  "const json = pm.response.json();\r",
                   "\r",
-                  "  if (!Array.isArray(json.data) || json.data.length === 0) {\r",
-                  "    console.log(\"No sessions returned to validate\");\r",
-                  "    return; // no pm.skip in Newman\r",
-                  "  }\r",
-                  "\r",
-                  "  json.data.forEach((s) => {\r",
-                  "    pm.expect(s.bookId).to.eql(expectedBookId);\r",
-                  "  });\r",
+                  "pm.test(\"Bulk update succeeded\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.operation).to.eql(\"update\");\r",
+                  "  pm.expect(json.data.operationId).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.affectedCount).to.eql(2);\r",
+                  "  pm.expect(json.data.affectedIds).to.be.an(\"array\");\r",
+                  "  pm.expect(json.data.affectedIds).to.include(pm.collectionVariables.get(\"bulkBookId1\"));\r",
+                  "  pm.expect(json.data.affectedIds).to.include(pm.collectionVariables.get(\"bulkBookId2\"));\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\", \"{{bulkBookId2}}\"],\r\n  \"patch\": {\r\n    \"status\": \"reading\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13. Verify Bulk Update Applied",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Bulk-updated books are returned\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "  pm.expect(json.data.length).to.be.at.least(2);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Both bulk books are now reading\", function () {\r",
+                  "  const id1 = pm.collectionVariables.get(\"bulkBookId1\");\r",
+                  "  const id2 = pm.collectionVariables.get(\"bulkBookId2\");\r",
+                  "\r",
+                  "  const targetBooks = json.data.filter(\r",
+                  "    (book) => book.id === id1 || book.id === id2\r",
+                  "  );\r",
+                  "\r",
+                  "  pm.expect(targetBooks.length).to.eql(2);\r",
+                  "  targetBooks.forEach((book) => {\r",
+                  "    pm.expect(book.status).to.eql(\"reading\");\r",
+                  "  });\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -414,25 +1159,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/sessions?bookId={{bookId}}&limit=10&offset=0",
+              "raw": "{{baseUrl}}/api/books?search=Bulk Test Book",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "sessions"
+                "api",
+                "books"
               ],
               "query": [
                 {
-                  "key": "bookId",
-                  "value": "{{bookId}}"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "offset",
-                  "value": "0"
+                  "key": "search",
+                  "value": "Bulk Test Book"
                 }
               ]
             }
@@ -440,26 +1178,387 @@
           "response": []
         },
         {
-          "name": ":id — delete",
+          "name": "14. Bulk Update Books — Empty IDs",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Empty ids are rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": [],\r\n  \"patch\": {\r\n    \"status\": \"reading\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15. Bulk Update Books — Empty Patch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Empty patch is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\"],\r\n  \"patch\": {}\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "16. Bulk Update Books — Invalid Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid status is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\"],\r\n  \"patch\": {\r\n    \"status\": \"invalid\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "17. Bulk Update Books — Duplicate IDs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"returns deleted session id and clears env\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  const expectedId = pm.environment.get(\"sessionId\");\r",
+                  "const json = pm.response.json();\r",
                   "\r",
-                  "  pm.expect(json.ok).to.be.true;\r",
-                  "  pm.expect(json.data.id).to.eql(expectedId);\r",
-                  "\r",
-                  "  pm.environment.unset(\"sessionId\");\r",
+                  "pm.test(\"Duplicate ids are handled consistently\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.operation).to.eql(\"update\");\r",
+                  "  pm.expect(json.data.affectedCount).to.eql(1);\r",
+                  "  pm.expect(json.data.affectedIds).to.be.an(\"array\");\r",
+                  "  pm.expect(json.data.affectedIds.length).to.eql(1);\r",
+                  "  pm.expect(json.data.affectedIds[0]).to.eql(pm.collectionVariables.get(\"bulkBookId1\"));\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\", \"{{bulkBookId1}}\"],\r\n  \"patch\": {\r\n    \"status\": \"finished\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "18. Bulk Delete Books — Empty IDs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Empty ids are rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": []\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "19. Bulk Delete Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Bulk delete succeeded\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.operation).to.eql(\"delete\");\r",
+                  "  pm.expect(json.data.operationId).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.affectedCount).to.eql(2);\r",
+                  "  pm.expect(json.data.affectedIds).to.be.an(\"array\");\r",
+                  "  pm.expect(json.data.affectedIds).to.include(pm.collectionVariables.get(\"bulkBookId1\"));\r",
+                  "  pm.expect(json.data.affectedIds).to.include(pm.collectionVariables.get(\"bulkBookId2\"));\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\", \"{{bulkBookId2}}\"]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "20. Verify Bulk Delete Applied",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Deleted bulk books are no longer returned\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "\r",
+                  "  const id1 = pm.collectionVariables.get(\"bulkBookId1\");\r",
+                  "  const id2 = pm.collectionVariables.get(\"bulkBookId2\");\r",
+                  "\r",
+                  "  const deletedBooks = json.data.filter(\r",
+                  "    (book) => book.id === id1 || book.id === id2\r",
+                  "  );\r",
+                  "\r",
+                  "  pm.expect(deletedBooks.length).to.eql(0);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/books?search=Bulk Test Book",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Bulk Test Book"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "21. Delete Created Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 204\", function () {\r",
+                  "  pm.response.to.have.status(204);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response body is empty\", function () {\r",
+                  "  pm.expect(pm.response.text()).to.eql(\"\");\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -471,35 +1570,76 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/sessions/{{sessionId}}",
+              "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "sessions",
-                "{{sessionId}}"
+                "api",
+                "books",
+                "{{createdBookId}}"
               ]
-            }
+            },
+            "description": "Deletes an existing book.\n\nThis test verifies that the Books API correctly removes a book and  \nreturns the expected success response.\n\nEndpoint  \nDELETE /api/books/:id"
           },
           "response": []
         },
         {
-          "name": "sessions — invalid minutes",
+          "name": "22. Delete Created Book Again",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 400\", function () {\r",
-                  "  pm.response.to.have.status(400);\r",
+                  "pm.test(\"Status is 404\", function () {\r",
+                  "  pm.response.to.have.status(404);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"validation error returned\", function () {\r",
-                  "  const json = pm.response.json();\r",
-                  "  pm.expect(json.ok).to.be.false;\r",
-                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Deleted book is no longer found\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"NOT_FOUND\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books",
+                "{{createdBookId}}"
+              ]
+            },
+            "description": "Attempts to delete the same book a second time.\n\nThis test confirms that the Books API returns a 404 not found response  \nafter the resource has already been deleted.\n\nEndpoint  \nDELETE /api/books/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "23. Create Book For Session Tests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.environment.set(\"bookIdForSessions\", json.data.id);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -512,7 +1652,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"bookId\": \"{{bookId}}\",\r\n  \"minutes\": -10,\r\n  \"notes\": \"bad minutes\",\r\n  \"date\": \"2025-12-11\"\r\n}\r\n",
+              "raw": "{\r\n  \"title\": \"Postman Session Test Book\",\r\n  \"author\": \"Anon\",\r\n  \"status\": \"reading\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -520,55 +1660,1180 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/sessions?bookId={{bookId}}&limit=10&offset=0",
+              "raw": "{{baseUrl}}/api/books/",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
+                "api",
+                "books",
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Contract tests for book CRUD, validation, query filtering, and not-found behavior."
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "1. List Sessions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"ok is true\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"data is an array\", function () {\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Each returned session has required fields\", function () {\r",
+                  "  if (json.data.length > 0) {\r",
+                  "    const session = json.data[0];\r",
+                  "    pm.expect(session.id).to.be.a(\"string\");\r",
+                  "    pm.expect(session.bookId).to.be.a(\"string\");\r",
+                  "    pm.expect(session.date).to.be.a(\"string\");\r",
+                  "    pm.expect(session.createdAt).to.be.a(\"string\");\r",
+                  "    pm.expect(session.updatedAt).to.be.a(\"string\");\r",
+                  "  }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Returns all reading sessions currently stored in the system.\n\nThe endpoint supports filtering and pagination through query parameters  \nsuch as bookId, date ranges, limit, and offset.\n\nResults are returned in deterministic order:\n\n1. date DESC\n    \n2. createdAt DESC\n    \n3. id DESC\n    \n\nEndpoint  \nGET /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Session — pages only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Session created successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.id).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.bookId).to.eql(pm.environment.get(\"bookIdForSessions\"));\r",
+                  "  pm.expect(json.data.pages).to.eql(20);\r",
+                  "  pm.expect(json.data.minutes).to.eql(null);\r",
+                  "});\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"createdSessionId\", json.data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-15\",\r\n  \"pages\": 20,\r\n  \"notes\": \"Sprint 3 pages-only test\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Creates a new reading session using pages as the reading metric.\n\nThis request also serves as the main lifecycle seed for the Sessions folder.  \nThe returned id is stored in the Postman collection variable createdSessionId  \nso that subsequent GET, PATCH, and DELETE requests can run automatically.\n\nEndpoint  \nPOST /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Session — minutes only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Minutes-only session created\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.pages).to.eql(null);\r",
+                  "  pm.expect(json.data.minutes).to.eql(35);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-14\",\r\n  \"minutes\": 35,\r\n  \"notes\": \"Sprint 3 minutes-only test\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Creates a new reading session using minutes as the reading metric.\n\nThis verifies that the Sessions API accepts a valid payload when only minutes  \nare provided and pages are omitted.\n\nEndpoint  \nPOST /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Create Session — pages and minutes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r",
+                  "  pm.response.to.have.status(201);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Full session created successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.bookId).to.eql(pm.environment.get(\"bookIdForSessions\"));\r",
+                  "  pm.expect(json.data.pages).to.eql(12);\r",
+                  "  pm.expect(json.data.minutes).to.eql(25);\r",
+                  "  pm.expect(json.data.notes).to.eql(\"Sprint 3 full session test\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-13\",\r\n  \"pages\": 12,\r\n  \"minutes\": 25,\r\n  \"notes\": \"Sprint 3 full session test\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Creates a new reading session with both pages and minutes provided.\n\nThis verifies that the Sessions API accepts and stores both supported reading  \nmetrics in the same session.\n\nEndpoint  \nPOST /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Create Session — invalid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Validation error returned\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-15\",\r\n  \"notes\": \"Should fail\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Attempts to create an invalid reading session.\n\nThis test confirms that the Sessions API enforces the rule requiring at least  \none reading metric and returns a validation error for invalid payloads.\n\nExpected result: HTTP 400 validation error.\n\nEndpoint  \nPOST /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Create Session — invalid book id format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid book id format is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"not-a-cuid\",\r\n  \"date\": \"2026-03-15\",\r\n  \"pages\": 10\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Attempts to create a reading session using an invalid book id format.\n\nThis verifies that request validation rejects malformed identifiers before  \ndatabase lookup occurs.\n\nEndpoint  \nPOST /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Create Session — valid id format, nonexistent book",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"cm1234567890123456789012\",\r\n  \"date\": \"2026-03-15\",\r\n  \"pages\": 10\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Attempts to create a reading session using a syntactically valid book id that  \ndoes not exist in the database.\n\nThis verifies that the API correctly distinguishes between malformed ids and  \nwell-formed ids that fail resource lookup.\n\nEndpoint  \nPOST /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Create Session — Invalid Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid date is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"not-a-date\",\r\n  \"pages\": 10\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9. Get Session by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Returned correct session\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get(\"createdSessionId\"));\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Session has required fields\", function () {\r",
+                  "  pm.expect(json.data.bookId).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.date).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.createdAt).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.updatedAt).to.be.a(\"string\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Retrieves the session created during the main lifecycle flow.\n\nThis request uses the createdSessionId collection variable populated by the  \npages-only create request and verifies that the resource can be retrieved  \nsuccessfully by id.\n\nEndpoint  \nGET /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "10. Session — update notes only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid merged update rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"notes\": \"Updated Sprint 3 note\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Updates only the notes field for the session created during the lifecycle flow.\n\nThis verifies that partial updates work correctly without changing unrelated  \nfields on the session.\n\nEndpoint  \nPATCH /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "11. Session — update pages only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Pages updated\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get(\"createdSessionId\"));\r",
+                  "  pm.expect(json.data.pages).to.eql(42);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Minutes remain unchanged or null\", function () {\r",
+                  "  pm.expect(\r",
+                  "    json.data.minutes === null || typeof json.data.minutes === \"number\"\r",
+                  "  ).to.eql(true);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"pages\": 42\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Updates only the pages field for the session created during the lifecycle flow.\n\nThis verifies that numeric reading metrics can be updated independently and  \nthat other fields remain intact.\n\nEndpoint  \nPATCH /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "12. Session — clear notes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Notes cleared to null\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.notes).to.eql(null);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"notes\": \"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Updates the session by clearing pages while keeping minutes present.\n\nThis verifies that the merged PATCH validation allows one reading metric to be  \ncleared as long as the session still retains at least one valid metric.\n\nEndpoint  \nPATCH /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "13. Session — set pages to null, keep minutes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Pages cleared and minutes preserved\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.pages).to.eql(null);\r",
+                  "  pm.expect(json.data.minutes).to.eql(15);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"pages\": null,\r\n  \"minutes\": 15\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Updates the session by clearing pages while keeping minutes present.\n\nThis verifies that the merged PATCH validation allows one reading metric to be  \ncleared as long as the session still retains at least one valid metric.\n\nEndpoint  \nPATCH /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "14. Session — empty body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Empty patch rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Attempts to update a session with an empty request body.\n\nThis verifies that the API rejects empty PATCH requests and requires at least  \none field to be provided for update operations.\n\nEndpoint  \nPATCH /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "15. Sessions — invalid update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid merged update rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"pages\": null,\r\n  \"minutes\": null\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Attempts to update a session so that both pages and minutes become null.\n\nThis verifies that merged PATCH validation prevents a session from being left  \nwithout any valid reading metric.\n\nEndpoint  \nPATCH /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "16. Session — invalid book id format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid bookId format is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"not-a-cuid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Verifies that session reassignment rejects malformed book IDs."
+          },
+          "response": []
+        },
+        {
+          "name": "17. Session — nonexistent book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {\r",
+                  "  pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Nonexistent owned book is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"NOT_FOUND\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"cm1234567890123456789012\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Verifies that session reassignment fails when the target book does not exist or is not owned by the user."
+          },
+          "response": []
+        },
+        {
+          "name": "18. Sessions — filtered by book id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "const expectedBookId = pm.variables.get(\"bookIdForSessions\");\r",
+                  "\r",
+                  "pm.test(\"All results match bookId filter\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "\r",
+                  "  json.data.forEach((item) => {\r",
+                  "    pm.expect(item.bookId).to.eql(expectedBookId);\r",
+                  "  });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?bookId={{bookIdForSessions}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
                 "sessions"
               ],
               "query": [
                 {
                   "key": "bookId",
-                  "value": "{{bookId}}"
+                  "value": "{{bookIdForSessions}}"
+                }
+              ]
+            },
+            "description": "Returns sessions associated with a specific book id.\n\nThis verifies that the Sessions API correctly applies the bookId filter and  \nreturns only matching records.\n\nEndpoint:\n\n```\nGET /api/sessions?bookId=<bookId>\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "19. Sessions — filtered by date range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Results are within date range\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "\r",
+                  "  json.data.forEach((item) => {\r",
+                  "    const day = item.date.slice(0, 10);\r",
+                  "    pm.expect(day >= \"2026-03-13\" && day <= \"2026-03-15\").to.eql(true);\r",
+                  "  });\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?from=2026-03-13&to=2026-03-15",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-03-13"
                 },
                 {
+                  "key": "to",
+                  "value": "2026-03-15"
+                }
+              ]
+            },
+            "description": "Filters sessions using inclusive date range query parameters.\n\nThis verifies that the from and to query parameters are parsed correctly and  \nthat the returned sessions fall within the expected range.\n\nEndpoint:\n\n```\nGET /api/sessions?from=<date>&to=<date>\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "20. Sessions — invalid date range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid date range is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?from=2026-03-15&to=2026-03-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-03-15"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-03-01"
+                }
+              ]
+            },
+            "description": "Attempts to request sessions with an invalid date range where  \nthe \"from\" date is later than the \"to\" date.\n\nThe API should reject this request with a validation error.\n\nEndpoint:\n\n```\nGET /api/sessions?from=<date>&to=<date>\n\n ```"
+          },
+          "response": []
+        },
+        {
+          "name": "21. Sessions — limit and offset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Returned at most requested limit\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.length).to.be.at.most(2);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Data is an array\", function () {\r",
+                  "  pm.expect(json.data).to.be.an(\"array\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions?limit=2&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ],
+              "query": [
+                {
                   "key": "limit",
-                  "value": "10"
+                  "value": "2"
                 },
                 {
                   "key": "offset",
                   "value": "0"
                 }
               ]
-            }
+            },
+            "description": "Tests pagination behavior for the sessions list endpoint.\n\nThis verifies that the API respects limit and offset parameters and returns  \na bounded slice of results.\n\nEndpoint:\n\n```\nGET /api/sessions?limit=&offset=<n>\n\n ```"
           },
           "response": []
-        }
-      ]
-    },
-    {
-      "name": "Cleanup",
-      "item": [
+        },
         {
-          "name": ":id - delete",
+          "name": "22. Sessions — deterministic Sort Test",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"status is 200\", function () {\r",
+                  "pm.test(\"Status is 200\", function () {\r",
                   "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
-                  "pm.test(\"returns deleted id and clear env var\", function () {\r",
+                  "pm.test(\"createdAt is descending when dates tie\", function () {\r",
                   "  const json = pm.response.json();\r",
-                  "  pm.expect(json.ok).to.be.true;\r",
-                  "  pm.expect(json.data.id).to.eql(pm.environment.get(\"bookId\"));\r",
+                  "  const items = json.data;\r",
                   "\r",
-                  "  pm.environment.unset(\"bookId\");\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(items).to.be.an(\"array\");\r",
+                  "\r",
+                  "  for (let i = 0; i < items.length - 1; i++) {\r",
+                  "    const a = items[i];\r",
+                  "    const b = items[i + 1];\r",
+                  "\r",
+                  "    if (a.date === b.date) {\r",
+                  "      pm.expect(new Date(a.createdAt).getTime()).to.be.at.least(\r",
+                  "        new Date(b.createdAt).getTime()\r",
+                  "      );\r",
+                  "    }\r",
+                  "  }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "description": "Verifies deterministic ordering of session list results.\n\nThis test is intended to confirm that sessions are consistently returned in  \nthe expected order: date DESC, createdAt DESC, then id DESC.\n\nEndpoint  \nGET /api/sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "23. Delete session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
                   "});\r",
-                  ""
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Session deleted successfully\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get(\"createdSessionId\"));\r",
+                  "});"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -580,19 +2845,1246 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
-                "books",
-                "{{bookId}}"
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Deletes an existing reading session.\n\nUsed to verify that the API correctly removes session records  \nand returns the expected success response.\n\nEndpoint  \nDELETE /api/sessions/:id"
+          },
+          "response": []
+        },
+        {
+          "name": "24. Session By ID — already deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {\r",
+                  "  pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Deleted session is no longer found\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"NOT_FOUND\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "25. Delete Session Again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {\r",
+                  "  pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Deleted session is no longer found\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error.code).to.eql(\"NOT_FOUND\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{createdSessionId}}"
+              ]
+            },
+            "description": "Attempts to delete a session that no longer exists.\n\nThe API should respond with a 404 error indicating that the  \nsession was not found.\n\nEndpoint  \nDELETE /api/sessions/:id"
+          },
+          "response": []
+        }
+      ],
+      "description": "Contract tests for session CRUD, relationship integrity, validation, filtering, sorting, and delete lifecycle behavior."
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "Auth Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login returns 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Login response envelope is valid\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Login returns token and user\", function () {\r",
+                  "  pm.expect(json.data.token).to.be.a(\"string\");\r",
+                  "  pm.expect(json.data.user).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.user.email).to.eql(pm.environment.get(\"testEmail\"));\r",
+                  "});\r",
+                  "\r",
+                  "pm.environment.set(\"token\", json.data.token);\r",
+                  "pm.environment.set(\"userId\", json.data.user.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"{{testEmail}}\",\r\n  \"password\": \"{{testPassword}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/books?limit=100",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Stats Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "summary"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trend Metric — Pages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/trend?metric=pages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "trend"
+              ],
+              "query": [
+                {
+                  "key": "metric",
+                  "value": "pages"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trend Metric — Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/trend?metric=sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "trend"
+              ],
+              "query": [
+                {
+                  "key": "metric",
+                  "value": "sessions"
+                },
+                {
+                  "key": "",
+                  "value": null,
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trend Metric — booksFinished",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/trend?metric=booksFinished",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "stats",
+                "trend"
+              ],
+              "query": [
+                {
+                  "key": "metric",
+                  "value": "booksFinished"
+                }
               ]
             }
           },
           "response": []
         }
       ]
+    },
+    {
+      "name": "Engagement",
+      "item": [
+        {
+          "name": "1. Get Snapshot (Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response is JSON\", function () {\r",
+                  "  pm.response.to.be.json;\r",
+                  "});\r",
+                  "\r",
+                  "const body = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Envelope has ok=true\", function () {\r",
+                  "  pm.expect(body.ok).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Response contains engagement data\", function () {\r",
+                  "  pm.expect(body.data).to.be.an(\"object\");\r",
+                  "  pm.expect(body.data.goals).to.be.an(\"object\");\r",
+                  "  pm.expect(body.data.streaks).to.be.an(\"object\");\r",
+                  "  pm.expect(body.data.badges).to.be.an(\"array\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/engagement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "engagement"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Snapshot (No Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Request is rejected without auth\", function () {\r",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/engagement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "engagement"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Snapshot (Shape + Rules)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();\r",
+                  "const goals = body.data.goals;\r",
+                  "const streaks = body.data.streaks;\r",
+                  "const badges = body.data.badges;\r",
+                  "\r",
+                  "function assertGoalShape(goal, name) {\r",
+                  "  if (goal === undefined) return;\r",
+                  "\r",
+                  "  pm.expect(goal, `${name} should be an object`).to.be.an(\"object\");\r",
+                  "  pm.expect(goal.target, `${name}.target`).to.be.a(\"number\");\r",
+                  "  pm.expect(goal.progress, `${name}.progress`).to.be.a(\"number\");\r",
+                  "  pm.expect(goal.complete, `${name}.complete`).to.be.a(\"boolean\");\r",
+                  "}\r",
+                  "\r",
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Envelope is valid\", function () {\r",
+                  "  pm.expect(body.ok).to.eql(true);\r",
+                  "  pm.expect(body.data).to.be.an(\"object\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Goals shape is valid\", function () {\r",
+                  "  assertGoalShape(goals.yearlyBooksGoal, \"yearlyBooksGoal\");\r",
+                  "  assertGoalShape(goals.yearlyPagesGoal, \"yearlyPagesGoal\");\r",
+                  "  assertGoalShape(goals.monthlyBooksGoal, \"monthlyBooksGoal\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Streak shape is valid\", function () {\r",
+                  "  pm.expect(streaks.currentStreakDays).to.be.a(\"number\");\r",
+                  "  pm.expect(streaks.longestStreakDays).to.be.a(\"number\");\r",
+                  "  pm.expect(streaks.graceWindowEnabled).to.be.a(\"boolean\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Longest streak is >= current streak\", function () {\r",
+                  "  pm.expect(streaks.longestStreakDays).to.be.at.least(streaks.currentStreakDays);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Badges array is valid\", function () {\r",
+                  "  pm.expect(badges).to.be.an(\"array\");\r",
+                  "\r",
+                  "  badges.forEach((badge, index) => {\r",
+                  "    pm.expect(badge.key, `badge[${index}].key`).to.be.a(\"string\");\r",
+                  "    pm.expect(badge.title, `badge[${index}].title`).to.be.a(\"string\");\r",
+                  "    pm.expect(badge.description, `badge[${index}].description`).to.be.a(\"string\");\r",
+                  "    pm.expect(badge.unlocked, `badge[${index}].unlocked`).to.be.a(\"boolean\");\r",
+                  "    pm.expect(badge.progress, `badge[${index}].progress`).to.be.a(\"number\");\r",
+                  "    pm.expect(badge.target, `badge[${index}].target`).to.be.a(\"number\");\r",
+                  "\r",
+                  "    if (badge.tier !== undefined) {\r",
+                  "      pm.expect([\"bronze\", \"silver\", \"gold\"]).to.include(badge.tier);\r",
+                  "    }\r",
+                  "  });\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"streak-3 badge follows longest streak rule\", function () {\r",
+                  "  const streak3 = badges.find((b) => b.key === \"streak-3\");\r",
+                  "  pm.expect(streak3, \"streak-3 badge should exist\").to.exist;\r",
+                  "\r",
+                  "  if (streaks.longestStreakDays >= 3) {\r",
+                  "    pm.expect(streak3.unlocked).to.eql(true);\r",
+                  "    pm.expect(streak3.progress).to.eql(streaks.longestStreakDays);\r",
+                  "  } else {\r",
+                  "    pm.expect(streak3.unlocked).to.eql(false);\r",
+                  "  }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/engagement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "engagement"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Create Book For Engagement Smoke Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Book create succeeded\", function () {\r",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);\r",
+                  "});\r",
+                  "\r",
+                  "const body = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Created book response contains id\", function () {\r",
+                  "  pm.expect(body.data).to.be.an(\"object\");\r",
+                  "  pm.expect(body.data.id).to.be.a(\"string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.collectionVariables.set(\"engagementBookId\", body.data.id);\r",
+                  "console.log(\"engagementBookId =\", body.data.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"title\": \"Engagement Smoke Test Book\",\r\n  \"author\": \"Readr Test\",\r\n  \"status\": \"reading\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/books",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "books"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Create Session Then Recheck Engagement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const engagementBookId = pm.collectionVariables.get(\"engagementBookId\");\r",
+                  "console.log(\"session request engagementBookId =\", engagementBookId);\r",
+                  "\r",
+                  "pm.test(\"A seeded book exists before creating a session\", function () {\r",
+                  "  pm.expect(engagementBookId).to.be.a(\"string\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Session create succeeded\", function () {\r",
+                  "  pm.expect(\r",
+                  "    pm.response.code,\r",
+                  "    \"If this is 404, the request is still not using the created book id\"\r",
+                  "  ).to.be.oneOf([200, 201]);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bookId\": \"{{engagementBookId}}\",\r\n  \"pages\": 10,\r\n  \"minutes\": 15,\r\n  \"date\": \"2026-04-03\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get Snapshot After Session Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();\r",
+                  "const badges = body.data.badges;\r",
+                  "\r",
+                  "pm.test(\"Engagement still returns valid data after new session\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "  pm.expect(body.ok).to.eql(true);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Session and page badge progress are nonnegative\", function () {\r",
+                  "  const sessionBadge = badges.find((b) => b.key === \"sessions-5\");\r",
+                  "  const pageBadge = badges.find((b) => b.key === \"pages-500\");\r",
+                  "\r",
+                  "  pm.expect(sessionBadge).to.exist;\r",
+                  "  pm.expect(pageBadge).to.exist;\r",
+                  "  pm.expect(sessionBadge.progress).to.be.at.least(0);\r",
+                  "  pm.expect(pageBadge.progress).to.be.at.least(0);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/engagement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "engagement"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Backup",
+      "item": [
+        {
+          "name": "1. Export Backup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Response envelope is ok\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Export has required top-level fields\", function () {\r",
+                  "  pm.expect(json.data).to.have.property(\"version\");\r",
+                  "  pm.expect(json.data).to.have.property(\"exportedAt\");\r",
+                  "  pm.expect(json.data).to.have.property(\"books\");\r",
+                  "  pm.expect(json.data).to.have.property(\"sessions\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Books and sessions are arrays\", function () {\r",
+                  "  pm.expect(json.data.books).to.be.an(\"array\");\r",
+                  "  pm.expect(json.data.sessions).to.be.an(\"array\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.environment.set(\"backupPayload\", JSON.stringify(json.data));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "export"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Import Backup — Valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Valid import returns success\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.have.property(\"importedBooks\");\r",
+                  "  pm.expect(json.data).to.have.property(\"importedSessions\");\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"Import counts are non-negative integers\", function () {\r",
+                  "  pm.expect(json.data.importedBooks).to.be.a(\"number\");\r",
+                  "  pm.expect(json.data.importedSessions).to.be.a(\"number\");\r",
+                  "  pm.expect(json.data.importedBooks).to.be.at.least(0);\r",
+                  "  pm.expect(json.data.importedSessions).to.be.at.least(0);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{backupPayload}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Import Backup — Empty Payload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Returns validation error envelope\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Import Backup — Missing Books Array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Missing books array is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"version\": \"2.3\",\r\n  \"sessions\": []\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Import Backup — Duplicate Book IDs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Duplicate book ids are rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"version\": \"2.3\",\r\n  \"books\": [\r\n    {\r\n      \"id\": \"dup-book-id\",\r\n      \"title\": \"Book One\",\r\n      \"author\": \"Author One\",\r\n      \"status\": \"planned\"\r\n    },\r\n    {\r\n      \"id\": \"dup-book-id\",\r\n      \"title\": \"Book Two\",\r\n      \"author\": \"Author Two\",\r\n      \"status\": \"reading\"\r\n    }\r\n  ],\r\n  \"sessions\": []\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Import Backup — Broken Session Relationship",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Orphan session is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"version\": \"2.3\",\r\n  \"books\": [\r\n    {\r\n      \"id\": \"book-1\",\r\n      \"title\": \"Valid Book\",\r\n      \"author\": \"Valid Author\",\r\n      \"status\": \"planned\"\r\n    }\r\n  ],\r\n  \"sessions\": [\r\n    {\r\n      \"bookId\": \"missing-book-id\",\r\n      \"date\": \"2026-03-20\",\r\n      \"pages\": 10\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Import Backup — Invalid Format/Subtype",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Invalid format/subtype pairing is rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"version\": \"2.3\",\r\n  \"books\": [\r\n    {\r\n      \"id\": \"book-1\",\r\n      \"title\": \"Bad Format Book\",\r\n      \"author\": \"Author\",\r\n      \"status\": \"planned\",\r\n      \"format\": \"digital\",\r\n      \"formatSubtype\": \"Hardcover\"\r\n    }\r\n  ],\r\n  \"sessions\": []\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Import Backup — Sessions Without Books",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r",
+                  "  pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "const json = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"Sessions without books are rejected\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(false);\r",
+                  "  pm.expect(json.error).to.be.an(\"object\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"version\": \"2.3\",\r\n  \"books\": [],\r\n  \"sessions\": [\r\n    {\r\n      \"bookId\": \"book-1\",\r\n      \"date\": \"2026-03-20\",\r\n      \"pages\": 15\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/backup/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "backup",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Contract tests for session CRUD, relationship integrity, validation, filtering, sorting, and delete lifecycle behavior."
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "createdBookId",
+      "value": ""
+    },
+    {
+      "key": "createdSessionId",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "backupPayload",
+      "value": ""
+    },
+    {
+      "key": "testEmail",
+      "value": ""
+    },
+    {
+      "key": "testPassword",
+      "value": ""
+    },
+    {
+      "key": "engagementBookId",
+      "value": ""
     }
   ]
 }
