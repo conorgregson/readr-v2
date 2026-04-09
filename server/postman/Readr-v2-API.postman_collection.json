@@ -449,7 +449,13 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books",
               "host": ["{{baseUrl}}"],
@@ -494,7 +500,13 @@
           },
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"title\": \"Postman Test Book\",\r\n  \"author\": \"Anon\",\r\n  \"genre\": \"Non-fiction\",\r\n  \"status\": \"planned\"\r\n}",
@@ -768,7 +780,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{}",
@@ -864,7 +882,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{}",
@@ -971,7 +995,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"title\": \"Bulk Test Book 2\",\r\n  \"author\": \"Bulk Author\",\r\n  \"genre\": \"Test\",\r\n  \"status\": \"planned\"\r\n}",
@@ -1022,7 +1052,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\", \"{{bulkBookId2}}\"],\r\n  \"patch\": {\r\n    \"status\": \"reading\"\r\n  }\r\n}",
@@ -1334,7 +1370,13 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": []\r\n}",
@@ -1794,7 +1836,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-13\",\r\n  \"pages\": 12,\r\n  \"minutes\": 25,\r\n  \"notes\": \"Sprint 3 full session test\"\r\n}",
@@ -2063,15 +2111,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status is 400\", function () {\r",
-                  "  pm.response.to.have.status(400);\r",
+                  "pm.test(\"Status is 200\", function () {\r",
+                  "  pm.response.to.have.status(200);\r",
                   "});\r",
                   "\r",
                   "const json = pm.response.json();\r",
                   "\r",
-                  "pm.test(\"Invalid merged update rejected\", function () {\r",
-                  "  pm.expect(json.ok).to.eql(false);\r",
-                  "  pm.expect(json.error.code).to.eql(\"VALIDATION_ERROR\");\r",
+                  "pm.test(\"Notes-only update succeeds\", function () {\r",
+                  "  pm.expect(json.ok).to.eql(true);\r",
+                  "  pm.expect(json.data).to.be.an(\"object\");\r",
+                  "  pm.expect(json.data.id).to.eql(pm.collectionVariables.get(\"createdSessionId\"));\r",
+                  "  pm.expect(json.data.notes).to.eql(\"Updated Sprint 3 note\");\r",
                   "});"
                 ],
                 "type": "text/javascript",
