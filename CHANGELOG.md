@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v3.0.0-sprint-4] — CI/CD & Release Confidence (2026-04-09)
+
+### Added
+
+- Expanded GitHub Actions coverage to include server validation alongside client checks
+- Added Prisma generation to CI for clean-runner compatibility
+- Added built-artifact startup validation against a Postgres test service
+- Added API smoke validation in CI using the Postman/Newman contract suite
+
+### Changed
+
+- Updated CI sequencing so API smoke runs after successful server startup validation
+- Separated static server validation from DB-backed validation for clearer CI failure isolation
+- Updated Postman contract tests to use authenticated `/api/*` routes
+- Updated Postman auth/bootstrap variables and protected request coverage to match current backend requirements
+- Corrected session notes-only update contract expectations to reflect current API behavior
+
+### Notes
+
+- Sprint 4 shifts Readr v3.0 from basic client-only CI toward fuller deploy-readiness validation
+- Hosted deployment verification remains a separate post-deploy step
+
+---
+
 ## [v3.0.0-sprint-3] — Reliability, Health Checks & Runtime Visibility (2026-04-08)
 
 ### Added
