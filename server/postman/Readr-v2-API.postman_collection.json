@@ -39,12 +39,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "health"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
             },
             "description": "Checks whether the Readr API server is running and reachable.\n\nThis endpoint is typically used as a preliminary test before executing  \nother API requests. If this request fails, the rest of the test suite  \nshould not be run.\n\nEndpoint  \nGET /api/health"
           },
@@ -115,14 +111,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
             }
           },
           "response": []
@@ -174,14 +164,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
             }
           },
           "response": []
@@ -226,14 +210,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
             }
           },
           "response": []
@@ -277,14 +255,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "register"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
             }
           },
           "response": []
@@ -328,14 +300,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
             }
           },
           "response": []
@@ -370,14 +336,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
             }
           },
           "response": []
@@ -438,14 +398,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
             }
           },
           "response": []
@@ -498,13 +452,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/books",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"]
             },
             "description": "Returns all books currently stored in the system.\n\nThis endpoint is commonly used during testing to retrieve a valid  \nbookId that can be reused for session creation tests.\n\nEndpoint  \nGET /api/books"
           },
@@ -557,14 +506,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                ""
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", ""]
             },
             "description": "Creates a new book record.\n\nThis request verifies that the Books API correctly accepts valid  \nbook data and persists it in the database.\n\nThe returned book id can be reused in subsequent update or delete tests.\n\nEndpoint  \nPOST /api/books"
           },
@@ -619,16 +562,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books?search=Postman",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
               "query": [
                 {
                   "key": "search",
@@ -672,16 +616,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books?limit=1",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
               "query": [
                 {
                   "key": "limit",
@@ -718,16 +663,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books?limit=999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
               "query": [
                 {
                   "key": "limit",
@@ -771,7 +717,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"title\": \"Updated Postman Test Book\"\r\n}\r\n",
@@ -783,14 +735,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "{{createdBookId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{createdBookId}}"]
             },
             "description": "Updates an existing book.\n\nThis request validates that partial updates work correctly and that  \nbook fields can be modified without affecting other fields.\n\nEndpoint  \nPATCH /api/books/:id"
           },
@@ -834,14 +780,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "{{createdBookId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{createdBookId}}"]
             },
             "description": "Verifies that an empty update body is rejected."
           },
@@ -873,7 +813,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"status\": \"invalid\"\r\n}",
@@ -885,14 +831,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "{{createdBookId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{createdBookId}}"]
             },
             "description": "Verifies that invalid enum values are rejected for book status."
           },
@@ -936,14 +876,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "{{createdBookId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{createdBookId}}"]
             },
             "description": "Verifies that session reassignment rejects malformed book IDs."
           },
@@ -981,7 +915,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"title\": \"Bulk Test Book 1\",\r\n  \"author\": \"Bulk Author\",\r\n  \"genre\": \"Test\",\r\n  \"status\": \"planned\"\r\n}",
@@ -993,13 +933,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"]
             }
           },
           "response": []
@@ -1048,13 +983,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"]
             }
           },
           "response": []
@@ -1104,14 +1034,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1157,16 +1081,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books?search=Bulk Test Book",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
               "query": [
                 {
                   "key": "search",
@@ -1203,7 +1128,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": [],\r\n  \"patch\": {\r\n    \"status\": \"reading\"\r\n  }\r\n}",
@@ -1215,14 +1146,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1253,7 +1178,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\"],\r\n  \"patch\": {}\r\n}",
@@ -1265,14 +1196,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1303,7 +1228,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\"],\r\n  \"patch\": {\r\n    \"status\": \"invalid\"\r\n  }\r\n}",
@@ -1315,14 +1246,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1359,7 +1284,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\", \"{{bulkBookId1}}\"],\r\n  \"patch\": {\r\n    \"status\": \"finished\"\r\n  }\r\n}",
@@ -1371,14 +1302,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1421,14 +1346,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1466,7 +1385,13 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"ids\": [\"{{bulkBookId1}}\", \"{{bulkBookId2}}\"]\r\n}",
@@ -1478,14 +1403,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/bulk",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "bulk"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "bulk"]
             }
           },
           "response": []
@@ -1525,16 +1444,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books?search=Bulk Test Book",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
               "query": [
                 {
                   "key": "search",
@@ -1568,17 +1488,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "{{createdBookId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{createdBookId}}"]
             },
             "description": "Deletes an existing book.\n\nThis test verifies that the Books API correctly removes a book and  \nreturns the expected success response.\n\nEndpoint  \nDELETE /api/books/:id"
           },
@@ -1610,17 +1530,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/books/{{createdBookId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                "{{createdBookId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", "{{createdBookId}}"]
             },
             "description": "Attempts to delete the same book a second time.\n\nThis test confirms that the Books API returns a 404 not found response  \nafter the resource has already been deleted.\n\nEndpoint  \nDELETE /api/books/:id"
           },
@@ -1649,7 +1569,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"title\": \"Postman Session Test Book\",\r\n  \"author\": \"Anon\",\r\n  \"status\": \"reading\"\r\n}",
@@ -1661,14 +1587,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books/",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books",
-                ""
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books", ""]
             }
           },
           "response": []
@@ -1719,16 +1639,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Returns all reading sessions currently stored in the system.\n\nThe endpoint supports filtering and pagination through query parameters  \nsuch as bookId, date ranges, limit, and offset.\n\nResults are returned in deterministic order:\n\n1. date DESC\n    \n2. createdAt DESC\n    \n3. id DESC\n    \n\nEndpoint  \nGET /api/sessions"
           },
@@ -1766,7 +1687,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-15\",\r\n  \"pages\": 20,\r\n  \"notes\": \"Sprint 3 pages-only test\"\r\n}",
@@ -1778,13 +1705,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Creates a new reading session using pages as the reading metric.\n\nThis request also serves as the main lifecycle seed for the Sessions folder.  \nThe returned id is stored in the Postman collection variable createdSessionId  \nso that subsequent GET, PATCH, and DELETE requests can run automatically.\n\nEndpoint  \nPOST /api/sessions"
           },
@@ -1817,7 +1739,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-14\",\r\n  \"minutes\": 35,\r\n  \"notes\": \"Sprint 3 minutes-only test\"\r\n}",
@@ -1829,13 +1757,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Creates a new reading session using minutes as the reading metric.\n\nThis verifies that the Sessions API accepts a valid payload when only minutes  \nare provided and pages are omitted.\n\nEndpoint  \nPOST /api/sessions"
           },
@@ -1883,13 +1806,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Creates a new reading session with both pages and minutes provided.\n\nThis verifies that the Sessions API accepts and stores both supported reading  \nmetrics in the same session.\n\nEndpoint  \nPOST /api/sessions"
           },
@@ -1921,7 +1839,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"2026-03-15\",\r\n  \"notes\": \"Should fail\"\r\n}",
@@ -1933,13 +1857,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Attempts to create an invalid reading session.\n\nThis test confirms that the Sessions API enforces the rule requiring at least  \none reading metric and returns a validation error for invalid payloads.\n\nExpected result: HTTP 400 validation error.\n\nEndpoint  \nPOST /api/sessions"
           },
@@ -1972,7 +1891,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"not-a-cuid\",\r\n  \"date\": \"2026-03-15\",\r\n  \"pages\": 10\r\n}",
@@ -1984,13 +1909,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Attempts to create a reading session using an invalid book id format.\n\nThis verifies that request validation rejects malformed identifiers before  \ndatabase lookup occurs.\n\nEndpoint  \nPOST /api/sessions"
           },
@@ -2000,7 +1920,13 @@
           "name": "7. Create Session — valid id format, nonexistent book",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"cm1234567890123456789012\",\r\n  \"date\": \"2026-03-15\",\r\n  \"pages\": 10\r\n}",
@@ -2012,13 +1938,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Attempts to create a reading session using a syntactically valid book id that  \ndoes not exist in the database.\n\nThis verifies that the API correctly distinguishes between malformed ids and  \nwell-formed ids that fail resource lookup.\n\nEndpoint  \nPOST /api/sessions"
           },
@@ -2050,7 +1971,13 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"{{bookIdForSessions}}\",\r\n  \"date\": \"not-a-date\",\r\n  \"pages\": 10\r\n}",
@@ -2062,13 +1989,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             }
           },
           "response": []
@@ -2109,7 +2031,13 @@
           },
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "",
@@ -2121,14 +2049,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Retrieves the session created during the main lifecycle flow.\n\nThis request uses the createdSessionId collection variable populated by the  \npages-only create request and verifies that the resource can be retrieved  \nsuccessfully by id.\n\nEndpoint  \nGET /api/sessions/:id"
           },
@@ -2160,7 +2082,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"notes\": \"Updated Sprint 3 note\"\r\n}",
@@ -2172,14 +2100,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Updates only the notes field for the session created during the lifecycle flow.\n\nThis verifies that partial updates work correctly without changing unrelated  \nfields on the session.\n\nEndpoint  \nPATCH /api/sessions/:id"
           },
@@ -2218,7 +2140,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"pages\": 42\r\n}",
@@ -2230,14 +2158,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Updates only the pages field for the session created during the lifecycle flow.\n\nThis verifies that numeric reading metrics can be updated independently and  \nthat other fields remain intact.\n\nEndpoint  \nPATCH /api/sessions/:id"
           },
@@ -2269,7 +2191,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"notes\": \"\"\r\n}",
@@ -2281,14 +2209,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Updates the session by clearing pages while keeping minutes present.\n\nThis verifies that the merged PATCH validation allows one reading metric to be  \ncleared as long as the session still retains at least one valid metric.\n\nEndpoint  \nPATCH /api/sessions/:id"
           },
@@ -2321,7 +2243,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"pages\": null,\r\n  \"minutes\": 15\r\n}",
@@ -2333,14 +2261,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Updates the session by clearing pages while keeping minutes present.\n\nThis verifies that the merged PATCH validation allows one reading metric to be  \ncleared as long as the session still retains at least one valid metric.\n\nEndpoint  \nPATCH /api/sessions/:id"
           },
@@ -2372,7 +2294,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{}",
@@ -2384,14 +2312,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Attempts to update a session with an empty request body.\n\nThis verifies that the API rejects empty PATCH requests and requires at least  \none field to be provided for update operations.\n\nEndpoint  \nPATCH /api/sessions/:id"
           },
@@ -2423,7 +2345,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"pages\": null,\r\n  \"minutes\": null\r\n}",
@@ -2435,14 +2363,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Attempts to update a session so that both pages and minutes become null.\n\nThis verifies that merged PATCH validation prevents a session from being left  \nwithout any valid reading metric.\n\nEndpoint  \nPATCH /api/sessions/:id"
           },
@@ -2474,7 +2396,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"not-a-cuid\"\r\n}",
@@ -2486,14 +2414,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Verifies that session reassignment rejects malformed book IDs."
           },
@@ -2525,7 +2447,13 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\r\n  \"bookId\": \"cm1234567890123456789012\"\r\n}",
@@ -2537,14 +2465,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Verifies that session reassignment fails when the target book does not exist or is not owned by the user."
           },
@@ -2581,16 +2503,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions?bookId={{bookIdForSessions}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"],
               "query": [
                 {
                   "key": "bookId",
@@ -2633,16 +2556,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions?from=2026-03-13&to=2026-03-15",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"],
               "query": [
                 {
                   "key": "from",
@@ -2684,16 +2608,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions?from=2026-03-15&to=2026-03-01",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"],
               "query": [
                 {
                   "key": "from",
@@ -2739,16 +2664,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions?limit=2&offset=0",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"],
               "query": [
                 {
                   "key": "limit",
@@ -2802,16 +2728,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             },
             "description": "Verifies deterministic ordering of session list results.\n\nThis test is intended to confirm that sessions are consistently returned in  \nthe expected order: date DESC, createdAt DESC, then id DESC.\n\nEndpoint  \nGET /api/sessions"
           },
@@ -2843,17 +2770,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Deletes an existing reading session.\n\nUsed to verify that the API correctly removes session records  \nand returns the expected success response.\n\nEndpoint  \nDELETE /api/sessions/:id"
           },
@@ -2885,17 +2812,17 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             }
           },
           "response": []
@@ -2926,17 +2853,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions/{{createdSessionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions",
-                "{{createdSessionId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{createdSessionId}}"]
             },
             "description": "Attempts to delete a session that no longer exists.\n\nThe API should respond with a 404 error indicating that the  \nsession was not found.\n\nEndpoint  \nDELETE /api/sessions/:id"
           },
@@ -2995,14 +2922,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
             }
           },
           "response": []
@@ -3020,13 +2941,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             }
           },
           "response": []
@@ -3044,13 +2960,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/books?limit=100",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"],
               "query": [
                 {
                   "key": "limit",
@@ -3074,14 +2985,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/stats/summary",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "stats",
-                "summary"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats", "summary"]
             }
           },
           "response": []
@@ -3099,14 +3004,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/stats/trend?metric=pages",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "stats",
-                "trend"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats", "trend"],
               "query": [
                 {
                   "key": "metric",
@@ -3130,14 +3029,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/stats/trend?metric=sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "stats",
-                "trend"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats", "trend"],
               "query": [
                 {
                   "key": "metric",
@@ -3167,14 +3060,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/stats/trend?metric=booksFinished",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "stats",
-                "trend"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats", "trend"],
               "query": [
                 {
                   "key": "metric",
@@ -3235,13 +3122,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/engagement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "engagement"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "engagement"]
             }
           },
           "response": []
@@ -3280,13 +3162,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/engagement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "engagement"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "engagement"]
             }
           },
           "response": []
@@ -3383,13 +3260,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/engagement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "engagement"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "engagement"]
             }
           },
           "response": []
@@ -3441,13 +3313,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/books",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "books"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "books"]
             }
           },
           "response": []
@@ -3499,13 +3366,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/sessions",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sessions"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
             }
           },
           "response": []
@@ -3552,13 +3414,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/engagement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "engagement"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "engagement"]
             }
           },
           "response": []
@@ -3617,14 +3474,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/backup/export",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "export"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "export"]
             }
           },
           "response": []
@@ -3681,14 +3532,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -3737,14 +3582,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -3793,14 +3632,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -3849,14 +3682,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -3905,14 +3732,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -3961,14 +3782,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -4017,14 +3832,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/backup/import",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "backup",
-                "import"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "backup", "import"]
             }
           },
           "response": []
@@ -4040,9 +3849,7 @@
         "type": "text/javascript",
         "packages": {},
         "requests": {},
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     },
     {
@@ -4051,9 +3858,7 @@
         "type": "text/javascript",
         "packages": {},
         "requests": {},
-        "exec": [
-          ""
-        ]
+        "exec": [""]
       }
     }
   ],
