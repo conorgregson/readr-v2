@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Sprint 4 shifts Readr v3.0 from basic client-only CI toward fuller deploy-readiness validation
 - Hosted deployment verification remains a separate post-deploy step
+- Hosted verification completed and passed after merge to `main` and platform deployment
 
 ---
 
