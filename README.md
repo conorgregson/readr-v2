@@ -355,6 +355,26 @@ Only SemVer releases represent official “ship-ready” states.
 
 ---
 
+## Release Process (v3.0 Sprint 4)
+
+Readr v3.0 expands release safety by documenting a lightweight deployment process alongside stronger CI-backed deploy-readiness checks.
+
+Sprint 4 release-process docs:
+
+- [Release Checklist](./docs/sprints/v3.0/release-checklist-v3.0.md)
+- [Deployment Verification Checklist](./docs/sprints/v3.0/deployment-verification-checklist-v3.0.md)
+- [Smoke-Test Flow](./docs/sprints/v3.0/smoke-test-flow-v3.0.md)
+
+These docs are intended to keep releases repeatable and lower-risk by separating:
+
+- pre-deploy validation
+- post-deploy verification
+- rollback / recovery expectations
+
+Together with the expanded CI pipeline, they provide a practical release framework for Readr v3.0 as deployment hardening continues.
+
+---
+
 ## Roadmap (High-Level)
 
 - **v2.0.0** — Backend & CI foundation (Express + Prisma + PostgreSQL) ✅
