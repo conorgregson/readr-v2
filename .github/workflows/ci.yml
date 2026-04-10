@@ -34,3 +34,162 @@ jobs:
 
       - name: Test client
         run: npm run -w client test:run
+
+      - name: Build client
+        run: npm run -w client build
+
+  server:
+    name: Server Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:5tF89%24mx2%40qes%25Gp2cH@127.0.0.1:5432/readr_v2_test
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run -w server prisma generate
+
+      - name: Typecheck server
+        run: npm run -w server typecheck
+
+      - name: Build server
+        run: npm run -w server build
+
+  server_startup:
+    name: Server Startup Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: server
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 5tF89$mx2@qes%Gp2cH
+          POSTGRES_DB: readr_v2_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d readr_v2_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:5tF89%24mx2%40qes%25Gp2cH@127.0.0.1:5432/readr_v2_test
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run -w server prisma generate
+
+      - name: Prepare test database
+        run: npm run -w server test:db:push
+
+      - name: Build server
+        run: npm run -w server build
+
+      - name: Start built server
+        run: |
+          npm run -w server start:ci &
+          echo $! > server.pid
+          sleep 10
+
+      - name: Check health endpoint
+        run: curl --fail http://127.0.0.1:4000/health
+
+      - name: Stop server
+        if: always()
+        run: kill $(cat server.pid)
+
+  api_smoke:
+    name: API Smoke Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: server_startup
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 5tF89$mx2@qes%Gp2cH
+          POSTGRES_DB: readr_v2_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d readr_v2_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        working-directory: server
+
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:5tF89%24mx2%40qes%25Gp2cH@127.0.0.1:5432/readr_v2_test
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run prisma generate
+
+      - name: Prepare test database
+        run: npm run test:db:push
+
+      - name: Run API smoke validation
+        run: npm run test:api:ci
