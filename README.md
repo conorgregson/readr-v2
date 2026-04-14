@@ -10,8 +10,8 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
   <img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Deployment-000000?style=for-the-badge&logo=vercel" />
 </a>
 
-<a href="https://github.com/conorgregson/readr-v2/releases/tag/v2.4.0">
-  <img src="https://img.shields.io/badge/Latest%20Release-v2.4.0-4CAF50?style=for-the-badge" />
+<a href="https://github.com/conorgregson/readr-v2/releases/tag/v3.0.0">
+  <img src="https://img.shields.io/badge/Latest%20Release-v3.0.0-4CAF50?style=for-the-badge" />
 </a>
 
 <img src="https://img.shields.io/badge/Frontend-React%20%2B%20TypeScript-008080?style=for-the-badge&logo=react" />
@@ -26,7 +26,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 </a>
 
 <img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
-<img src="https://img.shields.io/badge/Status-v3.0%20Release%20Ready-FF9800?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v3.0.0%20Released-4CAF50?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>

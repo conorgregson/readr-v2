@@ -237,115 +237,52 @@ Released: Apr 2026
 
 ---
 
-## 🌍 Version 3.0 — Deployment & Growth
+## ✅ Version 3.0 — Deployment & Growth
 
-**Focus:** Harden Readr’s existing deployed stack for reliability, consistency, and production maturity.
+**Focus:** Hardened Readr’s deployed stack for stronger reliability, consistency, release safety, and production maturity.
 
-### Goals
+### Completed Work
 
-- Strengthen the current Vercel + Render + Neon deployment
-- Standardize local and production setup
-- Improve deployment reliability, observability, and environment handling
-- Reduce friction when running, testing, and shipping the app
+- Audited and documented the hosted **Vercel + Render + Neon** architecture
+- Standardized deployment-facing environment documentation across frontend, backend, and Prisma tooling
+- Removed deployment ambiguity around environment ownership and request flow
+- Added backend containerization and Docker Compose support for local backend + database workflows
+- Improved local environment consistency and repeatability
+- Strengthened release confidence with health-check validation and deploy-readiness workflow improvements
+- Added release support docs including:
+  - deployment architecture documentation
+  - troubleshooting and recovery guidance
+  - release checklist
+  - deployment verification checklist
+  - smoke-test flow
+- Rewrote the README into a release-ready v3.0 overview covering:
+  - hosted architecture
+  - service boundaries
+  - local development workflow
+  - Docker workflow
+  - environment setup responsibilities
+  - testing / CI overview
+  - operational docs references
+- Verified production deployment successfully through CI and hosted smoke validation
 
----
+### Notes
 
-## Scope
+- v3.0 is a deployment-hardening and release-maturity milestone, not a major product-surface expansion.
+- The hosted stack remains intentionally practical:
+  - **Frontend:** Vercel
+  - **Backend:** Render
+  - **Database:** Neon PostgreSQL
+  - **Local containerization:** Docker + Docker Compose
+- This release focused on making the current stack easier to run, easier to ship, easier to debug, and easier to understand.
+- Final validation confirmed:
+  - CI passed
+  - deployed frontend loaded successfully
+  - hosted `/health` returned healthy
+  - login and logout worked
+  - protected authenticated flows worked across books, sessions, stats, saved views, and book mutation
+  - no obvious console or network failures appeared during the recorded smoke pass
 
-### Deployment Hardening
-
-- Validate and document the full Vercel + Render + Neon architecture
-- Review production environment variables across all services
-- Remove any remaining localhost assumptions
-- Confirm stable frontend-to-backend communication in production
-- Verify Neon connection handling and production database reliability
-
-### Local Environment Standardization
-
-- Add Docker support for local development
-- Add Docker Compose for multi-service local setup
-- Standardize local API + database workflows
-- Ensure local setup is easier and more predictable across environments
-
-### Reliability & Operations
-
-- Improve health check coverage
-- Add readiness expectations for backend startup
-- Strengthen structured logging baseline
-- Improve error visibility for production failures
-- Re-check CORS, security headers, and deployment-safe configuration
-
-### CI/CD & Release Confidence
-
-- Expand CI to validate build, lint, tests, and deploy readiness
-- Add container build validation where useful
-- Introduce a deployment/release checklist
-- Improve confidence in production pushes and rollback readiness
-
-### Documentation
-
-- Document deployed architecture clearly in README
-- Document local Docker workflow
-- Document environment variable setup for Vercel, Render, and Neon
-- Document common deployment/debugging steps
-- Add a simple recovery checklist for production issues
-
----
-
-## Technical Direction
-
-### Core stack for v3.0
-
-- **Frontend hosting:** Vercel
-- **Backend hosting:** Render
-- **Database:** Neon Postgres
-- **Local containerization:** Docker + Docker Compose
-- **Kubernetes:** Out of scope
-- **AWS:** Out of scope for core milestone
-
-### Why this direction
-
-- Readr already has a real deployed architecture, so v3.0 should improve that foundation rather than replace it.
-- Docker solves a practical local-development and environment-consistency problem.
-- Kubernetes would add complexity without solving the most immediate needs of the project.
-- AWS can still be explored later if there is a strong portfolio or cloud-learning reason.
-
----
-
-## Acceptance Criteria
-
-- Production deployment remains stable on Vercel + Render + Neon
-- Local development can be started through a documented, repeatable workflow
-- Dockerized local setup works reliably for the backend and supporting services
-- Frontend communicates correctly with production backend in deployed environments
-- Neon-backed persistence is stable and verified
-- Health check and basic runtime diagnostics are available
-- CI validates build/test/deploy readiness before release
-- README clearly documents deployment architecture and environment setup
-- No production path depends on localhost configuration
-
----
-
-## Deliverables
-
-- backend `Dockerfile`
-- optional frontend `Dockerfile`
-- `docker-compose.yml` for local development
-- updated `.env.example` files
-- deployment architecture documentation
-- release/deployment checklist
-- verified live deployment with documented environment flow
-
----
-
-## Notes
-
-- v3.0 is a deployment-hardening release, not an infrastructure migration.
-- The goal is to make the current hosted stack more reliable and easier to run, debug, and maintain.
-- Docker is included because it improves consistency and developer experience.
-- Kubernetes and AWS are intentionally deferred to avoid overengineering this milestone.
-
-Planned: Q2 2026
+Released: Apr 2026
 
 ---
 
@@ -366,7 +303,7 @@ Planned: Q2 2026
 
 ### Notes
 
-- v3.1 builds directly on the authentication and ownership foundation established in v2.3.
+- v3.1 builds on the more stable deployment, release, and operational foundation established in v3.0.
 - This release is about account lifecycle maturity, not social features.
 - Security and account recovery should be stable before adding broader community features.
 

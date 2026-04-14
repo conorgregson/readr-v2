@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v3.0.0] — Deployment & Growth
+
+### Added
+
+- Added backend containerization and local Docker Compose workflow for backend + database development.
+- Added deployment architecture documentation covering the Vercel, Render, and Neon hosted stack.
+- Added troubleshooting and recovery documentation for frontend, backend, database, auth, environment, and rollback scenarios.
+- Added release-process support docs including a release checklist, deployment verification checklist, and smoke-test flow.
+
+### Changed
+
+- Hardened environment configuration and standardized deployment-facing environment documentation across frontend, backend, and Prisma tooling.
+- Improved deployment clarity by documenting service boundaries, request flow, environment ownership, and local development paths in the README.
+- Improved runtime confidence through health-check validation, stronger release verification workflow, and clearer operational guidance.
+- Expanded CI/release-readiness coverage to better validate production build and deployment assumptions before release.
+
+### Notes
+
+- v3.0.0 is an infrastructure-maturity release focused on deployment clarity, reliability, and release safety rather than major product-surface expansion.
+- Final verification confirmed CI pass, deployed frontend load, healthy hosted `/health`, successful login/logout flow, successful protected authenticated flows across books, sessions, stats, saved views, and book mutation, and no obvious console or network failures during core smoke testing.
+- This milestone completes the v3.0 deployment-and-growth objective by leaving the stack easier to run, easier to ship, and easier to understand.
+
+---
+
 ## [v3.0-sprint-5] — Documentation, Recovery & Release Lock (2026-04-13)
 
 ### Added
