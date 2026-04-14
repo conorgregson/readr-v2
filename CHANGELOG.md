@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v3.0-sprint-5] — Documentation, Recovery & Release Lock (2026-04-13)
+
+### Added
+
+- Added deployment architecture documentation for the hosted Vercel, Render, and Neon stack.
+- Added troubleshooting and recovery guidance covering frontend, backend, database, auth, env, and rollback scenarios.
+
+### Changed
+
+- Rewrote the README into a release-ready v3.0 project overview with clearer hosted architecture, environment ownership, local workflow, testing, and operational documentation sections.
+- Linked Sprint 4 / Sprint 5 operational docs directly from the README for easier release verification and recovery reference.
+
+### Notes
+
+- Sprint 5 serves as the release-lock sprint for v3.0.
+- Final hosted verification remains pending until merge to `main`, since the deployed frontend is built from the main branch.
+- Full `v3.0.0` release notes will be finalized after post-merge production verification passes.
+
+---
+
 ## [v3.0.0-sprint-4] — CI/CD & Release Confidence (2026-04-09)
 
 ### Added
