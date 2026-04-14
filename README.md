@@ -1,8 +1,8 @@
-# Readr v2 — Full-Stack Reading Tracker
+# Readr — Full-Stack Reading Tracker
 
 ### _Turn pages into progress._
 
-A versioned full-stack reading tracker built to demonstrate modern frontend architecture, API-backed system evolution, behavioral parity testing, and CI-gated development.
+A versioned full-stack reading tracker built to demonstrate modern frontend architecture, API-backed system evolution, deployment hardening, behavioral reliability, and CI-gated development.
 
 <p align="center">
 
@@ -26,8 +26,7 @@ A versioned full-stack reading tracker built to demonstrate modern frontend arch
 </a>
 
 <img src="https://img.shields.io/badge/Tests-Full--Stack%20Validated-6A1B9A?style=for-the-badge" />
-
-<img src="https://img.shields.io/badge/Status-v3.0%20In%20Progress-FF9800?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-v3.0%20Release%20Ready-FF9800?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Commits-Signed%20(Verified)-00C853?style=for-the-badge&logo=github" />
 
 </p>
@@ -40,250 +39,93 @@ Try the deployed full-stack app here:
 
 **▶** https://readr-v2-app.vercel.app
 
-The demo is now connected to the **Express + PostgreSQL backend**, with all reading data persisted via the API.
+The live app runs on a split hosted architecture:
 
-### Notes
+- **Frontend:** Vercel
+- **Backend:** Render
+- **Database:** Neon PostgreSQL
 
-- Data is **fully server-backed (v2.2+)**
-- Changes persist across sessions and devices
-- **Authentication + user-scoped data now live in v2.3**
-- **Backup export/import now live with ownership enforcement**
-- **Basic auth endpoint rate limiting now protects repeated register/login attempts**
-- **v2.4 is now live**, adding engagement systems, analytics surfaces, and advanced library workflows
+Current stable feature release:
 
-> Current stable release: **v2.4.0**
-> In progress: **v3.0 — Deployment & Growth**
+- **v2.4.0** — Engagement & insights expansion
+
+Current milestone:
+
+- **v3.0.0** — Deployment, reliability, and release-hardening maturity
 
 ---
 
 ## Overview
 
-**Readr v2** is a full-stack reading tracker designed to demonstrate modern frontend architecture, API-driven persistence, and disciplined system evolution.
+Readr is a versioned full-stack reading tracker designed to demonstrate disciplined system growth across frontend architecture, backend persistence, authentication, data ownership, testing, and deployment hardening.
 
-It is a structured rewrite of the original offline-first app (**v1.0–v1.9**), transitioning to a scalable, multi-user system.
+The project began as an offline-first reading log and evolved through staged milestones into a multi-user, API-backed application with:
 
-Key goals:
+- a React + TypeScript frontend
+- an Express + Prisma backend
+- PostgreSQL persistence
+- JWT-based authentication
+- user-scoped data boundaries
+- CI-backed validation
+- documented deployment and recovery workflows
 
-- Build a **React + TypeScript frontend** with strict behavioral parity guarantees
-- Introduce a **typed Express + PostgreSQL backend**
-- Enforce **clear separation between UI, state, and persistence**
-- Validate correctness through **CI and full-stack testing**
+A major goal of the project is to show **how architecture can evolve safely** without sacrificing correctness, maintainability, or release confidence.
 
-Each version isolates a specific risk area (parity, persistence, ownership) before introducing new complexity.
+The original offline-first app remains available here:
 
-The original v1.x app remains available here:
 **▶** https://github.com/conorgregson/reading-log-app
-
-> Latest official release: **v2.4.0 — Engagement & insights expansion**
-> In progress: **v3.0.0 — Deployment & growth**
-
----
-
-## Latest Release (v2.4)
-
-Readr v2.4 expands the stable authenticated, API-backed architecture with advanced UX and server-derived read models, including:
-
-- bulk edit workflows for multi-book mutation
-- grouped Undo support for bulk operations
-- saved library views with persistent filters/sorts
-- dashboard statistics and chart-ready summaries
-- reading goals, streaks, and badge progression
-- Sprint 5 hardening for accessibility, recovery, and regression safety
-
-v2.4 is a feature-layering release built on the stable boundaries established in v2.0–v2.3.
-
----
-
-## Key Engineering Concepts
-
-Readr v2 was designed to demonstrate several real-world frontend engineering patterns:
-
-- **Behavioral Parity Testing**
-  The React frontend rebuild enforces v1.9 behavioral parity using automated tests to prevent regressions during architectural migration.
-
-- **Deterministic UI State**
-  Session history sorting is guaranteed deterministic so identical datasets always produce identical ordering.
-
-- **Undo Architecture**
-  Critical actions (delete / finish) support ~6s undo windows while preserving filters, search state, and list ordering.
-
-- **Local-First → API Migration Strategy**
-  Readr evolved through a staged migration to reduce system-wide risk:
-  - v1.x: fully offline-first (localStorage)
-  - v2.1: React rebuild maintained local persistence for parity lock
-  - v2.2: full migration to API-backed persistence (Express + PostgreSQL)
-
-  This approach ensured UI behavior remained stable while replacing the underlying data layer.
-
-- **CI-Gated Development**
-  GitHub Actions enforces typecheck, lint, and test validation on every push and pull request.
-
-These patterns mirror practices used in production applications where architectural changes must not introduce behavioral regressions.
-
----
-
-## Security & Data Ownership (v2.3)
-
-Readr v2.3 introduces strict per-user data boundaries across the system.
-
-Key guarantees:
-
-- All data is scoped to the authenticated user
-- Backup export returns only user-owned records
-- Backup import enforces ownership (incoming `userId` is ignored)
-- Invalid relationships (e.g., orphan sessions) are rejected
-- Failed imports rollback completely (no partial writes)
-- Auth write endpoints include basic rate limiting on register/login
-- Repeated auth attempts return structured `429` responses
-
-These constraints are enforced at both the API layer and database level, and validated through integration testing.
-
-This ensures the system is safe for multi-user environments.
-
----
-
-## Authentication Flow
-
-Readr v2.3 introduces **JWT-based authentication** to establish identity and enforce strict user ownership across the system.
-
-Core flow:
-
-- Users register or log in through the auth API
-- The backend validates credentials and returns:
-  - a signed JWT
-  - the authenticated user payload
-- The frontend stores the token and restores the session on app load
-- Protected API routes require a valid `Authorization: Bearer <token>` header
-- Invalid, expired, malformed, or incorrectly signed tokens are rejected with `401 Unauthorized`
-
-This authentication layer ensures that all protected operations execute within an authenticated user context.
-
-That includes:
-
-- books
-- sessions
-- backup export
-- backup import
-- account lookup via `/api/auth/me`
-
-Because identity is established before protected data is accessed, the backend can safely enforce **per-user ownership** on every request.
-
-### Why this matters
-
-Authentication in Readr v2.3 is not just a login feature — it is the foundation for **multi-user data isolation**.
-
-Without authentication, the system could not reliably determine:
-
-- which books belong to which user
-- which sessions belong to which library
-- which backup payloads are allowed to be imported or exported
-
-By introducing JWT-based auth before expanding multi-user functionality further, v2.3 creates a secure base for future features while preserving the app’s existing behavior and architecture.
-
----
-
-## Auth API Summary
-
-Primary authentication endpoints:
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-
-### Endpoint responsibilities
-
-- `POST /api/auth/register`
-  - Creates a new user account
-  - Validates request shape strictly
-  - Returns a signed JWT and authenticated user payload on success
-
-- `POST /api/auth/login`
-  - Validates submitted credentials
-  - Returns a signed JWT and authenticated user payload on success
-
-- `GET /api/auth/me`
-  - Requires a valid bearer token
-  - Returns the currently authenticated user
-  - Rejects missing, malformed, expired, or invalid tokens with `401 Unauthorized`
-
-### Auth contract
-
-Protected requests use the standard authorization header format:
-
-```http
-Authorization: Bearer <token>
-```
-
-This token is issued by the backend during registration or login and is required for all user-scoped operations.
-
-### Security behavior
-
-The auth layer is designed to fail safely:
-
-- Missing authorization headers are rejected
-- Malformed bearer tokens are rejected
-- Invalid signatures are rejected
-- Expired tokens are rejected
-- Invalid payload shapes are rejected
-- Unexpected request keys are rejected by strict validation
-- Repeated register/login attempts are throttled with structured `429` responses
-
-Together, these guarantees make authentication predictable at the API boundary and provide a reliable foundation for per-user ownership enforcement across books, sessions, and backup operations.
-
----
-
-## Parity Summary (v2.1)
-
-**v2.1 goal:** rebuild the v1.9 frontend in **React + TypeScript** with **behavior parity** before any API migration.
-
-**Tier 0 Lock (freeze gates):**
-
-- **Books/Search locked (Sprint 5):** Undo (~6s), highlight parity, autocomplete parity, regression tests
-- **Sessions locked (Sprint 7):** CRUD + deterministic sorting, keyboard navigation + live regions, Undo (~6s), highlight parity, regression tests
-
-**Hardening (Sprint 8):**
-
-- Accessibility + focus management baseline
-- Corrupt storage resilience
-- Performance sanity check on large libraries
-
-**CI baseline (Sprint 9):**
-
-- Typecheck + tests required on PRs
-- “Intentional regression” proof test to confirm the suite catches breakages
-
-Canonical docs:
-
-- Parity Charter: [`docs/sprints/v2.1/parity-charter-v2.1.md`](/docs/sprints/v2.1/parity-charter-v2.1.md)
-- Architecture: [`docs/sprints/v2.1/architecture-v2.1.md`](/docs/sprints/v2.1/architecture-v2.1.md)
-- Test Matrix: [`docs/sprints/v2.1/test-matrix-parity.md`](/docs/sprints/v2.1/test-matrix-parity.md)
-- Dependency Map: [`docs/sprints/v2.1/dependency-map-v2.1.md`](/docs/sprints/v2.1/dependency-map-v2.1.md)
 
 ---
 
 ## Table of Contents
 
+- [Live Demo](#live-demo)
 - [Overview](#overview)
-- [Key Engineering Concepts](#key-engineering-concepts)
-- [Security & Data Ownership (v2.3)](#security--data-ownership-v2.3)
-- [Authentication Flow](#authentication-flow)
-- [Auth API Summary](#auth-api-summary)
-- [Parity Summary (v2.1)](#parity-summary-v2.1)
+- [Latest Release](#latest-release)
 - [Why This Project](#why-this-project)
-- [Roadmap Philosophy](#roadmap-philosophy)
-- [Changelog](#changelog)
-- [Release Strategy](#release-strategy)
-- [Roadmap (High-Level)](#roadmap-high-level)
+- [Key Engineering Highlights](#key-engineering-highlights)
+- [Authentication & Data Ownership](#authentication--data-ownership)
 - [Tech Stack](#tech-stack)
-- [Testing & CI](#testing--ci)
-- [Project Structure](#project-structure)
 - [Architecture](#architecture)
 - [Deployment & Environment](#deployment--environment)
-- [Engineering Decisions](#engineering-decisions)
+- [Local Development](#local-development)
+- [Local Workflow Options](#local-workflow-options)
+- [Testing & CI](#testing--ci)
+- [Release Process & Operational Docs](#release-process--operational-docs)
+- [Project Structure](#project-structure)
 - [Screenshots](#screenshots)
-- [Installation & Development](#installation--development)
+- [Roadmap](#roadmap)
+- [Changelog](#changelog)
 - [Author](#author)
 - [License](#license)
+
+---
+
+## Latest Release
+
+### v2.4.0 — Engagement & Insights Expansion
+
+The latest shipped release expands the stable authenticated, API-backed architecture with:
+
+- bulk edit workflows for multi-book mutation
+- grouped Undo support for bulk operations
+- saved library views with persistent filters and sorts
+- dashboard statistics and chart-ready summaries
+- reading goals, streaks, and badge progression
+- accessibility and regression hardening
+
+### v3.0.0 — Deployment & Growth
+
+v3.0 focuses on infrastructure maturity rather than major product-surface changes.
+
+This milestone improves:
+
+- environment clarity
+- local Docker workflow consistency
+- health checks and runtime visibility
+- CI-backed deploy readiness
+- release verification and smoke-test discipline
+- documentation, troubleshooting, and recovery guidance
 
 ---
 
@@ -293,98 +135,90 @@ Readr is both a product and a systems-design exercise.
 
 It demonstrates:
 
-- Incremental, versioned system evolution
-- Safe migration from local-first → API-backed architecture
-- Strict separation of concerns across frontend and backend
-- Schema-driven validation (Zod + Prisma)
-- Full-stack testing (UI parity + API integration)
+- incremental, versioned system evolution
+- safe migration from local-first to API-backed persistence
+- clear separation of concerns across UI, state, IO, and persistence
+- schema-driven validation with Zod and Prisma
+- disciplined release engineering with CI and deployment verification
+- practical deployment architecture across separate hosting providers
 
-The goal is not just to build features, but to evolve architecture intentionally while maintaining correctness at every step.
-
----
-
-## Roadmap Philosophy
-
-Readr is developed in versioned milestones where each release isolates a specific risk area
-(e.g., architecture, persistence, UX, or scale) before introducing new complexity.
-
-The roadmap documents not just _what_ was built, but _why_ — serving as both a planning tool
-and a technical narrative.
-
-See the full roadmap in [`roadmap.md`](./roadmap.md).
+The goal is not just to build features, but to evolve the system intentionally while keeping behavior stable and risks isolated.
 
 ---
 
-## Changelog
+## Key Engineering Highlights
 
-All notable changes are documented in [`CHANGELOG.md`](./CHANGELOG.md),
-following **Keep a Changelog** and **Semantic Versioning**.
+### Behavioral Parity as a Migration Strategy
 
----
+The React rebuild prioritized behavioral parity with the earlier offline-first app before API migration. This reduced the risk of mixing architectural change with UI behavior change.
 
-## Release Strategy
+### Local-First to API-Backed Evolution
 
-Readr uses two parallel versioning systems:
+Readr evolved in stages:
 
-### Official Releases (Semantic Versioning)
+- **v1.x** — offline-first localStorage app
+- **v2.1** — React + TypeScript rebuild with parity lock
+- **v2.2** — migration to API-backed persistence
+- **v2.3** — authentication and strict per-user ownership
+- **v2.4** — engagement systems and derived read models
+- **v3.0** — deployment hardening and release maturity
 
-Major milestones follow **SemVer** and represent stable, coherent deliverables:
+### Deterministic UI Behavior
 
-- `v2.0.0` — Backend & CI foundation
-- `v2.1.0` — React frontend rebuild
-- Future versions increment semantically
+Critical UI behaviors such as sorting, Undo recovery, and filtered-list restoration are designed to remain predictable across state changes.
 
-These releases are published in GitHub Releases.
+### Strict Data Ownership
 
-### Sprint Tags (Development Checkpoints)
+Authenticated data access is enforced across books, sessions, exports, and imports. Import flows reject invalid relationships and do not trust incoming ownership fields.
 
-During active development, sprint tags are used to mark internal milestones:
+### CI-Gated Development
 
-- `v2.1-sprint-0`
-- `v2.1-sprint-1`
-- …
-- sprint tags continue throughout active milestone development
-
-Sprint tags serve as:
-
-- Structured iteration checkpoints
-- Rollback anchors
-- Evidence of disciplined development cadence
-
-Only SemVer releases represent official “ship-ready” states.
+Typechecking, linting, tests, build validation, artifact startup checks, health checks, and smoke-test procedures are used to reduce release risk.
 
 ---
 
-## Release Process (v3.0 Sprint 4)
+## Authentication & Data Ownership
 
-Readr v3.0 expands release safety by documenting a lightweight deployment process alongside stronger CI-backed deploy-readiness checks.
+Readr uses JWT-based authentication to establish identity and enforce user ownership across protected operations.
 
-Sprint 4 release-process docs:
+Protected areas include:
 
-- [Release Checklist](./docs/sprints/v3.0/release-checklist-v3.0.md)
-- [Deployment Verification Checklist](./docs/sprints/v3.0/deployment-verification-checklist-v3.0.md)
-- [Smoke-Test Flow](./docs/sprints/v3.0/smoke-test-flow-v3.0.md)
+- books
+- sessions
+- backup export
+- backup import
+- account lookup
+- authenticated derived data surfaces
 
-These docs are intended to keep releases repeatable and lower-risk by separating:
+### Auth API Summary
 
-- pre-deploy validation
-- post-deploy verification
-- rollback / recovery expectations
+Primary endpoints:
 
-Together with the expanded CI pipeline, they provide a practical release framework for Readr v3.0 as deployment hardening continues.
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
 
----
+Protected requests use:
 
-## Roadmap (High-Level)
+```http
+Authorization: Bearer <token>
+```
 
-- **v2.0.0** — Backend & CI foundation (Express + Prisma + PostgreSQL) ✅
-- **v2.1.0** — React frontend rebuild with full v1.9 behavioral parity ✅
-- **v2.2.0** — API integration & persistence migration (local-first → API) ✅
-- **v2.3.0** — Authentication, accounts, and multi-user data boundaries ✅
-- **v2.4.0** — Engagement & insights expansion ✅
-- **v3.0.0** — Production infrastructure & hosted deployment architecture _in progress_ 🚧
+This token is issued by the backend during registration or login and is required for all user-scoped operations.
 
-For detailed version history and architectural milestones, see [`roadmap.md`](./roadmap.md).
+### Security Guarantees
+
+The system is designed to fail safely:
+
+- missing authorization headers are rejected
+- malformed bearer tokens are rejected
+- invalid signatures are rejected
+- expired tokens are rejected
+- invalid payload shapes are rejected
+- unexpected request keys are rejected by strict validation
+- repeated auth write attempts are throttled with structured `429` responses
+
+These protections support reliable multi-user isolation and predictable API behavior.
 
 ---
 
@@ -398,287 +232,42 @@ For detailed version history and architectural milestones, see [`roadmap.md`](./
 - Tailwind CSS
 - React Router
 - Zustand
-- Vitest + React Testing Library
+- Vitest
+- React Testing Library
 
 ### Backend
 
-- Node.js + TypeScript
+- Node.js
+- TypeScript
 - Express
 - Prisma ORM
 - PostgreSQL
 - Zod
+- Supertest
+
+### Tooling & Infrastructure
+
 - GitHub Actions
-
----
-
-## Testing & CI
-
-Readr includes both **frontend behavioral tests** and **backend integration tests** to validate correctness across the UI, API, and data ownership layers.
-
-This layered strategy helps ensure that architectural changes do not introduce regressions, that protected routes behave predictably, and that user-scoped data boundaries remain enforced.
-
----
-
-### Frontend Testing (v2.1 → v2.4)
-
-The frontend test suite protects core UI behavior as the app evolves from parity-focused rebuild work into authenticated, API-backed flows.
-
-Covered areas include:
-
-- Search engine logic (tokenization, fuzzy matching, AND semantics)
-- Books undo system (delete/restore integrity)
-- Sessions sorting (deterministic ordering guarantees)
-- Keyboard navigation and accessibility behavior
-- Auth store behavior
-- Token restore flow
-- Logout state reset behavior
-- Bulk selection and grouped Undo recovery
-- Saved views and library control behavior
-- Dashboard recovery and engagement UI behavior
-- Accessibility semantics for search/list navigation and progress surfaces
-
-Tools:
-
-- **Vitest**
-- **React Testing Library**
-- **jsdom**
-
-These tests ensure that the React application remains behaviorally stable while new architecture is introduced underneath it.
-
----
-
-### Backend Integration Testing (v2.3)
-
-The backend includes **API-level integration tests** to validate correctness, security, and ownership enforcement across the system.
-
-Covered areas:
-
-- **Authentication**
-  - Register flow
-  - Login flow
-  - Authenticated account lookup via `GET /api/auth/me`
-  - Protected route enforcement (`401` on unauthorized access)
-
-- **Auth hardening**
-  - Missing authorization headers rejected
-  - Malformed authorization headers rejected
-  - Invalid JWTs rejected
-  - Expired JWTs rejected
-  - Incorrectly signed tokens rejected
-  - Invalid token payload shapes rejected
-  - Unexpected request keys rejected by strict validation
-
-- **HTTP hardening**
-  - Unknown routes return structured JSON `404`
-  - Malformed JSON bodies return structured `400`
-  - Oversized request bodies return structured `413`
-
-- **Ownership enforcement**
-  - Books are scoped to the authenticated user
-  - Sessions are scoped to the authenticated user
-  - Cross-user data access is rejected
-
-- **Backup Export**
-  - Returns only authenticated user data
-  - Prevents cross-user data leakage
-
-- **Backup Import**
-  - Valid payload ingestion
-  - Duplicate ID rejection
-  - Orphan relationship validation (sessions → books)
-  - Transaction rollback on failure
-  - Forced ownership assignment (never trusts incoming `userId`)
-
-Tools:
-
-- **Vitest**
-- **Supertest**
-- **PostgreSQL test database (`readr_v2_test`)**
-
-These tests validate that the system enforces **strict per-user data boundaries** and a predictable auth contract, which are core requirements of v2.3.
-
----
-
-### Postman Test Suites
-
-In addition to automated tests, the API is validated using structured Postman collections:
-
-- `Health/`
-- `Auth/`
-- `Backup/`
-- `Books/`
-- `Sessions/`
-- `Stats/`
-- `Engagement/`
-
-These collections support:
-
-- Manual endpoint verification
-- Regression testing during development
-- Real-world request/response validation outside the automated test harness
-
----
-
-### Continuous Integration
-
-GitHub Actions runs automated validation on **every push and pull request**.
-
-Pipeline steps:
-
-1. Type checking
-2. ESLint validation
-3. Test suite execution (frontend + backend)
-
-This keeps regressions visible early and helps maintain release discipline across sprint branches and merge flow.
-
----
-
-### Why This Matters
-
-This testing strategy ensures that:
-
-- UI behavior remains stable
-- Auth flows remain predictable
-- API contracts remain consistent
-- Ownership boundaries cannot be bypassed
-- Architectural evolution does not come at the cost of correctness
-
-That combination is central to Readr’s development model: **versioned system growth with explicit reliability checks at each stage.**
-
----
-
-## Project Structure
-
-The repository is organized by **architectural responsibility**, keeping UI, state, API, validation, and persistence concerns clearly separated across the frontend and backend.
-
-```bash
-readr-v2/
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml                    # CI pipeline (typecheck, lint, test)
-│
-├── client/                           # React frontend (Vite + TypeScript)
-│   ├── scripts/
-│   │   └── gen-backup.mjs            # Backup/dev utility script
-│   ├── src/
-│   │   ├── app/                      # App shell, routing, top-level composition
-│   │   ├── features/                 # Domain features
-│   │   │   ├── auth/                 # Authentication UI, services, state
-│   │   │   │   ├── services/
-│   │   │   │   ├── store/
-│   │   │   │   └── page.tsx
-│   │   │   ├── books/                # Book library flows, bulk actions, saved views
-│   │   │   │   ├── components/
-│   │   │   │   ├── search/
-│   │   │   │   ├── services/
-│   │   │   │   ├── store/
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── types.ts
-│   │   │   ├── engagement/           # Goals, streaks, badges, engagement UI/state
-│   │   │   │   ├── components/
-│   │   │   │   ├── services/
-│   │   │   │   ├── store/
-│   │   │   │   └── types.ts
-│   │   │   ├── sessions/             # Reading session flows
-│   │   │   │   ├── components/
-│   │   │   │   ├── services/
-│   │   │   │   ├── store/
-│   │   │   │   ├── page.tsx
-│   │   │   │   └── types.ts
-│   │   │   ├── settings/             # Import/export and app settings flows
-│   │   │   │   ├── services/
-│   │   │   │   └── page.tsx
-│   │   │   └── stats/                # Dashboard summaries, trends, and stats state
-│   │   │       ├── components/
-│   │   │       ├── services/
-│   │   │       ├── store/
-│   │   │       └── page.tsx
-│   │   ├── shared/                   # Cross-feature building blocks
-│   │   │   ├── a11y/                 # Accessibility helpers
-│   │   │   ├── api/                  # API client helpers and shared request logic
-│   │   │   ├── data/                 # Shared data helpers/constants
-│   │   │   ├── types/                # Shared frontend TypeScript types
-│   │   │   └── ui/                   # Reusable UI primitives/states
-│   │   │       └── states/
-│   │   ├── test/                     # Frontend test setup and helpers
-│   │   ├── index.css
-│   │   └── main.tsx
-│   ├── index.html
-│   ├── vercel.json
-│   ├── vite.config.ts
-│   └── vitest.config.ts
-│
-├── server/                           # Express backend
-│   ├── postman/                      # Manual API regression collections/reports
-│   │   ├── reports/
-│   │   ├── Readr-v2-API.postman_collection.json
-│   │   └── Readr-v2-local.postman_environment.json
-│   ├── prisma/
-│   │   ├── migrations/               # Database migration history
-│   │   ├── schema.prisma             # Prisma schema and model relationships
-│   │   └── seed.ts                   # Seed data script
-│   ├── src/
-│   │   ├── config/                   # Environment/runtime configuration
-│   │   ├── db/
-│   │   │   └── client.ts             # Prisma client setup
-│   │   ├── middleware/               # Auth, error handling, request guards
-│   │   ├── modules/                  # Route-domain backend modules
-│   │   │   ├── auth/                 # Register, login, me
-│   │   │   ├── backup/               # Import/export with ownership enforcement
-│   │   │   ├── books/                # Book CRUD
-│   │   │   ├── engagement/           # Goals, streaks, badges aggregation
-│   │   │   ├── saved-views/          # Persistent saved library views
-│   │   │   ├── sessions/             # Session CRUD
-│   │   │   ├── stats/                # Dashboard summaries and trends
-│   │   │   └── views/                # Shared view mappers / read-model helpers
-│   │   ├── tests/
-│   │   │   ├── helpers/
-│   │   │   ├── integration/          # API integration and hardening tests
-│   │   │   ├── setup.ts
-│   │   │   └── unit/                 # Focused unit tests (including engagement logic)
-│   │   ├── types/
-│   │   ├── utils/
-│   │   ├── app.ts                    # Express app composition
-│   │   └── index.ts                  # Server entry point
-│   ├── prisma.config.ts
-│   └── tsconfig.json
-│
-├── docs/                             # Architecture notes, sprint docs, dependency maps, screenshots
-├── shared/                           # Repo-level cross-app shared contracts
-│   └── types/
-│       └── v2.4.ts                   # Shared DTOs/types used by both client and server
-├── CHANGELOG.md
-├── roadmap.md
-├── LICENSE.md
-└── README.md
-```
-
-### Structure philosophy
-
-A few intentional boundaries shape the repository:
-
-- **Frontend features are domain-oriented**
-  - Authentication, books, sessions, stats, engagement, and settings are grouped by behavior rather than by file type alone
-- **Shared frontend infrastructure stays centralized**
-  - Accessibility, API helpers, shared UI, data helpers, and common types live under `client/src/shared/`
-- **Cross-app contracts live at the repo level**
-  - Shared DTOs used by both the client and server live under `shared/types/` to reduce contract drift
-- **Backend modules map directly to API and derived-read responsibilities**
-  - Auth, backup, books, saved views, stats, engagement, and sessions are isolated into focused route-domain modules
-- **Testing exists at multiple layers**
-  - Frontend tests protect behavioral parity and UI correctness
-  - Backend integration tests protect API contracts, auth correctness, and ownership enforcement
-  - Backend unit tests cover focused logic such as engagement evaluation and derived-state helpers
-  - Postman collections support structured manual regression checks
-
-This structure supports Readr’s versioned development model: preserving clear architectural boundaries while the system evolves from parity-focused frontend work into secure, multi-user full-stack behavior.
+- Vercel
+- Render
+- Neon PostgreSQL
+- Docker Compose
+- Postman
 
 ---
 
 ## Architecture
 
-### ASCII Diagram
+### Hosted Request Flow
+
+```txt
+Browser
+  -> Vercel frontend
+  -> Render API
+  -> Neon PostgreSQL
+```
+
+### Application Architecture
 
 ```txt
                      ┌──────────────────────────┐
@@ -693,8 +282,8 @@ This structure supports Readr’s versioned development model: preserving clear 
                                    │
                                    ▼
                    ┌─────────────────────────────────┐
-                   │         Express API              │
-                   │  Node.js + TypeScript + Zod      │
+                   │         Express API             │
+                   │  Node.js + TypeScript + Zod     │
                    └───────────────┬─────────────────┘
                                    │
                                    ▼
@@ -706,744 +295,102 @@ This structure supports Readr’s versioned development model: preserving clear 
                         ┌───────────────────────┐
                         │     Prisma ORM        │
                         │  (Typed DB access)    │
-                        └───────────┬──────────┘
+                        └───────────┬───────────┘
                                     │
                                     ▼
                         ┌─────────────────────────┐
                         │     PostgreSQL DB       │
-                        │                         │
                         └─────────────────────────┘
 ```
+
+### Service Boundaries
+
+- **Frontend**
+  - renders UI
+  - manages client state
+  - calls API services
+  - does not directly access the database
+- **Backend**
+  - validates requests
+  - authenticates users
+  - enforces ownership rules
+  - exposes API contracts
+  - manages database access through Prisma
+- **Database**
+  - persists application state
+  - enforces relational integrity
+  - supports secure per-user data storage
 
 ---
 
 ## Deployment & Environment
 
-Readr v2 uses a split hosted architecture:
+Readr uses a split deployment model:
 
 - **Frontend:** Vercel
 - **Backend:** Render
-- **Database:** Neon (hosted PostgreSQL)
+- **Database:** Neon PostgreSQL
 
-In local development, the frontend, backend, and database configuration can now be managed in either:
+This separation keeps frontend delivery, backend runtime, and managed database concerns clearly isolated.
 
-- a traditional manual workflow
-- a Docker-based backend + database workflow introduced during **v3.0 Sprint 2**
+### Production Environment Responsibilities
 
-This keeps local setup more predictable without replacing the hosted production stack.
+#### Vercel
 
----
-
-### Hosted Architecture
-
-Production request flow:
-
-```txt
-browser -> Vercel frontend -> Render API -> Neon database
-```
-
-This separation means frontend and backend environment variables are not interchangeable:
-
-- **Vercel** provides the frontend build-time API base URL
-- **Render** provides the backend runtime configuration
-- **Neon / local PostgreSQL** provides the database connection used by Prisma and the API
-
----
-
-### Environment Files
-
-Readr uses separate environment files for different responsibilities:
-
-#### Root (`/.env`)
-
-Used by **root-level Prisma tooling**.
-
-Required variable:
+Frontend deployment requires:
 
 ```env
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
-```
-
-This is used by repository-level Prisma configuration and database tooling.
-
----
-
-#### Frontend (`client/.env`)
-
-Used by the **Vite frontend** during local development.
-
-Required variable:
-
-```env
-VITE_API_BASE_URL="http://localhost:4000"
+VITE_API_BASE_URL="https://your-render-service.onrender.com"
 ```
 
 Important:
 
-This value should be the **backend origin only**
-Do **not** include `/api`
-The frontend appends `/api` internally when making requests
+- use the backend origin only
+- do **not** include `/api`
+- the client appends `/api` internally
 
-Example:
+#### Render
 
-Correct: `http://localhost:4000`
-Incorrect: `http://localhost:4000/api`
-
----
-
-#### Backend (`server/.env`)
-
-Used by the Express API during local development when running outside Docker.
-
-Required variables:
+Backend runtime requires:
 
 ```env
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+DATABASE_URL="postgresql://..."
 JWT_SECRET="replace-with-a-secure-secret"
 JWT_EXPIRES_IN="7d"
-NODE_ENV="development"
-PORT="4000"
-CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
+NODE_ENV="production"
+PORT="10000"
+CORS_ALLOWED_ORIGINS="https://readr-v2-app.vercel.app"
 AUTH_RATE_LIMIT_WINDOW_MS="900000"
 AUTH_RATE_LIMIT_MAX="10"
 ```
 
----
+#### Root Prisma Tooling
 
-#### Backend test environment (`server/.env.test`)
-
-Used by backend integration tests.
-
-Example:
+Repository-level Prisma tooling uses:
 
 ```env
-DATABASE_URL="postgresql://username:password@host/test_database"
-JWT_SECRET="test-secret"
-JWT_EXPIRES_IN="7d"
-NODE_ENV="test"
-CORS_ALLOWED_ORIGINS="http://localhost:5173"
+DATABASE_URL="postgresql://..."
 ```
 
----
+### Environment Templates
 
-### Example Environment Templates
-
-To document setup safely, the repository should include:
+The repository should include:
 
 - `/.env.example`
 - `client/.env.example`
 - `server/.env.example`
 - `server/.env.test.example`
 
-These files should contain **placeholder values only**, never real secrets or live connection strings.
-
-Example templates:
-
-`/.env.example`:
-
-```env
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
-```
-
-`client/.env.example`:
-
-```env
-VITE_API_BASE_URL="http://localhost:4000"
-```
-
-`server/.env.example`:
-
-```env
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
-JWT_SECRET="replace-with-a-secure-secret"
-JWT_EXPIRES_IN="7d"
-NODE_ENV="development"
-PORT="4000"
-CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
-AUTH_RATE_LIMIT_WINDOW_MS="900000"
-AUTH_RATE_LIMIT_MAX="10"
-```
-
-`server/.env.test.example`:
-
-```env
-DATABASE_URL="postgresql://username:password@host/test_database"
-JWT_SECRET="test-secret"
-JWT_EXPIRES_IN="7d"
-NODE_ENV="test"
-CORS_ALLOWED_ORIGINS="http://localhost:5173"
-```
+These files should only contain placeholder values, never real secrets.
 
 ---
 
-### Local Docker Workflow (v3.0 Sprint 2)
+## Local Development
 
-Readr now supports a Docker-based local backend workflow for improved environment consistency.
+Readr supports two local backend workflows:
 
-This Docker workflow currently covers:
-
-- local PostgreSQL
-- local Express backend
-
-The frontend remains optional outside Docker and can continue running through Vite as normal.
-
-#### Docker services
-
-The Docker Compose setup is intended to provide:
-
-- a local Postgres container
-- a local backend container connected to that database
-- a persistent Docker volume for local DB state
-
-#### Typical Docker environment values
-
-The backend container uses a local containerized database connection similar to:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@db:5432/readr_v3?schema=public"
-PORT="4000"
-NODE_ENV="development"
-CLIENT_ORIGIN="http://localhost:5173"
-JWT_SECRET="dev_jwt_secret_change_me"
-```
-
-These values are for **local container orchestration only** and do **not** replace hosted Render/Neon configuration.
-
-#### Start Docker workflow
-
-From the repository root:
-
-```env
-docker compose up
-```
-
-#### Rebuild Docker workflow
-
-```env
-docker compose build --no-cache
-docker compose up
-```
-
-#### Stop Docker workflow
-
-```env
-docker compose down
-```
-
-#### Reset Docker local database volume
-
-Use this only if you intentionally want to wipe the local containerized database state:
-
-```env
-docker compose down -v
-```
-
-#### Verified Sprint 2 result
-
-The backend + database Docker workflow has been verified locally:
-
-local Postgres starts successfully in Docker
-Prisma client generates successfully inside the backend container
-backend starts successfully on port `4000`
-local `/health` responds successfully
-
-This confirms the core backend Docker path is working as intended for local development.
-
----
-
-### Production Environment Responsibilities
-
-**Vercel**
-
-The frontend currently requires:
-
-- `VITE_API_BASE_URL`
-
-This should point to the deployed Render backend origin, for example:
-
-```env
-VITE_API_BASE_URL="https://your-render-service.onrender.com"
-```
-
-It should **not** include `/api`.
-
-> Some Neon-generated environment variables may still appear in Vercel even when they are not actively used by the frontend, because they were provisioned through a connected integration and cannot be removed from the standard environment variable screen without disconnecting that integration first.
-
-**Render**
-
-The backend runtime requires:
-
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `JWT_EXPIRES_IN`
-- `NODE_ENV`
-- `PORT`
-- `CORS_ALLOWED_ORIGINS`
-- `AUTH_RATE_LIMIT_WINDOW_MS`
-- `AUTH_RATE_LIMIT_MAX`
-
-These values must be configured directly in Render and do not inherit from local `.env` files.
-
----
-
-## Installation & Development
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/conorgregson/readr-v2.git
-cd readr-v2
-```
-
----
-
-### 2. Install dependencies
-
-Install dependencies separately for the frontend and backend:
-
-```bash
-cd client
-npm install
-```
-
-```bash
-cd ../server
-npm install
-```
-
----
-
-### 3. Configure environment variables
-
-Readr uses separate environment files for **root tooling**, **frontend local development**, and **backend runtime**.
-
-Create the following files before starting the app.
-
-#### Root (`/.env`)
-
-Create a root `.env` file for Prisma and repository-level database tooling:
-
-```env
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
-```
-
-This value is used by Prisma configuration and database commands run from the repository. Do **not** commit real credentials.
-
-#### Frontend (`client/.env`)
-
-Create a `.env` file inside `client/`:
-
-```env
-VITE_API_BASE_URL="http://localhost:4000"
-```
-
-This tells the frontend where to send API requests during local development.
-
-Important:
-
-Use the **backend origin only**
-Do **not** include `/api`
-The frontend appends `/api` internally when making requests
-
-Examples:
-
-Correct: `http://localhost:4000`
-Incorrect: `http://localhost:4000/api`
-
-#### Backend (`server/.env`)
-
-Create a `.env` file inside `server/`:
-
-```env
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
-JWT_SECRET="your-development-secret"
-JWT_EXPIRES_IN="7d"
-NODE_ENV="development"
-PORT="4000"
-CORS_ALLOWED_ORIGINS="http://localhost:5173,https://readr-v2-app.vercel.app"
-AUTH_RATE_LIMIT_WINDOW_MS="900000"
-AUTH_RATE_LIMIT_MAX="10"
-```
-
-Required backend variables:
-
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `JWT_EXPIRES_IN`
-- `NODE_ENV`
-- `PORT`
-- `CORS_ALLOWED_ORIGINS`
-- `AUTH_RATE_LIMIT_WINDOW_MS`
-- `AUTH_RATE_LIMIT_MAX`
-
-Backend test environment (`server/.env.test`)
-
-Create a `.env.test` file inside `server/` for backend integration tests:
-
-```env
-DATABASE_URL="postgresql://username:password@host/test_database"
-JWT_SECRET="test-secret"
-JWT_EXPIRES_IN="7d"
-NODE_ENV="test"
-CORS_ALLOWED_ORIGINS="http://localhost:5173"
-```
-
-> Local `.env` files do not automatically carry into Vercel or Render. Production environment variables must be configured separately in each deployment platform.
-
----
-
-### 4. Choose a local development workflow
-
-Readr now supports two local backend workflows.
-
-#### Option A — Traditional manual workflow
-
-Use your own local PostgreSQL instance or hosted dev database.
-
-Make sure `DATABASE_URL` points to a valid database before running backend commands.
-
-Apply schema:
-
-```bash
-cd server
-npx prisma generate
-npx prisma migrate dev
-```
-
-Start backend:
-
-```bash
-npm run dev
-```
-
-Backend runs at:
-
-```bash
-http://localhost:4000
-```
-
-Start frontend:
-
-```bash
-cd ../client
-npm run dev
-```
-
-Frontend typically runs at:
-
-```bash
-http://localhost:5173
-```
-
-#### Option B — Docker backend workflow
-
-Use Docker Compose for local Postgres + backend orchestration.
-
-From the repository root:
-
-```bash
-docker compose up
-```
-
-This starts:
-
-- local PostgreSQL
-- local Express backend
-
-Then start the frontend separately:
-
-```bash
-cd client
-npm run dev
-```
-
-The frontend will still point to:
-
-```bash
-http://localhost:4000
-```
-
-through `VITE_API_BASE_URL`.
-
----
-
-### 5. Run tests
-
-**Frontend tests**
-
-From `client/`:
-
-```bash
-npm run test
-```
-
-**Backend tests**
-
-From `server/`:
-
-```bash
-npm run test
-```
-
-If backend integration tests use a dedicated test database, ensure it is configured and available before running the suite.
-
----
-
-### 6. Production deployment
-
-Readr v2 uses a split deployment model:
-
-- **Frontend**: Vercel
-- **Backend**: Render
-- **Database**: Neon (production) / PostgreSQL for local development
-
-Production environments must provide valid runtime configuration for:
-
-- `VITE_API_BASE_URL`
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `AUTH_RATE_LIMIT_WINDOW_MS`
-- `AUTH_RATE_LIMIT_MAX`
-
----
-
-### Development Notes
-
-- The frontend depends on the backend being available at the configured API base URL
-- Authentication and all protected data flows require a valid backend `JWT_SECRET`
-- Register/login endpoints are protected by basic rate limiting in v2.3
-- Books, sessions, and backup operations are user-scoped in v2.3
-- Local development requires a reachable PostgreSQL database via `DATABASE_URL`
-- Docker-based local development is now supported for backend + database orchestration
-- Local `.env` files do not automatically carry into deployed environments
-
----
-
-### v3.0 Sprint 1 Environment Audit Findings
-
-Sprint 1 identified several environment and deployment hardening points:
-
-- The frontend uses `VITE_API_BASE_URL` as its API base variable.
-- Older names such as `VITE_API_BASE` are stale and should not be used.
-- The frontend base URL must be the backend origin only, not an `/api` path, because the client appends `/api` internally.
-- The backend runtime is centered on `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `PORT`, `CORS_ALLOWED_ORIGINS`, and auth rate-limit settings.
-- Root Prisma tooling uses `DATABASE_URL` separately from frontend deployment configuration.
-- No `.env.example` files existed previously, so Sprint 1 included creating them from scratch.
-- Auth rate-limit settings are now validated through centralized backend env parsing rather than being handled separately at runtime.
-
-### Deployment environment baseline
-
-- **Render** is the active backend runtime environment and holds the backend-required variables.
-- **Vercel** provides the frontend build-time API base URL through `VITE_API_BASE_URL`.
-- Local client environment configuration was previously out of sync with actual client code expectations and was corrected during Sprint 1 hardening.
-- Root Prisma tooling continues to use `DATABASE_URL` separately from frontend deployment configuration.
-
-### Vercel managed environment variables
-
-Several Neon/Postgres variables are still present in Vercel even though they do not appear to be used by the frontend application code.
-
-These variables are **integration-managed** rather than manually created. Because they were provisioned through a connected Neon integration, they cannot be removed directly from the standard Environment Variables screen. Removing them would require disconnecting the project from the connected integration first.
-
-For now, these variables are being treated as **non-blocking configuration residue** rather than active frontend requirements. The frontend’s relevant deployment variable remains `VITE_API_BASE_URL`, while backend and database runtime configuration are handled separately through Render and Prisma-backed tooling.
-
-### Localhost audit result
-
-Sprint 1 found several `localhost` references across local tooling and development assets. These references are not automatically deployment problems.
-
-Confirmed acceptable local-only references include:
-
-- local Postman environment configuration
-- development and test tooling
-- local CORS defaults in server env parsing
-- client-side dev fallback behavior when running outside production
-
-No evidence has been found so far that production runtime behavior depends on localhost. The more important configuration gap identified during this pass was that auth rate-limit environment variables were being used at runtime without centralized env validation, which has now been corrected as part of Sprint 1 hardening.
-
----
-
-### Why This Matters
-
-Readr’s hosted architecture depends on clear separation of responsibilities across environments:
-
-- frontend configuration must point to the correct backend origin
-- backend runtime must expose the correct secrets, CORS settings, and rate-limit configuration
-- Prisma tooling and backend runtime must each have valid database access where required
-- local `.env` files do not automatically carry into Vercel or Render
-- deployment platforms may also contain integration-managed variables that are not part of the app’s active runtime contract
-
-These boundaries matter because many deployment failures come from configuration drift, naming mismatches, undocumented assumptions, or environment-specific behavior rather than from application logic itself.
-
-Sprint 1 reduces that fragility by standardizing environment templates, correcting client API base configuration, centralizing backend env validation more fully, and documenting the current Vercel + Render + Neon deployment model more clearly.
-
-This makes the hosted stack easier to debug, easier to maintain, and easier to reason about as v3.0 continues.
-
----
-
-### Mermaid Diagram
-
-```mermaid
-flowchart TD
-
-A["React Frontend (Vite + TypeScript + Tailwind)"]
-  --> B["Client Services Layer (API-backed)"]
-
-B --> C["Express Server (Node + TypeScript)"]
-
-C --> D["Controller Layer"]
-D --> E["Service Layer"]
-
-E --> F["Prisma ORM"]
-F --> G[("PostgreSQL Database")]
-
-classDef teal fill:#008080,stroke:#004d4d,color:white;
-classDef navy fill:#003366,stroke:#001933,color:white;
-
-class A,B teal
-class C,D,E navy
-class F,G teal
-```
-
----
-
-## Engineering Decisions
-
-Readr v2 emphasizes architectural clarity and incremental evolution over rapid feature expansion.
-
-Key decisions:
-
-### 1. Backend-First Foundation (v2.0.0)
-
-The backend was built and stabilized before rewriting the frontend to:
-
-- De-risk persistence and schema design early
-- Lock API boundaries before UI coupling
-- Establish CI-backed integration testing from the start
-
-### 2. Parity Before Expansion (v2.1)
-
-The React frontend rebuild prioritizes feature parity with v1.9 before introducing API-backed persistence.
-This avoids mixing behavioral changes with architectural migration.
-
-### 3. Local-First → API Migration Strategy
-
-- v1.x: fully offline-first
-- v2.1: React rebuild stays local-first (parity lock)
-- v2.2: migrate persistence to API (stable UI)
-
-This staged migration reduces system-wide risk and simplifies debugging.
-
-### 4. Strict Separation of Concerns
-
-- UI components are isolated from state logic.
-- Stores isolate state from persistence.
-- Services abstract IO (local now, API later).
-- Backend separates controllers, services, and schemas.
-
-This keeps React → API integration friction low.
-
-### 5. CI as a First-Class Concern
-
-Backend endpoints are validated via automated API tests.
-v2.1 expands regression protection with parity tests and CI gating.
-
-Engineering choices are documented to emphasize maintainability and long-term scalability.
-
-### 6. Contract-First Feature Expansion (v2.4)
-
-v2.4 begins with a contract-first sprint that defines request/response shapes, derived-state ownership rules, and feature dependencies before implementation expands into UI and mutation behavior.
-
-This approach is used to reduce the risk of:
-
-- inconsistent DTOs
-- duplicated business logic
-- premature UI coupling
-- boundary erosion across frontend and backend layers
-
-By locking these assumptions early, later sprint work can build on stable contracts instead of inventing them during implementation.
-
----
-
-## Screenshots
-
-The UI below reflects the current full-stack system with API-backed persistence, authentication, user-scoped data, and the v2.4 engagement and insights layer.
-
-> All screenshots reflect the live application connected to the production API.
-
----
-
-**User authentication (login / account access)**
-
-![Auth](./docs/screenshots/auth.png)
-
----
-
-**Library view with search, filtering, status tracking, and server-backed books data**
-
-![Library](./docs/screenshots/library.png)
-
----
-
-**Saved views with persistent filters, sort state, and active view controls**
-
-![Saved Views](./docs/screenshots/saved-views.png)
-
----
-
-**Search with fuzzy matching and highlight rendering**
-
-![Search](./docs/screenshots/search.png)
-
----
-
-**Bulk selection and grouped library actions**
-
-![Bulk Actions](./docs/screenshots/bulk-actions.png)
-
----
-
-**Grouped Undo after bulk status updates**
-
-![Bulk Undo](./docs/screenshots/bulk-undo.png)
-
----
-
-**Dashboard with server-derived reading stats and chart-based summaries**
-
-![Dashboard](./docs/screenshots/dashboard.png)
-
----
-
-**Goals, streaks, and badge progression**
-
-![Engagement](./docs/screenshots/engagement.png)
-
----
-
-**Session history with deterministic sorting and reading progress tracking**
-
-![Sessions](./docs/screenshots/sessions.png)
-
----
-
-**Add Book flow with structured input and validation-ready form**
-
-![Add Book](./docs/screenshots/add-book.png)
-
----
-
-**Backup export/import system with ownership-safe data handling**
-
-![Backup](./docs/screenshots/backup.png)
-
----
-
-**Responsive mobile layout**
-
-![Mobile](./docs/screenshots/mobile-view.png)
-
----
-
-## Installation & Development
+- traditional manual setup
+- Docker-based backend + database orchestration
 
 ### 1. Clone the repository
 
@@ -1530,7 +477,7 @@ Required backend variables:
   - JWT lifetime configuration
 - `NODE_ENV`
   - Runtime environment name
-- `POST`
+- `PORT`
   - Local backend port
 - `CORS_ALLOWED_ORIGINS`
   - Comma-separated list of allowed frontend origins
@@ -1551,103 +498,368 @@ NODE_ENV="test"
 CORS_ALLOWED_ORIGINS="http://localhost:5173"
 ```
 
-> Local `.env` files do not automatically carry into Vercel or Render. Production environment variables must be configured separately in each deployment platform.
+> Local `.env` files do not automatically carry into Vercel or Render. Production configuration must be set separately in each platform.
 
-### 4. Ensure PostgreSQL is available
+---
 
-Readr requires a PostgreSQL database for local backend development.
+## Local Workflow Options
 
-You can use either:
+### Option A — Traditional Manual Workflow
 
-- a local PostgreSQL installation
-- a hosted development database such as Neon
+Use your own local PostgreSQL instance or a hosted development database.
 
-Make sure your DATABASE_URL points to a valid database before running
-
-### 5. Apply database schema
-
-After the database is running, initialize Prisma:
+From `server`:
 
 ```bash
-cd server
 npx prisma generate
 npx prisma migrate dev
+npm run dev
 ```
 
 This generates the Prisma client and applies the latest schema to your local database.
 
-### 6. Start the backend
-
-From `server/`:
-
-```bash
-npm run dev
-```
-
-The API will run locally at:
+Backend runs at:
 
 ```bash
 http://localhost:4000
 ```
 
-### 7. Start the frontend
-
 From `client/`:
 
 ```bash
 npm run dev
 ```
 
-The frontend will run locally through Vite, typically at:
+Frontend typically runs at:
 
 ```bash
 http://localhost:5173
 ```
 
-### 8. Run Tests
+### Option B — Docker Backend Workflow
 
-#### Frontend tests
+Use Docker Compose for local PostgreSQL + backend orchestration.
 
-From `client/`:
-
-```bash
-npm run test
-```
-
-#### Backend tests
-
-From `server/`:
+From the repository root:
 
 ```bash
-npm run test
+docker compose up
 ```
 
-If backend integration tests use a dedicated test database, ensure it is configured and available before running the suite.
+This starts:
 
-### 9. Production deployment
+- local PostgreSQL
+- local Express backend
 
-Readr v2 uses a split deployment model:
+Then start the frontend separately:
 
-- **Frontend**: Vercel
-- **Backend**: Render
-- **Database**: Neon (production) / PostgreSQL for local development
+```bash
+cd client
+npm run dev
+```
 
-Production environments must provide valid runtime configuration for:
+Useful commands:
 
-- `VITE_API_BASE_URL`
-- `DATABASE_URL`
-- `JWT_SECRET`
-- `AUTH_RATE_LIMIT_WINDOW_MS`
-- `AUTH_RATE_LIMIT_MAX`
+```bash
+docker compose build --no-cache
+docker compose up
+```
 
-### Development Notes
+```bash
+docker compose down
+```
 
-- The frontend depends on the backend being available at the configured API base URL
-- Authentication and all protected data flows require a valid backend `JWT_SECRET`
-- Register/login endpoints are protected by basic rate limiting in v2.3
-- Books, sessions, and backup operations are user-scoped in v2.3
-- Local development requires a reachable PostgreSQL database via `DATABASE_URL`
-- Local `.env` files do not automatically carry into deployed environments
+```bash
+docker compose down -v
+```
+
+Use `docker compose down -v` only if you intentionally want to wipe local containerized database state.
+
+---
+
+## Testing & CI
+
+Readr uses layered validation across frontend behavior, backend contracts, and deployment readiness.
+
+### Frontend Testing
+
+Covers areas such as:
+
+- search logic
+- Undo behavior
+- sorting behavior
+- auth state behavior
+- token restore flow
+- logout state reset
+- bulk selection and grouped Undo
+- saved view behavior
+- dashboard and engagement UI behavior
+- accessibility semantics
+
+Tools:
+
+- Vitest
+- React Testing Library
+- jsdom
+
+### Backend Testing
+
+Covers areas such as:
+
+- register/login flows
+- authenticated account lookup
+- protected route enforcement
+- invalid and expired token handling
+- malformed request handling
+- ownership enforcement
+- backup import/export integrity
+- transaction rollback behavior
+- structured hardening responses
+
+Tools:
+
+- Vitest
+- Supertest
+- PostgreSQL test database
+
+### Postman Test Suites
+
+The API is also validated through structured Postman collections for:
+
+- health
+- auth
+- backup
+- books
+- sessions
+- stats
+- engagement
+
+### Continuous Integration
+
+GitHub Actions is used to validate:
+
+- typechecking
+- linting
+- frontend tests
+- backend tests
+- production builds
+- deploy-readiness checks
+- built-artifact startup validation
+- `/health` validation
+- API smoke flows where applicable
+
+This keeps release confidence high and helps catch environment-sensitive failures before deployment.
+
+---
+
+## Release Process & Operational Docs
+
+Readr v3.0 adds lightweight release-process documentation to make deployments safer and more repeatable.
+
+Sprint 4 / Sprint 5 operational docs:
+
+- [`./docs/sprints/v3.0/v3.0-release-checklist.md`](./docs/sprints/v3.0/v3.0-release-checklist.md)
+- [`./docs/sprints/v3.0/v3.0-deployment-verification-checklist.md`](./docs/sprints/v3.0/v3.0-deployment-verification-checklist.md)
+- [`./docs/sprints/v3.0/v3.0-smoke-test-flow.md`](./docs/sprints/v3.0/v3.0-smoke-test-flow.md)
+
+Recommended supporting docs:
+
+- [`./docs/deployment/architecture.md`](./docs/deployment/architecture.md)
+- [`./docs/deployment/troubleshooting-and-recovery.md`](./docs/deployment/troubleshooting-and-recovery.md)
+
+These docs separate:
+
+- pre-deploy validation
+- post-deploy verification
+- rollback and recovery expectations
+- deployment architecture reference
+- troubleshooting steps for common failures
+
+---
+
+## Project Structure
+
+```bash
+readr-v2/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── client/
+│   ├── scripts/
+│   ├── src/
+│   │   ├── app/
+│   │   ├── features/
+│   │   │   ├── auth/
+│   │   │   ├── books/
+│   │   │   ├── engagement/
+│   │   │   ├── sessions/
+│   │   │   ├── settings/
+│   │   │   └── stats/
+│   │   ├── shared/
+│   │   │   ├── a11y/
+│   │   │   ├── api/
+│   │   │   ├── data/
+│   │   │   ├── types/
+│   │   │   └── ui/
+│   │   ├── test/
+│   │   └── main.tsx
+│   ├── index.html
+│   ├── vercel.json
+│   ├── vite.config.ts
+│   └── vitest.config.ts
+│
+├── server/
+│   ├── postman/
+│   ├── prisma/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── db/
+│   │   ├── middleware/
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   ├── backup/
+│   │   │   ├── books/
+│   │   │   ├── engagement/
+│   │   │   ├── saved-views/
+│   │   │   ├── sessions/
+│   │   │   ├── stats/
+│   │   │   └── views/
+│   │   ├── tests/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── app.ts
+│   │   └── index.ts
+│   ├── prisma.config.ts
+│   └── tsconfig.json
+│
+├── docs/
+├── shared/
+│   └── types/
+│       └── v2.4.ts
+├── CHANGELOG.md
+├── roadmap.md
+├── LICENSE.md
+└── README.md
+```
+
+### Structure Philosophy
+
+A few intentional boundaries shape the repository:
+
+- frontend features are grouped by domain behavior
+- shared frontend infrastructure remains centralized
+- cross-app contracts live at the repo level
+- backend modules map to route-domain responsibilities
+- testing exists at multiple layers
+- deployment and release docs are versioned alongside implementation work
+
+This structure supports versioned development without collapsing architecture boundaries as the system grows.
+
+---
+
+## Screenshots
+
+The UI below reflects the current full-stack system with API-backed persistence, authentication, user-scoped data, and the v2.4 engagement and insights layer.
+
+> All screenshots reflect the live application connected to the production API.
+
+---
+
+**User authentication (login / account access)**
+
+![Auth](./docs/screenshots/auth.png)
+
+---
+
+**Library view with search, filtering, status tracking, and server-backed books data**
+
+![Library](./docs/screenshots/library.png)
+
+---
+
+**Saved views with persistent filters, sort state, and active view controls**
+
+![Saved Views](./docs/screenshots/saved-views.png)
+
+---
+
+**Search with fuzzy matching and highlight rendering**
+
+![Search](./docs/screenshots/search.png)
+
+---
+
+**Bulk selection and grouped library actions**
+
+![Bulk Actions](./docs/screenshots/bulk-actions.png)
+
+---
+
+**Grouped Undo after bulk status updates**
+
+![Bulk Undo](./docs/screenshots/bulk-undo.png)
+
+---
+
+**Dashboard with server-derived reading stats and chart-based summaries**
+
+![Dashboard](./docs/screenshots/dashboard.png)
+
+---
+
+**Goals, streaks, and badge progression**
+
+![Engagement](./docs/screenshots/engagement.png)
+
+---
+
+**Session history with deterministic sorting and reading progress tracking**
+
+![Sessions](./docs/screenshots/sessions.png)
+
+---
+
+**Add Book flow with structured input and validation-ready form**
+
+![Add Book](./docs/screenshots/add-book.png)
+
+---
+
+**Backup export/import system with ownership-safe data handling**
+
+![Backup](./docs/screenshots/backup.png)
+
+---
+
+**Responsive mobile layout**
+
+![Mobile](./docs/screenshots/mobile-view.png)
+
+---
+
+## Roadmap
+
+Readr is developed in versioned milestones where each release isolates a specific risk area before introducing new complexity.
+
+High-level version history:
+
+- **v2.0.0** — Backend & CI foundation
+- **v2.1.0** — React frontend rebuild with full v1.9 behavioral parity
+- **v2.2.0** — API integration & persistence migration
+- **v2.3.0** — Authentication and strict user ownership
+- **v2.4.0** — Engagement & insights expansion
+- **v3.0.0** — Deployment hardening, release safety, and hosted architecture maturity
+
+For the full roadmap, see [`roadmap.md`](./roadmap.md).
+
+---
+
+## Changelog
+
+All notable changes are documented in [`CHANGELOG.md`](./CHANGELOG.md),
+following **Keep a Changelog** and **Semantic Versioning**.
 
 ---
 
